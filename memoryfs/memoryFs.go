@@ -26,10 +26,10 @@ type openMemoryFile struct {
 	file       *memoryFile
 }
 
-func New(targetDir string) *MemoryFilesystem {
+func New(targetDir string) (*MemoryFilesystem, error) {
 	targetDir = path.Clean(targetDir)
 	files := make(map[string]*memoryFile)
-	filepath.Walk(targetDir, func(path string, info fs.FileInfo, err error) error {
+	err := filepath.Walk(targetDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -50,9 +50,12 @@ func New(targetDir string) *MemoryFilesystem {
 		files[path[(len(targetDir)+1):]] = &memoryFile{data: data, info: info}
 		return nil
 	})
+	if err != nil {
+		return nil, fmt.Errorf("error reading files into in-memory-fs: %w", err)
+	}
 	return &MemoryFilesystem{
 		files: files,
-	}
+	}, nil
 }
 
 func (fs *MemoryFilesystem) Open(name string) (fs.File, error) {

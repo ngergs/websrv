@@ -60,17 +60,23 @@ func init() {
 func startFileServer(httpHeaderConfig *server.HttpHeaderConfig, errChan chan<- error) {
 	flag.Parse()
 	var filesystem fs.FS
+	var err error
 	if *memoryFs {
 		log.Info().Msg("Using the in-memory-filesystem")
-		filesystem = memoryfs.New(targetDir)
+		filesystem, err = memoryfs.New(targetDir)
+		if err != nil {
+			errChan <- fmt.Errorf("error initializing in-memory-fs: %w", err)
+			return
+		}
 	} else {
-		log.Info().Msg("Using os filesystem")
+		log.Info().Msg("Using nano git os filesystem")
 		filesystem = os.DirFS(targetDir)
 	}
-	var handler http.Handler = &server.WebserverHandler{
-		FileSystem:       filesystem,
-		FallbackFilepath: *fallbackFilepath,
-		HttpheaderConfig: httpHeaderConfig,
+	var handler http.Handler
+	handler, err = server.New(filesystem, *fallbackFilepath, httpHeaderConfig)
+	if err != nil {
+		errChan <- fmt.Errorf("error initializing webserver handler: %w", err)
+		return
 	}
 	if *accessLog {
 		handler = &server.AccessLogWrapper{
