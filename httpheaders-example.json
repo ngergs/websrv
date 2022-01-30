@@ -1,0 +1,16 @@
+{
+   "headers":
+   {
+      "X-XSS-Protection": ["1; mode=block"],
+      "X-Frame-Options": ["deny"],
+      "X-Content-Type-Options": ["nosniff"],
+      "Referrer-Policy": ["no-referrer"],
+      "Permissions-Policy": ["accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), cross-origin-isolated=(self), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(self), execution-while-out-of-viewport=(self), fullscreen=(self), geolocation=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()"],
+      "Cross-Origin-Embedder-Policy": ["require-corp"],
+      "Cross-Origin-Opener-Policy": ["same-origin"],
+      "Cross-Origin-Resource-Policy": ["same-site"],
+      "Cache-Control": ["no-cache"],
+      "Pragma": ["no-cache"],
+      "Expect-CT": ["enforce, max-age=2592000"]
+   }
+}
