@@ -75,6 +75,20 @@ func (open *openMemoryFile) Read(dst []byte) (int, error) {
 	return n, nil
 }
 
+func (open *openMemoryFile) WriteTo(w io.Writer) (int64, error) {
+	if open.readOffset >= len(open.file.data) {
+		return 0, io.EOF
+	}
+	for open.readOffset < len(open.file.data) {
+		n, err := w.Write(open.file.data[open.readOffset:])
+		open.readOffset += n
+		if err != nil {
+			return int64(open.readOffset), err
+		}
+	}
+	return int64(open.readOffset), nil
+}
+
 func (file *openMemoryFile) Close() error {
 	// in memory file does nothing on error
 	return nil
