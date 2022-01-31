@@ -84,6 +84,13 @@ func (handler *WebserverHandler) replaceNounceHeaders(w http.ResponseWriter, non
 }
 
 func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	sessionIds := r.Header.Values("SSL-Session-ID")
+	if len(sessionIds) == 0 {
+		log.Warn().Msg("error getting nonce from ssl-session-id-header")
+		http.Error(w, "failed to serve requested file, you can retry.", http.StatusInternalServerError)
+	}
+	nonce := sessionIds[len(sessionIds)-1]
+
 	if !handler.validate(w, r) {
 		return
 	}
@@ -95,16 +102,7 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	if handler.config.RandomIdReplacer != nil && handler.config.RandomIdReplacer.FileNamePattern.MatchString(requestPath) {
 		log.Debug().Msgf("Serving template file %s", requestPath)
 		// needed due to https://github.com/golang/go/issues/32350
-		sessionIds := r.Header.Values("SSL-Session-ID")
-		sessionIds = []string{"123"}
-		if len(sessionIds) == 0 {
-			log.Warn().Msg("error getting nonce from ssl-session-id-header")
-			http.Error(w, "failed to serve requested file, you can retry.", http.StatusInternalServerError)
-		}
-
-		nonce := sessionIds[len(sessionIds)-1]
 		serve = func(writer io.Writer, w http.ResponseWriter) error {
-			handler.replaceNounceHeaders(w, nonce)
 			return handler.templateServer.Serve(writer, requestPath, map[string]string{handler.config.RandomIdReplacer.VariableName: nonce})
 		}
 	} else {
@@ -142,6 +140,7 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	mediaType := handler.getMediaType(requestPath)
 	w.Header()["Content-Type"] = []string{mediaType}
 	handler.setHeaders(w)
+	handler.replaceNounceHeaders(w, nonce)
 
 	var writer io.Writer = w
 	if handler.gzip && contains(handler.config.GzipMediaTypes, mediaType) {
