@@ -1,6 +1,7 @@
 package server
 
 import (
+	"compress/gzip"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -8,34 +9,32 @@ import (
 	"io/fs"
 	"net/http"
 	"path"
+	"strings"
+	"text/template"
 
 	"github.com/rs/zerolog/log"
 )
 
-// needed due to https://github.com/golang/go/issues/32350
-var mediaTypeMapping map[string]string = map[string]string{
-	".js":   "application/javascript",
-	".css":  "text/css",
-	".html": "text/html; charset=UTF-8",
-	".jpg":  "image/jpeg",
-	".avif": "image/avif",
-	".jxl":  "image/jxl",
-}
-
 type WebserverHandler struct {
 	fallbackFilepath string
 	fileSystem       fs.FS
-	httpHeaderConfig *HttpHeaderConfig
+	config           *Config
 	hashes           map[string]string
+	templateServer   *templateServer
 }
 
-func New(fileSystem fs.FS, fallbackFilepath string, httpHeaderConfig *HttpHeaderConfig) (*WebserverHandler, error) {
+func New(fileSystem fs.FS, fallbackFilepath string, httpHeaderConfig *Config) (*WebserverHandler, error) {
 	handler := &WebserverHandler{
 		fallbackFilepath: fallbackFilepath,
 		fileSystem:       fileSystem,
-		httpHeaderConfig: httpHeaderConfig,
+		config:           httpHeaderConfig,
 		hashes:           make(map[string]string),
+		templateServer: &templateServer{
+			filesystems: fileSystem,
+			templates:   make(map[string]*template.Template),
+		},
 	}
+	// compute hashes
 	err := fs.WalkDir(fileSystem, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -43,6 +42,7 @@ func New(fileSystem fs.FS, fallbackFilepath string, httpHeaderConfig *HttpHeader
 		if d.IsDir() {
 			return nil
 		}
+		log.Debug().Msgf("Compute hash for %s", path)
 		file, err := fileSystem.Open(path)
 		if err != nil {
 			return err
@@ -61,6 +61,23 @@ func New(fileSystem fs.FS, fallbackFilepath string, httpHeaderConfig *HttpHeader
 	return handler, nil
 }
 
+func (handler *WebserverHandler) setHeaders(w http.ResponseWriter) {
+	if handler.config != nil {
+		for k, v := range handler.config.Headers {
+			w.Header()[k] = v
+		}
+	}
+	replacer := handler.config.RandomIdReplacer
+	headerElements, ok := w.Header()[replacer.HeaderName]
+	if !ok {
+		return
+	}
+	for i, header := range headerElements {
+		headerElements[i] = strings.Replace(header, replacer.VariableName, "todo", -1)
+	}
+
+}
+
 func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !handler.validate(w, r) {
 		return
@@ -70,8 +87,23 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	requestPath := path.Clean(r.URL.Path)[1:]
 
 	ifNoneMatch := r.Header.Get("If-None-Match")
-	if handler.checkIfNoneMatch(requestPath, ifNoneMatch) {
+	/*if handler.checkIfNoneMatch(requestPath, ifNoneMatch) {
+		handler.setHeaders(w)
 		w.WriteHeader(http.StatusNotModified)
+		return
+	}*/
+
+	if handler.config.RandomIdReplacer.FileNamePattern.MatchString(requestPath) {
+		log.Debug().Msgf("Serving template file %s", requestPath)
+		// needed due to https://github.com/golang/go/issues/32350
+		w.Header()["Content-Type"] = []string{handler.getMediaType(requestPath)}
+		handler.setHeaders(w)
+		err := handler.templateServer.Serve(w, requestPath, map[string]string{handler.config.RandomIdReplacer.VariableName: "todo"})
+
+		if err != nil {
+			log.Warn().Err(err).Msg("error serving template file")
+			http.Error(w, "failed to serve requested file, you can retry.", http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -88,16 +120,20 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	// needed due to https://github.com/golang/go/issues/32350
 	w.Header()["Content-Type"] = []string{handler.getMediaType(requestPath)}
-	hash, ok := handler.hashes[requestPath]
+	/*hash, ok := handler.hashes[requestPath]
 	if ok {
 		w.Header()["ETag"] = []string{hash}
+	}*/
+	// todo: make optional
+	handler.setHeaders(w)
+	if handler.getMediaType(requestPath) == "application/javascript" {
+		_, err = io.Copy(w, file)
+	} else {
+		w.Header()["Content-Encoding"] = []string{"gzip"}
+		gzipWriter := gzip.NewWriter(w)
+		defer gzipWriter.Close()
+		_, err = io.Copy(gzipWriter, file)
 	}
-	if handler.httpHeaderConfig != nil {
-		for k, v := range handler.httpHeaderConfig.Headers {
-			w.Header()[k] = v
-		}
-	}
-	_, err = io.Copy(w, file)
 	if err != nil {
 		log.Warn().Err(err).Msg("error copying requested file")
 		http.Error(w, "failed to copy requested file, you can retry.", http.StatusInternalServerError)
@@ -162,7 +198,7 @@ func (handler *WebserverHandler) checkIfNoneMatch(requestPath string, ifNoneMatc
 }
 
 func (handler *WebserverHandler) getMediaType(requestPath string) string {
-	mediaType, ok := mediaTypeMapping[path.Ext(requestPath)]
+	mediaType, ok := handler.config.MediaTypeMap[path.Ext(requestPath)]
 	if !ok {
 		mediaType = "application/octet-stream"
 	}

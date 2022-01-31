@@ -8,9 +8,10 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 
-	"github.com/ngergs/webserver/v2/memoryfs"
+	"github.com/ngergs/webserver/v2/filesystems"
 	"github.com/ngergs/webserver/v2/server"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -57,13 +58,13 @@ func init() {
 	targetDir = args[0]
 }
 
-func startFileServer(httpHeaderConfig *server.HttpHeaderConfig, errChan chan<- error) {
+func startFileServer(config *server.Config, errChan chan<- error) {
 	flag.Parse()
 	var filesystem fs.FS
 	var err error
 	if *memoryFs {
 		log.Info().Msg("Using the in-memory-filesystem")
-		filesystem, err = memoryfs.New(targetDir)
+		filesystem, err = filesystems.NewMemoryFs(targetDir)
 		if err != nil {
 			errChan <- fmt.Errorf("error initializing in-memory-fs: %w", err)
 			return
@@ -73,7 +74,7 @@ func startFileServer(httpHeaderConfig *server.HttpHeaderConfig, errChan chan<- e
 		filesystem = os.DirFS(targetDir)
 	}
 	var handler http.Handler
-	handler, err = server.New(filesystem, *fallbackFilepath, httpHeaderConfig)
+	handler, err = server.New(filesystem, *fallbackFilepath, config)
 	if err != nil {
 		errChan <- fmt.Errorf("error initializing webserver handler: %w", err)
 		return
@@ -108,7 +109,7 @@ func startHealthServer(errChan chan<- error) {
 	}
 }
 
-func readHttpHeaderConfig() (*server.HttpHeaderConfig, error) {
+func readHttpHeaderConfig() (*server.Config, error) {
 	if *httpHeaderFile == "" {
 		return nil, nil
 	}
@@ -120,12 +121,24 @@ func readHttpHeaderConfig() (*server.HttpHeaderConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result server.HttpHeaderConfig
-	err = json.Unmarshal(data, &result)
+	var resultRaw server.ConfigRaw
+	err = json.Unmarshal(data, &resultRaw)
 	if err != nil {
 		return nil, err
 	}
-	return &result, nil
+	replacerRaw := resultRaw.RandomIdReplacerRaw
+	fileNamePattern := regexp.MustCompile(resultRaw.RandomIdReplacerRaw.FileNamePattern)
+	randomIdReplacer := &server.RandomIdReplacer{
+		FileNamePattern: *fileNamePattern,
+		HeaderName:      replacerRaw.HeaderName,
+		VariableName:    replacerRaw.VariableName,
+		MaxReplacements: replacerRaw.MaxReplacements,
+	}
+	return &server.Config{
+		Headers:          resultRaw.Headers,
+		RandomIdReplacer: randomIdReplacer,
+		MediaTypeMap:     resultRaw.MediaTypeMap,
+	}, nil
 }
 
 func main() {

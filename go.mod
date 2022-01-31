@@ -4,4 +4,4 @@ go 1.17
 
 replace github.com/ngergs/webserver => ./
 
-require github.com/rs/zerolog v1.26.1 // indirect
+require github.com/rs/zerolog v1.26.1
