@@ -19,13 +19,14 @@ import (
 
 var accessLog = flag.Bool("access-log", false, "Prints an acess log for the file server endpoint.")
 var debugLogging = flag.Bool("debug", false, "Log debug level")
+var configFile = flag.String("config-file", "", "Optional file that contains more involved config settings, see server/config.go for the structure.")
 var fallbackFilepath = flag.String("fallback-file", "index.html", "Filepath relative to targetDir which serves as fallback. Set to empty to disable.")
 var fileServerPort = flag.Int("port", 8080, "Port under which the fileserver runs.")
+var gzip = flag.Bool("gzip", true, "Whether to send gzip encoded response. See config-file for setting the detailed types. As default gzip is used when activated for test/css, text/html and application/javascript")
 var health = flag.Bool("health", true, "Whether to start the health check endpoint (/ under a separate port)")
 var healthAccessLog = flag.Bool("health-access-log", false, "Prints an access log for the health check endpoint to stdout.")
 var healthPort = flag.Int("health-port", 8081, "Different port under which the health check endpoint runs.")
 var help = flag.Bool("help", false, "Prints the help.")
-var httpHeaderFile = flag.String("http-header-file", "", "Optional file that contains a set of HTTP headers to be served for each request.")
 var memoryFs = flag.Bool("in-memory-fs", false, "Whether to use a in-memory-filesystem. I.e. prefetch the target directory into the heap.")
 var prettyLogging = flag.Bool("pretty", false, "Activates zerolog pretty logging")
 var targetDir string
@@ -74,7 +75,7 @@ func startFileServer(config *server.Config, errChan chan<- error) {
 		filesystem = os.DirFS(targetDir)
 	}
 	var handler http.Handler
-	handler, err = server.New(filesystem, *fallbackFilepath, config)
+	handler, err = server.New(filesystem, *fallbackFilepath, config, *gzip)
 	if err != nil {
 		errChan <- fmt.Errorf("error initializing webserver handler: %w", err)
 		return
@@ -110,10 +111,10 @@ func startHealthServer(errChan chan<- error) {
 }
 
 func readHttpHeaderConfig() (*server.Config, error) {
-	if *httpHeaderFile == "" {
+	if *configFile == "" {
 		return nil, nil
 	}
-	file, err := os.Open(*httpHeaderFile)
+	file, err := os.Open(*configFile)
 	if err != nil {
 		return nil, err
 	}
@@ -134,10 +135,15 @@ func readHttpHeaderConfig() (*server.Config, error) {
 		VariableName:    replacerRaw.VariableName,
 		MaxReplacements: replacerRaw.MaxReplacements,
 	}
+	gzipMediaTypes := resultRaw.GzipMediaTypes
+	if gzipMediaTypes == nil {
+		gzipMediaTypes = []string{"application/javascript", "text/css", "text/html; charset=UTF-8"}
+	}
 	return &server.Config{
 		Headers:          resultRaw.Headers,
 		RandomIdReplacer: randomIdReplacer,
 		MediaTypeMap:     resultRaw.MediaTypeMap,
+		GzipMediaTypes:   resultRaw.GzipMediaTypes,
 	}, nil
 }
 

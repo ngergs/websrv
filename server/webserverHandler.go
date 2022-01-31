@@ -19,15 +19,17 @@ type WebserverHandler struct {
 	fallbackFilepath string
 	fileSystem       fs.FS
 	config           *Config
+	gzip             bool
 	hashes           map[string]string
 	templateServer   *templateServer
 }
 
-func New(fileSystem fs.FS, fallbackFilepath string, httpHeaderConfig *Config) (*WebserverHandler, error) {
+func New(fileSystem fs.FS, fallbackFilepath string, config *Config, gzip bool) (*WebserverHandler, error) {
 	handler := &WebserverHandler{
 		fallbackFilepath: fallbackFilepath,
 		fileSystem:       fileSystem,
-		config:           httpHeaderConfig,
+		config:           config,
+		gzip:             gzip,
 		hashes:           make(map[string]string),
 		templateServer: &templateServer{
 			filesystems: fileSystem,
@@ -67,13 +69,16 @@ func (handler *WebserverHandler) setHeaders(w http.ResponseWriter) {
 			w.Header()[k] = v
 		}
 	}
+}
+
+func (handler *WebserverHandler) replaceNounceHeaders(w http.ResponseWriter, nonce string) {
 	replacer := handler.config.RandomIdReplacer
 	headerElements, ok := w.Header()[replacer.HeaderName]
 	if !ok {
 		return
 	}
 	for i, header := range headerElements {
-		headerElements[i] = strings.Replace(header, replacer.VariableName, "todo", -1)
+		headerElements[i] = strings.Replace(header, replacer.VariableName, nonce, -1)
 	}
 
 }
@@ -86,54 +91,66 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	// important to do this after cleaning, else relative paths may remain
 	requestPath := path.Clean(r.URL.Path)[1:]
 
-	ifNoneMatch := r.Header.Get("If-None-Match")
-	/*if handler.checkIfNoneMatch(requestPath, ifNoneMatch) {
-		handler.setHeaders(w)
-		w.WriteHeader(http.StatusNotModified)
-		return
-	}*/
-
-	if handler.config.RandomIdReplacer.FileNamePattern.MatchString(requestPath) {
+	var serve func(writer io.Writer, w http.ResponseWriter) error
+	if handler.config.RandomIdReplacer != nil && handler.config.RandomIdReplacer.FileNamePattern.MatchString(requestPath) {
 		log.Debug().Msgf("Serving template file %s", requestPath)
 		// needed due to https://github.com/golang/go/issues/32350
-		w.Header()["Content-Type"] = []string{handler.getMediaType(requestPath)}
-		handler.setHeaders(w)
-		err := handler.templateServer.Serve(w, requestPath, map[string]string{handler.config.RandomIdReplacer.VariableName: "todo"})
-
-		if err != nil {
-			log.Warn().Err(err).Msg("error serving template file")
+		sessionIds := r.Header.Values("SSL-Session-ID")
+		sessionIds = []string{"123"}
+		if len(sessionIds) == 0 {
+			log.Warn().Msg("error getting nonce from ssl-session-id-header")
 			http.Error(w, "failed to serve requested file, you can retry.", http.StatusInternalServerError)
 		}
-		return
-	}
 
-	file, err := handler.tryGetFile(requestPath)
-	if err != nil {
-		log.Debug().Err(err).Msgf("file %s not found", requestPath)
-		var finishServing bool
-		file, requestPath, finishServing = handler.checkForFallbackFile(w, requestPath, ifNoneMatch)
-		if finishServing {
+		nonce := sessionIds[len(sessionIds)-1]
+		serve = func(writer io.Writer, w http.ResponseWriter) error {
+			handler.replaceNounceHeaders(w, nonce)
+			return handler.templateServer.Serve(writer, requestPath, map[string]string{handler.config.RandomIdReplacer.VariableName: nonce})
+		}
+	} else {
+		ifNoneMatch := r.Header.Get("If-None-Match")
+		if handler.checkIfNoneMatch(requestPath, ifNoneMatch) {
+			handler.setHeaders(w)
+			w.WriteHeader(http.StatusNotModified)
 			return
 		}
-	}
-	defer file.Close()
 
-	// needed due to https://github.com/golang/go/issues/32350
-	w.Header()["Content-Type"] = []string{handler.getMediaType(requestPath)}
-	/*hash, ok := handler.hashes[requestPath]
-	if ok {
-		w.Header()["ETag"] = []string{hash}
-	}*/
-	// todo: make optional
+		log.Debug().Msgf("Serving file %s", requestPath)
+		file, err := handler.tryGetFile(requestPath)
+		if err == nil {
+			// hash only for regular served files, not for fallback index file as this ruins CSP header
+			hash, ok := handler.hashes[requestPath]
+			if ok {
+				w.Header()["ETag"] = []string{hash}
+			}
+		}
+		if err != nil {
+			log.Debug().Err(err).Msgf("file %s not found", requestPath)
+			var finishServing bool
+			file, requestPath, finishServing = handler.checkForFallbackFile(w, requestPath, ifNoneMatch)
+			if finishServing {
+				return
+			}
+		}
+		defer file.Close()
+		serve = func(writer io.Writer, w http.ResponseWriter) error {
+			_, err := io.Copy(writer, file)
+			return err
+		}
+	}
+
+	mediaType := handler.getMediaType(requestPath)
+	w.Header()["Content-Type"] = []string{mediaType}
 	handler.setHeaders(w)
-	if handler.getMediaType(requestPath) == "application/javascript" {
-		_, err = io.Copy(w, file)
-	} else {
-		w.Header()["Content-Encoding"] = []string{"gzip"}
+
+	var writer io.Writer = w
+	if handler.gzip && contains(handler.config.GzipMediaTypes, mediaType) {
 		gzipWriter := gzip.NewWriter(w)
 		defer gzipWriter.Close()
-		_, err = io.Copy(gzipWriter, file)
+		writer = gzipWriter
+		w.Header()["Content-Encoding"] = []string{"gzip"}
 	}
+	err := serve(writer, w)
 	if err != nil {
 		log.Warn().Err(err).Msg("error copying requested file")
 		http.Error(w, "failed to copy requested file, you can retry.", http.StatusInternalServerError)
