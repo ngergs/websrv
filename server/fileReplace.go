@@ -1,9 +1,9 @@
 package server
 
 import (
-	"io"
 	"io/fs"
 	"net/http"
+	"path"
 	"regexp"
 	"text/template"
 
@@ -16,7 +16,8 @@ type FileReplaceHandler struct {
 	SourceHeaderName string
 	FileNamePatter   *regexp.Regexp
 	VariableName     string
-	templates        map[string]*template.Template
+	Templates        map[string]*template.Template
+	MediaTypeMap     map[string]string
 }
 
 func (handler *FileReplaceHandler) load(path string) (*template.Template, error) {
@@ -25,12 +26,12 @@ func (handler *FileReplaceHandler) load(path string) (*template.Template, error)
 	if err != nil {
 		return nil, err
 	}
-	handler.templates[path] = template
+	handler.Templates[path] = template
 	return template, nil
 }
 
-func (handler *FileReplaceHandler) Serve(w io.Writer, path string, data interface{}) error {
-	template, ok := handler.templates[path]
+func (handler *FileReplaceHandler) Serve(w http.ResponseWriter, path string, data interface{}) error {
+	template, ok := handler.Templates[path]
 	if !ok {
 		var err error
 		template, err = handler.load(path)
@@ -42,10 +43,12 @@ func (handler *FileReplaceHandler) Serve(w io.Writer, path string, data interfac
 	if err != nil {
 		return err
 	}
+	w.Header().Set("Content-Type", handler.getMediaType(path))
 	return template.Execute(w, data)
 }
 
 func (handler *FileReplaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Ctx(r.Context()).Debug().Msg("Entering file replace handler")
 	if !handler.FileNamePatter.MatchString(r.URL.Path) {
 		handler.Next.ServeHTTP(w, r)
 		return
@@ -56,4 +59,12 @@ func (handler *FileReplaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Error serving file.", http.StatusInternalServerError)
 	}
 
+}
+
+func (handler *FileReplaceHandler) getMediaType(requestPath string) string {
+	mediaType, ok := handler.MediaTypeMap[path.Ext(requestPath)]
+	if !ok {
+		mediaType = "application/octet-stream"
+	}
+	return mediaType
 }

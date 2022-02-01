@@ -32,8 +32,8 @@ func (w *metricResponseWriter) WriteHeader(statusCode int) {
 }
 
 func AccessLogHandler(next http.Handler) http.Handler {
-	log.Debug().Msg("Adding access log handler")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Ctx(r.Context()).Debug().Msg("Entering access log handler")
 		start := time.Now()
 		metricResponseWriter := &metricResponseWriter{Next: w}
 		next.ServeHTTP(metricResponseWriter, r)

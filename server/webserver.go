@@ -30,7 +30,7 @@ func New(fileSystem fs.FS, fallbackFilepath string, config *Config) (*WebserverH
 		hashes:           make(map[string]string),
 		templateServer: &FileReplaceHandler{
 			Filesystem: fileSystem,
-			templates:  make(map[string]*template.Template),
+			Templates:  make(map[string]*template.Template),
 		},
 	}
 	// compute hashes
@@ -62,12 +62,8 @@ func New(fileSystem fs.FS, fallbackFilepath string, config *Config) (*WebserverH
 
 func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logger := log.Ctx(r.Context())
-	if !handler.validate(w, r) {
-		return
-	}
-	// remove leading / from path to make it relative
-	// important to do this after cleaning, else relative paths may remain
-	requestPath := path.Clean(r.URL.Path)[1:]
+	logger.Debug().Msg("Entering webserver handler")
+	requestPath := r.URL.Path
 
 	ifNoneMatch := r.Header.Get("If-None-Match")
 	if handler.chechHash(requestPath, ifNoneMatch) {
@@ -93,9 +89,7 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 	}
 	defer file.Close()
-
-	mediaType := handler.getMediaType(requestPath)
-	w.Header()["Content-Type"] = []string{mediaType}
+	w.Header().Set("Content-Type", handler.getMediaType(requestPath))
 
 	if r.Method == http.MethodHead {
 		w.WriteHeader(http.StatusOK)
@@ -107,18 +101,6 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "failed to copy requested file, you can retry.", http.StatusInternalServerError)
 		return
 	}
-}
-
-func (handler *WebserverHandler) validate(w http.ResponseWriter, r *http.Request) bool {
-	if r.Method != http.MethodGet && r.Method != http.MethodHead {
-		http.Error(w, "This server only supports HTTP methods GET and HEAD", http.StatusMethodNotAllowed)
-		return false
-	}
-	if !path.IsAbs(r.URL.Path) {
-		http.Error(w, "", http.StatusBadRequest)
-		return false
-	}
-	return true
 }
 
 func (handler *WebserverHandler) tryGetFile(requestPath string) (fs.File, error) {
@@ -134,7 +116,6 @@ func (handler *WebserverHandler) tryGetFile(requestPath string) (fs.File, error)
 	return file, err
 }
 
-//checkIfNoneMatch returns true if a match occured
 func (handler *WebserverHandler) checkForFallbackFile(logger *zerolog.Logger, w http.ResponseWriter, requestPath string, ifNoneMatch string) (file fs.File, requestpath string, finishServing bool) {
 	// requested files do not fall back to index.html
 	if handler.fallbackFilepath == "" || (path.Ext(requestPath) != "" && path.Ext(requestPath) != ".") {

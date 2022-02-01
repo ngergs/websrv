@@ -37,8 +37,8 @@ func (w *gzipResponseWriter) WriteHeader(statusCode int) {
 }
 
 func GzipHandler(next http.Handler, gzipMediaTypes []string) http.Handler {
-	log.Debug().Msg("Adding gzip handler")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Ctx(r.Context()).Debug().Msg("Entering gzip handler")
 		if containsAfterSplit(r.Header.Values("Accept-Encoding"), ",", "gzip") {
 			gzipWriter := gzip.NewWriter(w)
 			defer gzipWriter.Close()

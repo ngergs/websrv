@@ -1,12 +1,10 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
-	"regexp"
 	"strconv"
 	"time"
 
@@ -15,46 +13,28 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func startFileServer(config *server.Config, errChan chan<- error) {
-	flag.Parse()
-	var filesystem fs.FS
-	var err error
+func getFilesystem(config *server.Config) (fs.FS, error) {
 	if *memoryFs {
 		log.Info().Msg("Using the in-memory-filesystem")
-		filesystem, err = filesystems.NewMemoryFs(targetDir)
+		filesystem, err := filesystems.NewMemoryFs(targetDir)
 		if err != nil {
-			errChan <- fmt.Errorf("error initializing in-memory-fs: %w", err)
-			return
+			return nil, err
 		}
-	} else {
-		log.Info().Msg("Using the os filesystem")
-		filesystem = os.DirFS(targetDir)
+		return filesystem, nil
 	}
+	log.Info().Msg("Using the os filesystem")
+	return os.DirFS(targetDir), nil
+}
+
+func startFileServer(config *server.Config, filesystem fs.FS, errChan chan<- error, handlerSetups ...HandlerSetup) {
 	var handler http.Handler
-	handler, err = server.New(filesystem, *fallbackFilepath, config)
+	handler, err := server.New(filesystem, *fallbackFilepath, config)
 	if err != nil {
 		errChan <- fmt.Errorf("error initializing webserver handler: %w", err)
 		return
 	}
-	if config.FromHeaderReplace != nil {
-		handler = &server.FileReplaceHandler{
-			Next:             handler,
-			Filesystem:       filesystem,
-			SourceHeaderName: config.FromHeaderReplace.SourceHeaderName,
-			FileNamePatter:   regexp.MustCompile(config.FromHeaderReplace.FileNamePattern),
-			VariableName:     config.FromHeaderReplace.VariableName,
-		}
-	}
-	handler = &server.HeaderHandler{
-		Next:    handler,
-		Headers: config.Headers,
-		Replace: config.FromHeaderReplace,
-	}
-	if *gzip {
-		handler = server.GzipHandler(handler, config.GzipMediaTypes)
-	}
-	if *accessLog {
-		handler = server.AccessLogHandler(handler)
+	for _, handlerSetup := range handlerSetups {
+		handler = handlerSetup(handler)
 	}
 	handler = server.RequestIdToCtxHandler(handler)
 	fileserver := &http.Server{
@@ -81,12 +61,22 @@ func startHealthServer(errChan chan<- error) {
 }
 
 func main() {
-	httpHeaderConfig, err := readConfig()
+	config, err := readConfig()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error reading http-header-config: See httpHeaderConfig.go for the expected structure.")
+		log.Fatal().Err(err).Msg("Error reading -config: See server.config.go for the expected structure.")
+	}
+	filesystem, err := getFilesystem(config)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error preparing read-only filesystem.")
 	}
 	errChan := make(chan error)
-	go startFileServer(httpHeaderConfig, errChan)
+	go startFileServer(config, filesystem, errChan,
+		FileReplaceHandler(config, filesystem),
+		HeaderHandler(config),
+		GzipHandler(config, *gzip),
+		ValidateCleanHandler(),
+		AccessLogHandler(*accessLog),
+	)
 	go startHealthServer(errChan)
 	for err := range errChan {
 		log.Fatal().Err(err).Msg("Error starting server: %v")
