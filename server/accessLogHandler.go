@@ -39,6 +39,7 @@ func AccessLogHandler(next http.Handler) http.Handler {
 		next.ServeHTTP(metricResponseWriter, r)
 		log.Info().
 			Dict("httpRequest", zerolog.Dict().
+				Str("requestId", r.Context().Value(requestIdKey).(string)).
 				Str("requestMethod", r.Method).
 				Str("requestUrl", r.URL.String()).
 				Int("status", metricResponseWriter.StatusCode).

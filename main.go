@@ -41,6 +41,7 @@ func startFileServer(config *server.Config, errChan chan<- error) {
 	if *accessLog {
 		handler = server.AccessLogHandler(handler)
 	}
+	handler = server.RequestIdToCtxHandler(handler)
 	fileserver := &http.Server{
 		Addr:    ":" + strconv.Itoa(*fileServerPort),
 		Handler: handler,

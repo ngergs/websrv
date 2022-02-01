@@ -11,6 +11,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -80,6 +81,7 @@ func (handler *WebserverHandler) setHeaders(w http.ResponseWriter, replacement s
 }
 
 func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	logger := log.Ctx(r.Context())
 	if !handler.validate(w, r) {
 		return
 	}
@@ -98,7 +100,7 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	var serve func(w http.ResponseWriter) error
 	if handler.config.FromHeaderReplacer != nil &&
 		handler.config.FromHeaderReplacer.FileNamePattern.MatchString(requestPath) {
-		log.Debug().Msgf("Serving template file %s", requestPath)
+		logger.Debug().Msgf("Serving template file %s", requestPath)
 		// needed due to https://github.com/golang/go/issues/32350
 		serve = func(w http.ResponseWriter) error {
 			return handler.templateServer.Serve(w, requestPath, map[string]string{handler.config.FromHeaderReplacer.VariableName: fromHeaderReplacement})
@@ -111,7 +113,7 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		log.Debug().Msgf("Serving file %s", requestPath)
+		logger.Debug().Msgf("Serving file %s", requestPath)
 		file, err := handler.tryGetFile(requestPath)
 		if err == nil {
 			// hash only for regular served files, not for fallback index file as this ruins CSP header
@@ -121,9 +123,9 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			}
 		}
 		if err != nil {
-			log.Debug().Err(err).Msgf("file %s not found", requestPath)
+			logger.Debug().Err(err).Msgf("file %s not found", requestPath)
 			var finishServing bool
-			file, requestPath, finishServing = handler.checkForFallbackFile(w, requestPath, ifNoneMatch)
+			file, requestPath, finishServing = handler.checkForFallbackFile(logger, w, requestPath, ifNoneMatch)
 			if finishServing {
 				return
 			}
@@ -177,7 +179,7 @@ func (handler *WebserverHandler) tryGetFile(requestPath string) (fs.File, error)
 }
 
 //checkIfNoneMatch returns true if a match occured
-func (handler *WebserverHandler) checkForFallbackFile(w http.ResponseWriter, requestPath string, ifNoneMatch string) (file fs.File, requestpath string, finishServing bool) {
+func (handler *WebserverHandler) checkForFallbackFile(logger *zerolog.Logger, w http.ResponseWriter, requestPath string, ifNoneMatch string) (file fs.File, requestpath string, finishServing bool) {
 	// requested files do not fall back to index.html
 	if handler.fallbackFilepath == "" || (path.Ext(requestPath) != "" && path.Ext(requestPath) != ".") {
 		http.Error(w, "file not found", http.StatusNotFound)
@@ -190,7 +192,7 @@ func (handler *WebserverHandler) checkForFallbackFile(w http.ResponseWriter, req
 	}
 	file, err := handler.fileSystem.Open(handler.fallbackFilepath)
 	if err != nil {
-		log.Error().Err(err).Msg("fallback file not found")
+		logger.Error().Err(err).Msg("fallback file not found")
 		http.Error(w, "file not found", http.StatusNotFound)
 		return nil, "", true
 	}
