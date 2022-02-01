@@ -36,12 +36,13 @@ func AccessLogHandler(next http.Handler) http.Handler {
 		log.Ctx(r.Context()).Debug().Msg("Entering access log handler")
 		start := time.Now()
 		metricResponseWriter := &metricResponseWriter{Next: w}
+		originalPath := r.URL.String()
 		next.ServeHTTP(metricResponseWriter, r)
 		log.Info().
+			Str("requestId", r.Context().Value(requestIdKey).(string)).
 			Dict("httpRequest", zerolog.Dict().
-				Str("requestId", r.Context().Value(requestIdKey).(string)).
 				Str("requestMethod", r.Method).
-				Str("requestUrl", r.URL.String()).
+				Str("requestUrl", originalPath).
 				Int("status", metricResponseWriter.StatusCode).
 				Int("responseSize", metricResponseWriter.BytesSend).
 				Str("userAgent", r.UserAgent()).
