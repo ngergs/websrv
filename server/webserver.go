@@ -1,8 +1,6 @@
 package server
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"io/fs"
@@ -18,72 +16,34 @@ type WebserverHandler struct {
 	fallbackFilepath string
 	fileSystem       fs.FS
 	config           *Config
-	hashes           map[string]string
 	templateServer   *FileReplaceHandler
 }
 
-func New(fileSystem fs.FS, fallbackFilepath string, config *Config) (*WebserverHandler, error) {
+func New(fileSystem fs.FS, fallbackFilepath string, config *Config) *WebserverHandler {
 	handler := &WebserverHandler{
 		fallbackFilepath: fallbackFilepath,
 		fileSystem:       fileSystem,
 		config:           config,
-		hashes:           make(map[string]string),
 		templateServer: &FileReplaceHandler{
 			Filesystem: fileSystem,
 			Templates:  make(map[string]*template.Template),
 		},
 	}
-	// compute hashes
-	err := fs.WalkDir(fileSystem, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-		log.Debug().Msgf("Compute hash for %s", path)
-		file, err := fileSystem.Open(path)
-		if err != nil {
-			return err
-		}
-		data, err := io.ReadAll(file)
-		if err != nil {
-			return err
-		}
-		hash := sha256.Sum256(data)
-		handler.hashes[path] = base64.StdEncoding.EncodeToString(hash[:])
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error initializing hashes: %w", err)
-	}
-	return handler, nil
+	return handler
 }
 
 func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
 	logger := log.Ctx(r.Context())
 	logger.Debug().Msg("Entering webserver handler")
 	requestPath := r.URL.Path
-
-	ifNoneMatch := r.Header.Get("If-None-Match")
-	if handler.chechHash(requestPath, ifNoneMatch) {
-		w.WriteHeader(http.StatusNotModified)
-		return
-	}
-
 	logger.Debug().Msgf("Serving file %s", requestPath)
+
 	file, err := handler.tryGetFile(requestPath)
-	if err == nil {
-		// hash only for regular served files, not for fallback index file as this ruins CSP header
-		hash, ok := handler.hashes[requestPath]
-		if ok {
-			w.Header()["ETag"] = []string{hash}
-		}
-	}
 	if err != nil {
 		logger.Debug().Err(err).Msgf("file %s not found", requestPath)
 		var finishServing bool
-		file, requestPath, finishServing = handler.checkForFallbackFile(logger, w, requestPath, ifNoneMatch)
+		file, requestPath, finishServing = handler.checkForFallbackFile(logger, w, requestPath)
 		if finishServing {
 			return
 		}
@@ -116,17 +76,13 @@ func (handler *WebserverHandler) tryGetFile(requestPath string) (fs.File, error)
 	return file, err
 }
 
-func (handler *WebserverHandler) checkForFallbackFile(logger *zerolog.Logger, w http.ResponseWriter, requestPath string, ifNoneMatch string) (file fs.File, requestpath string, finishServing bool) {
+func (handler *WebserverHandler) checkForFallbackFile(logger *zerolog.Logger, w http.ResponseWriter, requestPath string) (file fs.File, requestpath string, finishServing bool) {
 	// requested files do not fall back to index.html
 	if handler.fallbackFilepath == "" || (path.Ext(requestPath) != "" && path.Ext(requestPath) != ".") {
 		http.Error(w, "file not found", http.StatusNotFound)
 		return nil, "", true
 	}
 	requestPath = handler.fallbackFilepath
-	if handler.chechHash(requestPath, ifNoneMatch) {
-		w.WriteHeader(http.StatusNotModified)
-		return nil, "", true
-	}
 	file, err := handler.fileSystem.Open(handler.fallbackFilepath)
 	if err != nil {
 		logger.Error().Err(err).Msg("fallback file not found")
@@ -134,16 +90,6 @@ func (handler *WebserverHandler) checkForFallbackFile(logger *zerolog.Logger, w 
 		return nil, "", true
 	}
 	return file, requestPath, false
-}
-
-func (handler *WebserverHandler) chechHash(requestPath string, ifNoneMatch string) (match bool) {
-	if ifNoneMatch != "" && ifNoneMatch == handler.hashes[requestPath] {
-		hash, ok := handler.hashes[requestPath]
-		if ok && ifNoneMatch == hash {
-			return true
-		}
-	}
-	return false
 }
 
 func (handler *WebserverHandler) getMediaType(requestPath string) string {

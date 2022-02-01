@@ -12,7 +12,15 @@ import (
 // HandlerSetup wraps a received handler with another wrapper handler to add functionality
 type HandlerSetup func(handler http.Handler) http.Handler
 
-func FileReplaceHandler(config *server.Config, filesystem fs.FS) HandlerSetup {
+func Caching(filesystem fs.FS) HandlerSetup {
+	return func(handler http.Handler) http.Handler {
+		cacheHandler := &server.CacheHandler{Next: handler, FileSystem: filesystem}
+		cacheHandler.Init()
+		return cacheHandler
+	}
+}
+
+func FileReplace(config *server.Config, filesystem fs.FS) HandlerSetup {
 	return func(handler http.Handler) http.Handler {
 		if config.FromHeaderReplace == nil {
 			return handler
@@ -29,7 +37,7 @@ func FileReplaceHandler(config *server.Config, filesystem fs.FS) HandlerSetup {
 	}
 }
 
-func HeaderHandler(config *server.Config) HandlerSetup {
+func Header(config *server.Config) HandlerSetup {
 	return func(handler http.Handler) http.Handler {
 		return &server.HeaderHandler{
 			Next:    handler,
@@ -39,7 +47,7 @@ func HeaderHandler(config *server.Config) HandlerSetup {
 	}
 }
 
-func GzipHandler(config *server.Config, active bool) HandlerSetup {
+func Gzip(config *server.Config, active bool) HandlerSetup {
 	return func(handler http.Handler) http.Handler {
 		if !active {
 			return handler
@@ -48,17 +56,23 @@ func GzipHandler(config *server.Config, active bool) HandlerSetup {
 	}
 }
 
-func ValidateCleanHandler() HandlerSetup {
+func ValidateClean() HandlerSetup {
 	return func(handler http.Handler) http.Handler {
 		return server.ValidateCleanHandler(handler)
 	}
 }
 
-func AccessLogHandler(active bool) HandlerSetup {
+func AccessLog(active bool) HandlerSetup {
 	return func(handler http.Handler) http.Handler {
 		if !active {
 			return handler
 		}
 		return server.AccessLogHandler(handler)
+	}
+}
+
+func RequestID() HandlerSetup {
+	return func(handler http.Handler) http.Handler {
+		return server.RequestIdToCtxHandler(handler)
 	}
 }

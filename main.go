@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
@@ -28,15 +27,10 @@ func getFilesystem(config *server.Config) (fs.FS, error) {
 
 func startFileServer(config *server.Config, filesystem fs.FS, errChan chan<- error, handlerSetups ...HandlerSetup) {
 	var handler http.Handler
-	handler, err := server.New(filesystem, *fallbackFilepath, config)
-	if err != nil {
-		errChan <- fmt.Errorf("error initializing webserver handler: %w", err)
-		return
-	}
+	handler = server.New(filesystem, *fallbackFilepath, config)
 	for _, handlerSetup := range handlerSetups {
 		handler = handlerSetup(handler)
 	}
-	handler = server.RequestIdToCtxHandler(handler)
 	fileserver := &http.Server{
 		Addr:    ":" + strconv.Itoa(*fileServerPort),
 		Handler: handler,
@@ -71,11 +65,13 @@ func main() {
 	}
 	errChan := make(chan error)
 	go startFileServer(config, filesystem, errChan,
-		FileReplaceHandler(config, filesystem),
-		HeaderHandler(config),
-		GzipHandler(config, *gzip),
-		ValidateCleanHandler(),
-		AccessLogHandler(*accessLog),
+		Caching(filesystem),
+		FileReplace(config, filesystem),
+		Header(config),
+		Gzip(config, *gzip),
+		ValidateClean(),
+		AccessLog(*accessLog),
+		RequestID(),
 	)
 	go startHealthServer(errChan)
 	for err := range errChan {
