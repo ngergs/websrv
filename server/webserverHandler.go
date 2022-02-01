@@ -63,16 +63,18 @@ func New(fileSystem fs.FS, fallbackFilepath string, config *Config, gzip bool) (
 	return handler, nil
 }
 
-func (handler *WebserverHandler) setHeaders(w http.ResponseWriter) {
+func (handler *WebserverHandler) setHeaders(w http.ResponseWriter, nonce string) {
 	if handler.config != nil {
 		for k, v := range handler.config.Headers {
 			w.Header()[k] = v
 		}
 	}
-}
 
-func (handler *WebserverHandler) replaceNounceHeaders(w http.ResponseWriter, nonce string) {
+	// nonce replacement if necessary
 	replacer := handler.config.RandomIdReplacer
+	if replacer == nil {
+		return
+	}
 	headerElements, ok := w.Header()[replacer.HeaderName]
 	if !ok {
 		return
@@ -80,7 +82,6 @@ func (handler *WebserverHandler) replaceNounceHeaders(w http.ResponseWriter, non
 	for i, header := range headerElements {
 		headerElements[i] = strings.Replace(header, replacer.VariableName, nonce, -1)
 	}
-
 }
 
 func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -89,6 +90,7 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		log.Warn().Msg("error getting nonce from ssl-session-id-header")
 		http.Error(w, "failed to serve requested file, you can retry.", http.StatusInternalServerError)
 	}
+	// select last entry as nginx just appends to the header
 	nonce := sessionIds[len(sessionIds)-1]
 
 	if !handler.validate(w, r) {
@@ -108,7 +110,7 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	} else {
 		ifNoneMatch := r.Header.Get("If-None-Match")
 		if handler.checkIfNoneMatch(requestPath, ifNoneMatch) {
-			handler.setHeaders(w)
+			handler.setHeaders(w, nonce)
 			w.WriteHeader(http.StatusNotModified)
 			return
 		}
@@ -139,8 +141,7 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	mediaType := handler.getMediaType(requestPath)
 	w.Header()["Content-Type"] = []string{mediaType}
-	handler.setHeaders(w)
-	handler.replaceNounceHeaders(w, nonce)
+	handler.setHeaders(w, nonce)
 
 	var writer io.Writer = w
 	if handler.gzip && contains(handler.config.GzipMediaTypes, mediaType) {
