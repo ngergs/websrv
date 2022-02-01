@@ -1,7 +1,6 @@
 package server
 
 import (
-	"compress/gzip"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -19,17 +18,15 @@ type WebserverHandler struct {
 	fallbackFilepath string
 	fileSystem       fs.FS
 	config           *Config
-	gzip             bool
 	hashes           map[string]string
 	templateServer   *templateServer
 }
 
-func New(fileSystem fs.FS, fallbackFilepath string, config *Config, gzip bool) (*WebserverHandler, error) {
+func New(fileSystem fs.FS, fallbackFilepath string, config *Config) (*WebserverHandler, error) {
 	handler := &WebserverHandler{
 		fallbackFilepath: fallbackFilepath,
 		fileSystem:       fileSystem,
 		config:           config,
-		gzip:             gzip,
 		hashes:           make(map[string]string),
 		templateServer: &templateServer{
 			filesystems: fileSystem,
@@ -63,7 +60,7 @@ func New(fileSystem fs.FS, fallbackFilepath string, config *Config, gzip bool) (
 	return handler, nil
 }
 
-func (handler *WebserverHandler) setHeaders(w http.ResponseWriter, nonce string) {
+func (handler *WebserverHandler) setHeaders(w http.ResponseWriter, replacement string) {
 	if handler.config != nil {
 		for k, v := range handler.config.Headers {
 			w.Header().Set(k, v)
@@ -71,45 +68,45 @@ func (handler *WebserverHandler) setHeaders(w http.ResponseWriter, nonce string)
 	}
 
 	// nonce replacement if necessary
-	replacer := handler.config.RandomIdReplacer
+	replacer := handler.config.FromHeaderReplacer
 	if replacer == nil {
 		return
 	}
-	header := w.Header().Get(replacer.HeaderName)
+	header := w.Header().Get(replacer.TargetHeaderName)
 	if header == "" {
 		return
 	}
-	w.Header().Set(replacer.HeaderName, strings.Replace(header, replacer.VariableName, nonce, -1))
+	w.Header().Set(replacer.TargetHeaderName, strings.Replace(header, replacer.VariableName, replacement, -1))
 }
 
 func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	sessionIds := r.Header.Values("SSL-Session-ID")
-	if len(sessionIds) == 0 {
-		log.Warn().Msg("error getting nonce from ssl-session-id-header")
-		http.Error(w, "failed to serve requested file, you can retry.", http.StatusInternalServerError)
-	}
-	// select last entry as nginx just appends to the header
-	nonce := sessionIds[len(sessionIds)-1]
-	log.Debug().Msgf("Nonce %s", nonce)
-
 	if !handler.validate(w, r) {
 		return
 	}
+	var fromHeaderReplacement string
+	if handler.config.FromHeaderReplacer != nil {
+		headers := r.Header.Values(handler.config.FromHeaderReplacer.SourceHeaderName)
+		if len(headers) > 0 {
+			fromHeaderReplacement = headers[len(headers)-1]
+		}
+	}
+
 	// remove leading / from path to make it relative
 	// important to do this after cleaning, else relative paths may remain
 	requestPath := path.Clean(r.URL.Path)[1:]
 
-	var serve func(writer io.Writer, w http.ResponseWriter) error
-	if handler.config.RandomIdReplacer != nil && handler.config.RandomIdReplacer.FileNamePattern.MatchString(requestPath) {
+	var serve func(w http.ResponseWriter) error
+	if handler.config.FromHeaderReplacer != nil &&
+		handler.config.FromHeaderReplacer.FileNamePattern.MatchString(requestPath) {
 		log.Debug().Msgf("Serving template file %s", requestPath)
 		// needed due to https://github.com/golang/go/issues/32350
-		serve = func(writer io.Writer, w http.ResponseWriter) error {
-			return handler.templateServer.Serve(writer, requestPath, map[string]string{handler.config.RandomIdReplacer.VariableName: nonce})
+		serve = func(w http.ResponseWriter) error {
+			return handler.templateServer.Serve(w, requestPath, map[string]string{handler.config.FromHeaderReplacer.VariableName: fromHeaderReplacement})
 		}
 	} else {
 		ifNoneMatch := r.Header.Get("If-None-Match")
-		if handler.checkIfNoneMatch(requestPath, ifNoneMatch) {
-			handler.setHeaders(w, nonce)
+		if handler.chechHash(requestPath, ifNoneMatch) {
+			handler.setHeaders(w, fromHeaderReplacement)
 			w.WriteHeader(http.StatusNotModified)
 			return
 		}
@@ -132,24 +129,21 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			}
 		}
 		defer file.Close()
-		serve = func(writer io.Writer, w http.ResponseWriter) error {
-			_, err := io.Copy(writer, file)
+		serve = func(w http.ResponseWriter) error {
+			_, err := io.Copy(w, file)
 			return err
 		}
 	}
 
 	mediaType := handler.getMediaType(requestPath)
 	w.Header()["Content-Type"] = []string{mediaType}
-	handler.setHeaders(w, nonce)
+	handler.setHeaders(w, fromHeaderReplacement)
 
-	var writer io.Writer = w
-	if handler.gzip && contains(handler.config.GzipMediaTypes, mediaType) {
-		gzipWriter := gzip.NewWriter(w)
-		defer gzipWriter.Close()
-		writer = gzipWriter
-		w.Header()["Content-Encoding"] = []string{"gzip"}
+	if r.Method == http.MethodHead {
+		w.WriteHeader(http.StatusOK)
+		return
 	}
-	err := serve(writer, w)
+	err := serve(w)
 	if err != nil {
 		log.Warn().Err(err).Msg("error copying requested file")
 		http.Error(w, "failed to copy requested file, you can retry.", http.StatusInternalServerError)
@@ -158,8 +152,8 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 }
 
 func (handler *WebserverHandler) validate(w http.ResponseWriter, r *http.Request) bool {
-	if r.Method != http.MethodGet {
-		http.Error(w, "This server only supports GET", http.StatusMethodNotAllowed)
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "This server only supports HTTP methods GET and HEAD", http.StatusMethodNotAllowed)
 		return false
 	}
 	if !path.IsAbs(r.URL.Path) {
@@ -190,7 +184,7 @@ func (handler *WebserverHandler) checkForFallbackFile(w http.ResponseWriter, req
 		return nil, "", true
 	}
 	requestPath = handler.fallbackFilepath
-	if handler.checkIfNoneMatch(requestPath, ifNoneMatch) {
+	if handler.chechHash(requestPath, ifNoneMatch) {
 		w.WriteHeader(http.StatusNotModified)
 		return nil, "", true
 	}
@@ -203,7 +197,7 @@ func (handler *WebserverHandler) checkForFallbackFile(w http.ResponseWriter, req
 	return file, requestPath, false
 }
 
-func (handler *WebserverHandler) checkIfNoneMatch(requestPath string, ifNoneMatch string) (match bool) {
+func (handler *WebserverHandler) chechHash(requestPath string, ifNoneMatch string) (match bool) {
 	if ifNoneMatch != "" && ifNoneMatch == handler.hashes[requestPath] {
 		hash, ok := handler.hashes[requestPath]
 		if ok && ifNoneMatch == hash {

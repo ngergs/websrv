@@ -13,9 +13,10 @@
       "Expect-CT": "enforce, max-age=2592000",
       "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'; form-action 'none';  font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self' 'nonce-random_csp_nonce' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='; worker-src 'self'"
    },
-   "random-id-replacer": {
+   "from-header-replacer": {
       "file-name-pattern": "^main.*\\.js$",
-      "header-name": "Content-Security-Policy",
+      "source-header-name": "SSL-Session-ID",
+      "target-header-name": "Content-Security-Policy",
       "variable-name": "random_csp_nonce",
       "max-replacements": 1
    },
