@@ -30,5 +30,9 @@ func (server *templateServer) Serve(w io.Writer, path string, data interface{}) 
 			return err
 		}
 	}
+	template, err := template.Clone()
+	if err != nil {
+		return err
+	}
 	return template.Execute(w, data)
 }
