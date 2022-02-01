@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -34,6 +35,20 @@ func startFileServer(config *server.Config, errChan chan<- error) {
 	if err != nil {
 		errChan <- fmt.Errorf("error initializing webserver handler: %w", err)
 		return
+	}
+	if config.FromHeaderReplace != nil {
+		handler = &server.FileReplaceHandler{
+			Next:             handler,
+			Filesystem:       filesystem,
+			SourceHeaderName: config.FromHeaderReplace.SourceHeaderName,
+			FileNamePatter:   regexp.MustCompile(config.FromHeaderReplace.FileNamePattern),
+			VariableName:     config.FromHeaderReplace.VariableName,
+		}
+	}
+	handler = &server.HeaderHandler{
+		Next:    handler,
+		Headers: config.Headers,
+		Replace: config.FromHeaderReplace,
 	}
 	if *gzip {
 		handler = server.GzipHandler(handler, config.GzipMediaTypes)

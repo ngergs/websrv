@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"net/http"
 	"path"
-	"strings"
 	"text/template"
 
 	"github.com/rs/zerolog"
@@ -20,7 +19,7 @@ type WebserverHandler struct {
 	fileSystem       fs.FS
 	config           *Config
 	hashes           map[string]string
-	templateServer   *templateServer
+	templateServer   *FileReplaceHandler
 }
 
 func New(fileSystem fs.FS, fallbackFilepath string, config *Config) (*WebserverHandler, error) {
@@ -29,9 +28,9 @@ func New(fileSystem fs.FS, fallbackFilepath string, config *Config) (*WebserverH
 		fileSystem:       fileSystem,
 		config:           config,
 		hashes:           make(map[string]string),
-		templateServer: &templateServer{
-			filesystems: fileSystem,
-			templates:   make(map[string]*template.Template),
+		templateServer: &FileReplaceHandler{
+			Filesystem: fileSystem,
+			templates:  make(map[string]*template.Template),
 		},
 	}
 	// compute hashes
@@ -61,91 +60,48 @@ func New(fileSystem fs.FS, fallbackFilepath string, config *Config) (*WebserverH
 	return handler, nil
 }
 
-func (handler *WebserverHandler) setHeaders(w http.ResponseWriter, replacement string) {
-	if handler.config != nil {
-		for k, v := range handler.config.Headers {
-			w.Header().Set(k, v)
-		}
-	}
-
-	// nonce replacement if necessary
-	replacer := handler.config.FromHeaderReplacer
-	if replacer == nil {
-		return
-	}
-	header := w.Header().Get(replacer.TargetHeaderName)
-	if header == "" {
-		return
-	}
-	w.Header().Set(replacer.TargetHeaderName, strings.Replace(header, replacer.VariableName, replacement, -1))
-}
-
 func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logger := log.Ctx(r.Context())
 	if !handler.validate(w, r) {
 		return
 	}
-	var fromHeaderReplacement string
-	if handler.config.FromHeaderReplacer != nil {
-		headers := r.Header.Values(handler.config.FromHeaderReplacer.SourceHeaderName)
-		if len(headers) > 0 {
-			fromHeaderReplacement = headers[len(headers)-1]
-		}
-	}
-
 	// remove leading / from path to make it relative
 	// important to do this after cleaning, else relative paths may remain
 	requestPath := path.Clean(r.URL.Path)[1:]
 
-	var serve func(w http.ResponseWriter) error
-	if handler.config.FromHeaderReplacer != nil &&
-		handler.config.FromHeaderReplacer.FileNamePattern.MatchString(requestPath) {
-		logger.Debug().Msgf("Serving template file %s", requestPath)
-		// needed due to https://github.com/golang/go/issues/32350
-		serve = func(w http.ResponseWriter) error {
-			return handler.templateServer.Serve(w, requestPath, map[string]string{handler.config.FromHeaderReplacer.VariableName: fromHeaderReplacement})
-		}
-	} else {
-		ifNoneMatch := r.Header.Get("If-None-Match")
-		if handler.chechHash(requestPath, ifNoneMatch) {
-			handler.setHeaders(w, fromHeaderReplacement)
-			w.WriteHeader(http.StatusNotModified)
-			return
-		}
+	ifNoneMatch := r.Header.Get("If-None-Match")
+	if handler.chechHash(requestPath, ifNoneMatch) {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
 
-		logger.Debug().Msgf("Serving file %s", requestPath)
-		file, err := handler.tryGetFile(requestPath)
-		if err == nil {
-			// hash only for regular served files, not for fallback index file as this ruins CSP header
-			hash, ok := handler.hashes[requestPath]
-			if ok {
-				w.Header()["ETag"] = []string{hash}
-			}
-		}
-		if err != nil {
-			logger.Debug().Err(err).Msgf("file %s not found", requestPath)
-			var finishServing bool
-			file, requestPath, finishServing = handler.checkForFallbackFile(logger, w, requestPath, ifNoneMatch)
-			if finishServing {
-				return
-			}
-		}
-		defer file.Close()
-		serve = func(w http.ResponseWriter) error {
-			_, err := io.Copy(w, file)
-			return err
+	logger.Debug().Msgf("Serving file %s", requestPath)
+	file, err := handler.tryGetFile(requestPath)
+	if err == nil {
+		// hash only for regular served files, not for fallback index file as this ruins CSP header
+		hash, ok := handler.hashes[requestPath]
+		if ok {
+			w.Header()["ETag"] = []string{hash}
 		}
 	}
+	if err != nil {
+		logger.Debug().Err(err).Msgf("file %s not found", requestPath)
+		var finishServing bool
+		file, requestPath, finishServing = handler.checkForFallbackFile(logger, w, requestPath, ifNoneMatch)
+		if finishServing {
+			return
+		}
+	}
+	defer file.Close()
 
 	mediaType := handler.getMediaType(requestPath)
 	w.Header()["Content-Type"] = []string{mediaType}
-	handler.setHeaders(w, fromHeaderReplacement)
 
 	if r.Method == http.MethodHead {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-	err := serve(w)
+	_, err = io.Copy(w, file)
 	if err != nil {
 		log.Warn().Err(err).Msg("error copying requested file")
 		http.Error(w, "failed to copy requested file, you can retry.", http.StatusInternalServerError)

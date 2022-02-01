@@ -17,8 +17,7 @@
       "file-name-pattern": "^main.*\\.js$",
       "source-header-name": "SSL-Session-ID",
       "target-header-name": "Content-Security-Policy",
-      "variable-name": "random_csp_nonce",
-      "max-replacements": 1
+      "variable-name": "random_csp_nonce"
    },
    "media-type-map":{
       ".js":   "application/javascript",

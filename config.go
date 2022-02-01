@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"time"
 
 	"github.com/ngergs/webserver/v2/server"
@@ -74,28 +73,13 @@ func readConfig() (*server.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	var resultRaw server.ConfigRaw
-	err = json.Unmarshal(data, &resultRaw)
+	var config server.Config
+	err = json.Unmarshal(data, &config)
 	if err != nil {
 		return nil, err
 	}
-	replacerRaw := resultRaw.FromHeaderReplacerRaw
-	fileNamePattern := regexp.MustCompile(resultRaw.FromHeaderReplacerRaw.FileNamePattern)
-	randomIdReplacer := &server.FromHeaderReplacer{
-		FileNamePattern:  *fileNamePattern,
-		TargetHeaderName: replacerRaw.TargetHeaderName,
-		SourceHeaderName: replacerRaw.SourceHeaderName,
-		VariableName:     replacerRaw.VariableName,
-		MaxReplacements:  replacerRaw.MaxReplacements,
+	if config.GzipMediaTypes == nil {
+		config.GzipMediaTypes = defaultGzipMediaTypes
 	}
-	gzipMediaTypes := resultRaw.GzipMediaTypes
-	if gzipMediaTypes == nil {
-		gzipMediaTypes = defaultGzipMediaTypes
-	}
-	return &server.Config{
-		Headers:            resultRaw.Headers,
-		FromHeaderReplacer: randomIdReplacer,
-		MediaTypeMap:       resultRaw.MediaTypeMap,
-		GzipMediaTypes:     gzipMediaTypes,
-	}, nil
+	return &config, nil
 }
