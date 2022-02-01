@@ -9,10 +9,10 @@ import (
 	"github.com/ngergs/webserver/v2/server"
 )
 
-// HandlerSetup wraps a received handler with another wrapper handler to add functionality
-type HandlerSetup func(handler http.Handler) http.Handler
+// HandlerMiddleware wraps a received handler with another wrapper handler to add functionality
+type HandlerMiddleware func(handler http.Handler) http.Handler
 
-func Caching(filesystem fs.FS) HandlerSetup {
+func Caching(filesystem fs.FS) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		cacheHandler := &server.CacheHandler{Next: handler, FileSystem: filesystem}
 		cacheHandler.Init()
@@ -20,7 +20,7 @@ func Caching(filesystem fs.FS) HandlerSetup {
 	}
 }
 
-func FileReplace(config *server.Config, filesystem fs.FS) HandlerSetup {
+func FileReplace(config *server.Config, filesystem fs.FS) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		if config.FromHeaderReplace == nil {
 			return handler
@@ -37,7 +37,7 @@ func FileReplace(config *server.Config, filesystem fs.FS) HandlerSetup {
 	}
 }
 
-func Header(config *server.Config) HandlerSetup {
+func Header(config *server.Config) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		return &server.HeaderHandler{
 			Next:    handler,
@@ -47,7 +47,7 @@ func Header(config *server.Config) HandlerSetup {
 	}
 }
 
-func Gzip(config *server.Config, active bool) HandlerSetup {
+func Gzip(config *server.Config, active bool) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		if !active {
 			return handler
@@ -56,13 +56,13 @@ func Gzip(config *server.Config, active bool) HandlerSetup {
 	}
 }
 
-func ValidateClean() HandlerSetup {
+func ValidateClean() HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		return server.ValidateCleanHandler(handler)
 	}
 }
 
-func AccessLog(active bool) HandlerSetup {
+func AccessLog(active bool) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		if !active {
 			return handler
@@ -71,7 +71,7 @@ func AccessLog(active bool) HandlerSetup {
 	}
 }
 
-func RequestID() HandlerSetup {
+func RequestID() HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		return server.RequestIdToCtxHandler(handler)
 	}

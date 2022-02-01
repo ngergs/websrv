@@ -25,33 +25,17 @@ func getFilesystem(config *server.Config) (fs.FS, error) {
 	return os.DirFS(targetDir), nil
 }
 
-func startFileServer(config *server.Config, filesystem fs.FS, errChan chan<- error, handlerSetups ...HandlerSetup) {
-	var handler http.Handler
-	handler = server.New(filesystem, *fallbackFilepath, config)
+func startServer(name string, port int, handler http.Handler, errChan chan<- error, handlerSetups ...HandlerMiddleware) {
+	//	handler = server.New(filesystem, *fallbackFilepath, config)
 	for _, handlerSetup := range handlerSetups {
 		handler = handlerSetup(handler)
 	}
 	fileserver := &http.Server{
-		Addr:    ":" + strconv.Itoa(*fileServerPort),
+		Addr:    ":" + strconv.Itoa(port),
 		Handler: handler,
 	}
-	log.Info().Msgf("Starting fileserver, time elapsed since app start: %s", time.Since(startTime).String())
+	log.Info().Msgf("Starting %s server on port %d, time elapsed since app start: %s", name, port, time.Since(startTime).String())
 	errChan <- fileserver.ListenAndServe()
-}
-
-func startHealthServer(errChan chan<- error) {
-	if *health {
-		var handler http.Handler = server.HealthCheckHandler()
-		if *healthAccessLog {
-			handler = server.AccessLogHandler(handler)
-		}
-		healthserver := &http.Server{
-			Addr:    ":" + strconv.Itoa(*healthPort),
-			Handler: handler,
-		}
-		log.Info().Msgf("Starting healtcheck-server, time elapsed since app start: %s", time.Since(startTime).String())
-		errChan <- healthserver.ListenAndServe()
-	}
 }
 
 func main() {
@@ -64,7 +48,8 @@ func main() {
 		log.Fatal().Err(err).Msg("Error preparing read-only filesystem.")
 	}
 	errChan := make(chan error)
-	go startFileServer(config, filesystem, errChan,
+	webserver := server.New(filesystem, *fallbackFilepath, config)
+	go startServer("webserver", *webServerPort, webserver, errChan,
 		Caching(filesystem),
 		FileReplace(config, filesystem),
 		Header(config),
@@ -73,7 +58,11 @@ func main() {
 		AccessLog(*accessLog),
 		RequestID(),
 	)
-	go startHealthServer(errChan)
+	if *health {
+		go startServer("healthserver", *healthPort, server.HealthCheckHandler(), errChan,
+			AccessLog(*healthAccessLog),
+		)
+	}
 	for err := range errChan {
 		log.Fatal().Err(err).Msg("Error starting server: %v")
 	}
