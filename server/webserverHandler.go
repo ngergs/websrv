@@ -66,7 +66,7 @@ func New(fileSystem fs.FS, fallbackFilepath string, config *Config, gzip bool) (
 func (handler *WebserverHandler) setHeaders(w http.ResponseWriter, nonce string) {
 	if handler.config != nil {
 		for k, v := range handler.config.Headers {
-			w.Header()[k] = v
+			w.Header().Set(k, v)
 		}
 	}
 
@@ -75,13 +75,11 @@ func (handler *WebserverHandler) setHeaders(w http.ResponseWriter, nonce string)
 	if replacer == nil {
 		return
 	}
-	headerElements, ok := w.Header()[replacer.HeaderName]
-	if !ok {
+	header := w.Header().Get(replacer.HeaderName)
+	if header == "" {
 		return
 	}
-	for i, header := range headerElements {
-		headerElements[i] = strings.Replace(header, replacer.VariableName, nonce, -1)
-	}
+	w.Header().Set(replacer.HeaderName, strings.Replace(header, replacer.VariableName, nonce, -1))
 }
 
 func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -92,6 +90,7 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 	// select last entry as nginx just appends to the header
 	nonce := sessionIds[len(sessionIds)-1]
+	log.Debug().Msgf("Nonce %s", nonce)
 
 	if !handler.validate(w, r) {
 		return
