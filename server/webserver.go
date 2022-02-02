@@ -40,77 +40,79 @@ func FileServerHandler(fileSystem filesystem.ZipFs, fallbackFilepath string, con
 func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logEnter(r.Context(), "webserver")
 	logger := log.Ctx(r.Context())
-	logger.Debug().Msg("Entering webserver handler")
 	requestPath := r.URL.Path
-	logger.Debug().Msgf("Serving file %s", requestPath)
 
-	file, err := handler.tryGetFile(requestPath)
+	file, requestPath, err := handler.getFileOrFallback(logger, requestPath)
 	if err != nil {
-		logger.Debug().Err(err).Msgf("file %s not found", requestPath)
-		var finishServing bool
-		file, requestPath, finishServing = handler.checkForFallbackFile(logger, w, requestPath)
-		if finishServing {
-			return
-		}
+		logger.Error().Err(err).Msgf("file %s not found", r.URL.Path)
+		http.Error(w, "file not found", http.StatusNotFound)
+		return
 	}
 	defer file.Close()
 
-	mediaType := handler.getMediaType(requestPath)
+	logger.Debug().Msgf("Serving file %s", requestPath)
+	err = handler.setContentHeader(w, requestPath)
+	if err != nil {
+		logger.Error().Err(err).Msgf("content header error")
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(w, r, file)
+}
+
+func (handler *WebserverHandler) getFileOrFallback(logger *zerolog.Logger, requestPath string) (file fs.File, requestpath string, err error) {
+	file, err = handler.fileSystem.Open(requestPath)
+	if err != nil {
+		logger.Debug().Err(err).Msgf("file %s not found", requestPath)
+		return handler.checkForFallbackFile(logger, requestPath)
+	}
+	fileInfo, err := file.Stat()
+	if fileInfo.IsDir() {
+		defer file.Close()
+		return nil, requestPath, fmt.Errorf("requested file is directory")
+	}
+	return file, requestPath, err
+}
+
+func (handler *WebserverHandler) checkForFallbackFile(logger *zerolog.Logger, requestPath string) (file fs.File, requestpath string, err error) {
+	// explicitly requested files do not fall back to index.html, only paths do
+	if handler.fallbackFilepath == "" || (path.Ext(requestPath) != "" && path.Ext(requestPath) != ".") {
+		return nil, "", fmt.Errorf("fallback file not relevant for directories: %s", requestPath)
+	}
+	requestPath = handler.fallbackFilepath
+	file, err = handler.fileSystem.Open(handler.fallbackFilepath)
+	if err != nil {
+		return nil, "", fmt.Errorf("fallback file %s not found", requestPath)
+	}
+	return file, requestPath, err
+}
+
+func (handler *WebserverHandler) setContentHeader(w http.ResponseWriter, requestPath string) error {
+	mediaType, ok := handler.config.MediaTypeMap[path.Ext(requestPath)]
+	if !ok {
+		mediaType = "application/octet-stream"
+	}
 	w.Header().Set("Content-Type", mediaType)
 	isZipped, err := handler.fileSystem.IsZipped(requestPath)
 	if err != nil {
-		logger.Error().Err(err).Msg("Failed to resolve whether file is zipped")
-		http.Error(w, "file not found", http.StatusNotFound)
+		return fmt.Errorf("failed to resolve whether file is zipped: %s", requestPath)
 	}
 	if isZipped {
 		w.Header().Set("Content-Encoding", "gzip")
 	}
+	return nil
+}
 
+func writeResponse(w http.ResponseWriter, r *http.Request, file io.Reader) {
 	if r.Method == http.MethodHead {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-	_, err = io.Copy(w, file)
+	_, err := io.Copy(w, file)
 	if err != nil {
 		log.Warn().Err(err).Msg("error copying requested file")
 		http.Error(w, "failed to copy requested file, you can retry.", http.StatusInternalServerError)
 		return
 	}
-}
-
-func (handler *WebserverHandler) tryGetFile(requestPath string) (fs.File, error) {
-	file, err := handler.fileSystem.Open(requestPath)
-	if err != nil {
-		return nil, err
-	}
-	fileInfo, err := file.Stat()
-	if fileInfo.IsDir() {
-		defer file.Close()
-		return nil, fmt.Errorf("requested file is directory")
-	}
-	return file, err
-}
-
-func (handler *WebserverHandler) checkForFallbackFile(logger *zerolog.Logger, w http.ResponseWriter, requestPath string) (file fs.File, requestpath string, finishServing bool) {
-	// explicitly requested files do not fall back to index.html, only paths do
-	if handler.fallbackFilepath == "" || (path.Ext(requestPath) != "" && path.Ext(requestPath) != ".") {
-		http.Error(w, "file not found", http.StatusNotFound)
-		return nil, "", true
-	}
-	requestPath = handler.fallbackFilepath
-	file, err := handler.fileSystem.Open(handler.fallbackFilepath)
-	if err != nil {
-		logger.Error().Err(err).Msg("fallback file not found")
-		http.Error(w, "file not found", http.StatusNotFound)
-		return nil, "", true
-	}
-	return file, requestPath, false
-}
-
-func (handler *WebserverHandler) getMediaType(requestPath string) string {
-	mediaType, ok := handler.config.MediaTypeMap[path.Ext(requestPath)]
-	if !ok {
-		mediaType = "application/octet-stream"
-	}
-	return mediaType
 }
