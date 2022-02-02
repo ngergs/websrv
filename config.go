@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
 
 	"github.com/ngergs/webserver/v2/server"
+	"github.com/ngergs/webserver/v2/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -28,7 +28,6 @@ var prettyLogging = flag.Bool("pretty", false, "Activates zerolog pretty logging
 var targetDir string
 
 var defaultGzipMediaTypes []string = []string{"application/javascript", "text/css", "text/html; charset=UTF-8"}
-var startTime time.Time
 
 func usage() {
 	fmt.Printf("Usage: fileserver {options} [target-path]\nOptions:\n")
@@ -36,7 +35,6 @@ func usage() {
 }
 
 func init() {
-	startTime = time.Now()
 	flag.Parse()
 	if *help {
 		usage()
@@ -59,27 +57,37 @@ func init() {
 	targetDir = args[0]
 }
 
-func readConfig() (*server.Config, error) {
+func readConfig() (*server.Config, []string, error) {
 	if *configFile == "" {
 		return &server.Config{
 			GzipMediaTypes: defaultGzipMediaTypes,
-		}, nil
+		}, nil, nil
 	}
 	file, err := os.Open(*configFile)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var config server.Config
 	err = json.Unmarshal(data, &config)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	if config.GzipMediaTypes == nil {
-		config.GzipMediaTypes = defaultGzipMediaTypes
+	gzipFileExtensions := []string{}
+	if !*gzip {
+		config.GzipMediaTypes = []string{}
+	} else {
+		if config.GzipMediaTypes == nil {
+			config.GzipMediaTypes = defaultGzipMediaTypes
+		}
+		for fileExtension, mediaType := range config.MediaTypeMap {
+			if utils.Contains(config.GzipMediaTypes, mediaType) {
+				gzipFileExtensions = append(gzipFileExtensions, fileExtension)
+			}
+		}
 	}
-	return &config, nil
+	return &config, gzipFileExtensions, nil
 }

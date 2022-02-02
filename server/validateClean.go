@@ -3,13 +3,11 @@ package server
 import (
 	"net/http"
 	"path"
-
-	"github.com/rs/zerolog/log"
 )
 
 func ValidateCleanHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Ctx(r.Context()).Debug().Msg("Entering validate and clean handler")
+		logEnter(r.Context(), "validate-clean")
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
 			http.Error(w, "This server only supports HTTP methods GET and HEAD", http.StatusMethodNotAllowed)
 			return

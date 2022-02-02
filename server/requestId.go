@@ -29,10 +29,8 @@ func init() {
 
 func RequestIdToCtxHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logEnter(r.Context(), "request-id")
 		ctx := r.Context()
-		if ctx == nil {
-			ctx = context.Background()
-		}
 		requestId := getRandomId(32)
 		log := log.With().Str("requestId", requestId).Logger()
 		ctx = log.WithContext(ctx)

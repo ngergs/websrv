@@ -1,0 +1,196 @@
+[90m4:08PM[0m [32mINF[0m Using the in-memory-filesystem
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: .
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: 3rdpartylicenses.txt
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: 983.01f0a1c3096b4c57.js
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: 998.4358309f6d5637b1.js
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: MaterialIcons-Regular.a68cbfe8c27c4138.woff
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: MaterialIcons-Regular.b8846fb877b762df.woff2
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: MaterialIcons-Regular.f2f78d19b778412c.ttf
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/contents_home.json
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/contents_menu.json
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/img
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/img/me.avif
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/img/me.jpg
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/img/me.jxl
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/markdown
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/markdown/angular
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/markdown/angular/style-csp-fix.md
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/markdown/k8s
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/markdown/k8s/admission-controller.md
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/markdown/k8s/budget-gke.md
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/markdown/nginx
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: assets/markdown/nginx/ssllabs.md
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: favicon.ico
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: index.html
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: main.323591363763bbbc.js
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: polyfills.27c5e7e857267996.js
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: roboto-latin-300-normal.4d8f8086236bad80.woff2
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: roboto-latin-300-normal.6c1bc461047e61f5.woff
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: roboto-latin-400-normal.1e2d4d3a272629cd.woff2
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: roboto-latin-400-normal.7e4a045b9373d9c1.woff
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: roboto-latin-500-normal.1dfbc3dbf815e3f3.woff2
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: roboto-latin-500-normal.e21fe97fd2329ff7.woff
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: runtime.8c715848ba9a7a03.js
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: scripts.be8461a0b7b53a62.js
+[90m4:08PM[0m [33mDBG[0m Read into memory-fs: styles.ab22957d0a17e481.css
+[90m4:08PM[0m [33mDBG[0m Zipping the filesystem with file extensions: [.css .html .ttf .js]
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Zipping 983.01f0a1c3096b4c57.js
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference favicon.ico
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference roboto-latin-400-normal.7e4a045b9373d9c1.woff
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference MaterialIcons-Regular.a68cbfe8c27c4138.woff
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/markdown/k8s
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference roboto-latin-300-normal.4d8f8086236bad80.woff2
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference roboto-latin-500-normal.e21fe97fd2329ff7.woff
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/img
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Zipping main.323591363763bbbc.js
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/img/me.jpg
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/img/me.jxl
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/markdown/angular/style-csp-fix.md
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/markdown/nginx/ssllabs.md
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Zipping runtime.8c715848ba9a7a03.js
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Zipping 998.4358309f6d5637b1.js
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/img/me.avif
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/markdown/k8s/admission-controller.md
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/markdown/k8s/budget-gke.md
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/markdown/nginx
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Zipping polyfills.27c5e7e857267996.js
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference roboto-latin-400-normal.1e2d4d3a272629cd.woff2
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference 3rdpartylicenses.txt
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Zipping MaterialIcons-Regular.f2f78d19b778412c.ttf
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/contents_home.json
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference .
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/markdown/angular
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Zipping scripts.be8461a0b7b53a62.js
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/markdown
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Zipping index.html
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference roboto-latin-300-normal.6c1bc461047e61f5.woff
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference roboto-latin-500-normal.1dfbc3dbf815e3f3.woff2
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Zipping styles.ab22957d0a17e481.css
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference MaterialIcons-Regular.b8846fb877b762df.woff2
+[90m4:08PM[0m [33mDBG[0m Zip-FS: Copy raw reference assets/contents_menu.json
+[90m4:08PM[0m [32mINF[0m Starting healthserver server on port 8081
+[90m4:08PM[0m [33mDBG[0m Compute hash for 3rdpartylicenses.txt
+[90m4:08PM[0m [33mDBG[0m Compute hash for 983.01f0a1c3096b4c57.js
+[90m4:08PM[0m [33mDBG[0m Compute hash for 998.4358309f6d5637b1.js
+[90m4:08PM[0m [33mDBG[0m Compute hash for MaterialIcons-Regular.a68cbfe8c27c4138.woff
+[90m4:08PM[0m [33mDBG[0m Compute hash for MaterialIcons-Regular.b8846fb877b762df.woff2
+[90m4:08PM[0m [33mDBG[0m Compute hash for MaterialIcons-Regular.f2f78d19b778412c.ttf
+[90m4:08PM[0m [33mDBG[0m Compute hash for assets/contents_home.json
+[90m4:08PM[0m [33mDBG[0m Compute hash for assets/contents_menu.json
+[90m4:08PM[0m [33mDBG[0m Compute hash for assets/img/me.avif
+[90m4:08PM[0m [33mDBG[0m Compute hash for assets/img/me.jpg
+[90m4:08PM[0m [33mDBG[0m Compute hash for assets/img/me.jxl
+[90m4:08PM[0m [33mDBG[0m Compute hash for assets/markdown/angular/style-csp-fix.md
+[90m4:08PM[0m [33mDBG[0m Compute hash for assets/markdown/k8s/admission-controller.md
+[90m4:08PM[0m [33mDBG[0m Compute hash for assets/markdown/k8s/budget-gke.md
+[90m4:08PM[0m [33mDBG[0m Compute hash for assets/markdown/nginx/ssllabs.md
+[90m4:08PM[0m [33mDBG[0m Compute hash for favicon.ico
+[90m4:08PM[0m [33mDBG[0m Compute hash for index.html
+[90m4:08PM[0m [33mDBG[0m Compute hash for main.323591363763bbbc.js
+[90m4:08PM[0m [33mDBG[0m Compute hash for polyfills.27c5e7e857267996.js
+[90m4:08PM[0m [33mDBG[0m Compute hash for roboto-latin-300-normal.4d8f8086236bad80.woff2
+[90m4:08PM[0m [33mDBG[0m Compute hash for roboto-latin-300-normal.6c1bc461047e61f5.woff
+[90m4:08PM[0m [33mDBG[0m Compute hash for roboto-latin-400-normal.1e2d4d3a272629cd.woff2
+[90m4:08PM[0m [33mDBG[0m Compute hash for roboto-latin-400-normal.7e4a045b9373d9c1.woff
+[90m4:08PM[0m [33mDBG[0m Compute hash for roboto-latin-500-normal.1dfbc3dbf815e3f3.woff2
+[90m4:08PM[0m [33mDBG[0m Compute hash for roboto-latin-500-normal.e21fe97fd2329ff7.woff
+[90m4:08PM[0m [33mDBG[0m Compute hash for runtime.8c715848ba9a7a03.js
+[90m4:08PM[0m [33mDBG[0m Compute hash for scripts.be8461a0b7b53a62.js
+[90m4:08PM[0m [33mDBG[0m Compute hash for styles.ab22957d0a17e481.css
+[90m4:08PM[0m [32mINF[0m Starting webserver server on port 8080
+[90m4:08PM[0m [33mDBG[0m entering access-log: 23.605µs since request start [36mrequestId=[0my1LugaUQ2t8zXq04KvGGwUhxEiNvwY0T
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 136.586µs since request start [36mrequestId=[0my1LugaUQ2t8zXq04KvGGwUhxEiNvwY0T
+[90m4:08PM[0m [33mDBG[0m entering gzip: 177.908µs since request start [36mrequestId=[0my1LugaUQ2t8zXq04KvGGwUhxEiNvwY0T
+[90m4:08PM[0m [33mDBG[0m entering header: 212.273µs since request start [36mrequestId=[0my1LugaUQ2t8zXq04KvGGwUhxEiNvwY0T
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 261.661µs since request start [36mrequestId=[0my1LugaUQ2t8zXq04KvGGwUhxEiNvwY0T
+[90m4:08PM[0m [33mDBG[0m entering caching: 298.135µs since request start [36mrequestId=[0my1LugaUQ2t8zXq04KvGGwUhxEiNvwY0T
+[90m4:08PM[0m [33mDBG[0m entering webserver: 328.291µs since request start [36mrequestId=[0my1LugaUQ2t8zXq04KvGGwUhxEiNvwY0T
+[90m4:08PM[0m [33mDBG[0m Entering webserver handler [36mrequestId=[0my1LugaUQ2t8zXq04KvGGwUhxEiNvwY0T
+[90m4:08PM[0m [33mDBG[0m Serving file  [36mrequestId=[0my1LugaUQ2t8zXq04KvGGwUhxEiNvwY0T
+[90m4:08PM[0m [33mDBG[0m file  not found [36merror=[0m[31m"file  not found"[0m [36mrequestId=[0my1LugaUQ2t8zXq04KvGGwUhxEiNvwY0T
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"374.286µs","referer":"","remoteIp":"[::1]:34878","requestMethod":"GET","requestUrl":"/","responseSize":350,"status":200,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0my1LugaUQ2t8zXq04KvGGwUhxEiNvwY0T
+[90m4:08PM[0m [33mDBG[0m entering access-log: 13.589µs since request start [36mrequestId=[0mcPaEsVrvJHulk93FxsHnyXew2484Tbq3
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 101.33µs since request start [36mrequestId=[0mcPaEsVrvJHulk93FxsHnyXew2484Tbq3
+[90m4:08PM[0m [33mDBG[0m entering gzip: 144.219µs since request start [36mrequestId=[0mcPaEsVrvJHulk93FxsHnyXew2484Tbq3
+[90m4:08PM[0m [33mDBG[0m entering header: 183.914µs since request start [36mrequestId=[0mcPaEsVrvJHulk93FxsHnyXew2484Tbq3
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 248.719µs since request start [36mrequestId=[0mcPaEsVrvJHulk93FxsHnyXew2484Tbq3
+[90m4:08PM[0m [33mDBG[0m entering caching: 299.82µs since request start [36mrequestId=[0mcPaEsVrvJHulk93FxsHnyXew2484Tbq3
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"234.948µs","referer":"","remoteIp":"[::1]:34878","requestMethod":"GET","requestUrl":"/styles.ab22957d0a17e481.css","responseSize":0,"status":304,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0mcPaEsVrvJHulk93FxsHnyXew2484Tbq3
+[90m4:08PM[0m [33mDBG[0m entering access-log: 42.42µs since request start [36mrequestId=[0mfG16VzpNUnYn1Aj259YqTIkln9DCPumV
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 113.909µs since request start [36mrequestId=[0mfG16VzpNUnYn1Aj259YqTIkln9DCPumV
+[90m4:08PM[0m [33mDBG[0m entering gzip: 150.501µs since request start [36mrequestId=[0mfG16VzpNUnYn1Aj259YqTIkln9DCPumV
+[90m4:08PM[0m [33mDBG[0m entering header: 186.044µs since request start [36mrequestId=[0mfG16VzpNUnYn1Aj259YqTIkln9DCPumV
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 246.686µs since request start [36mrequestId=[0mfG16VzpNUnYn1Aj259YqTIkln9DCPumV
+[90m4:08PM[0m [33mDBG[0m entering caching: 316.893µs since request start [36mrequestId=[0mfG16VzpNUnYn1Aj259YqTIkln9DCPumV
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"258.201µs","referer":"","remoteIp":"[::1]:34880","requestMethod":"GET","requestUrl":"/runtime.8c715848ba9a7a03.js","responseSize":0,"status":304,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0mfG16VzpNUnYn1Aj259YqTIkln9DCPumV
+[90m4:08PM[0m [33mDBG[0m entering access-log: 13.071µs since request start [36mrequestId=[0mNQvxBtJgxO6KwPVxz3NKsguDuABJ0U5Q
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 102.82µs since request start [36mrequestId=[0mNQvxBtJgxO6KwPVxz3NKsguDuABJ0U5Q
+[90m4:08PM[0m [33mDBG[0m entering gzip: 130.33µs since request start [36mrequestId=[0mNQvxBtJgxO6KwPVxz3NKsguDuABJ0U5Q
+[90m4:08PM[0m [33mDBG[0m entering header: 159.638µs since request start [36mrequestId=[0mNQvxBtJgxO6KwPVxz3NKsguDuABJ0U5Q
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 187.567µs since request start [36mrequestId=[0mNQvxBtJgxO6KwPVxz3NKsguDuABJ0U5Q
+[90m4:08PM[0m [33mDBG[0m entering access-log: 307.252µs since request start [36mrequestId=[0mu4YqLoyyv0e1blq1BW3nuzfATJ0qrc7T
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 510.849µs since request start [36mrequestId=[0mu4YqLoyyv0e1blq1BW3nuzfATJ0qrc7T
+[90m4:08PM[0m [33mDBG[0m entering gzip: 549.925µs since request start [36mrequestId=[0mu4YqLoyyv0e1blq1BW3nuzfATJ0qrc7T
+[90m4:08PM[0m [33mDBG[0m entering header: 593.658µs since request start [36mrequestId=[0mu4YqLoyyv0e1blq1BW3nuzfATJ0qrc7T
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 652.239µs since request start [36mrequestId=[0mu4YqLoyyv0e1blq1BW3nuzfATJ0qrc7T
+[90m4:08PM[0m [33mDBG[0m entering caching: 697.276µs since request start [36mrequestId=[0mu4YqLoyyv0e1blq1BW3nuzfATJ0qrc7T
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"238.508µs","referer":"","remoteIp":"[::1]:34880","requestMethod":"GET","requestUrl":"/polyfills.27c5e7e857267996.js","responseSize":0,"status":304,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0mu4YqLoyyv0e1blq1BW3nuzfATJ0qrc7T
+[90m4:08PM[0m [33mDBG[0m entering access-log: 13.133µs since request start [36mrequestId=[0mPhedUQzycAxlzEDLnpeIYriz9gj0hGBM
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 85.14µs since request start [36mrequestId=[0mPhedUQzycAxlzEDLnpeIYriz9gj0hGBM
+[90m4:08PM[0m [33mDBG[0m entering gzip: 124.972µs since request start [36mrequestId=[0mPhedUQzycAxlzEDLnpeIYriz9gj0hGBM
+[90m4:08PM[0m [33mDBG[0m entering header: 161.299µs since request start [36mrequestId=[0mPhedUQzycAxlzEDLnpeIYriz9gj0hGBM
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 208.263µs since request start [36mrequestId=[0mPhedUQzycAxlzEDLnpeIYriz9gj0hGBM
+[90m4:08PM[0m [33mDBG[0m entering caching: 237.323µs since request start [36mrequestId=[0mPhedUQzycAxlzEDLnpeIYriz9gj0hGBM
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"194.147µs","referer":"","remoteIp":"[::1]:34880","requestMethod":"GET","requestUrl":"/scripts.be8461a0b7b53a62.js","responseSize":0,"status":304,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0mPhedUQzycAxlzEDLnpeIYriz9gj0hGBM
+[90m4:08PM[0m [33mDBG[0m entering access-log: 12.09µs since request start [36mrequestId=[0mTnshKGE2eADEOmQd5t78PQdmJX1IkFcM
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 81.737µs since request start [36mrequestId=[0mTnshKGE2eADEOmQd5t78PQdmJX1IkFcM
+[90m4:08PM[0m [33mDBG[0m entering gzip: 131.34µs since request start [36mrequestId=[0mTnshKGE2eADEOmQd5t78PQdmJX1IkFcM
+[90m4:08PM[0m [33mDBG[0m entering header: 176.381µs since request start [36mrequestId=[0mTnshKGE2eADEOmQd5t78PQdmJX1IkFcM
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 228.227µs since request start [36mrequestId=[0mTnshKGE2eADEOmQd5t78PQdmJX1IkFcM
+[90m4:08PM[0m [33mDBG[0m entering caching: 264.98µs since request start [36mrequestId=[0mTnshKGE2eADEOmQd5t78PQdmJX1IkFcM
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"239.775µs","referer":"","remoteIp":"[::1]:34880","requestMethod":"GET","requestUrl":"/roboto-latin-400-normal.1e2d4d3a272629cd.woff2","responseSize":0,"status":304,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0mTnshKGE2eADEOmQd5t78PQdmJX1IkFcM
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"42.179812ms","referer":"","remoteIp":"[::1]:34878","requestMethod":"GET","requestUrl":"/main.323591363763bbbc.js","responseSize":149891,"status":200,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0mNQvxBtJgxO6KwPVxz3NKsguDuABJ0U5Q
+[90m4:08PM[0m [33mDBG[0m entering access-log: 37.63µs since request start [36mrequestId=[0mSY0m37TnOvn022wS4QeRO9EGdzbg9lnR
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 104.101µs since request start [36mrequestId=[0mSY0m37TnOvn022wS4QeRO9EGdzbg9lnR
+[90m4:08PM[0m [33mDBG[0m entering gzip: 158.783µs since request start [36mrequestId=[0mSY0m37TnOvn022wS4QeRO9EGdzbg9lnR
+[90m4:08PM[0m [33mDBG[0m entering header: 177.67µs since request start [36mrequestId=[0mSY0m37TnOvn022wS4QeRO9EGdzbg9lnR
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 220.869µs since request start [36mrequestId=[0mSY0m37TnOvn022wS4QeRO9EGdzbg9lnR
+[90m4:08PM[0m [33mDBG[0m entering caching: 258.73µs since request start [36mrequestId=[0mSY0m37TnOvn022wS4QeRO9EGdzbg9lnR
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"214.256µs","referer":"","remoteIp":"[::1]:34878","requestMethod":"GET","requestUrl":"/assets/img/me.avif","responseSize":0,"status":304,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0mSY0m37TnOvn022wS4QeRO9EGdzbg9lnR
+[90m4:08PM[0m [33mDBG[0m entering access-log: 17.392µs since request start [36mrequestId=[0mSk0nrCnSrG9CULoOt6cezAROHwejP8BX
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 106.567µs since request start [36mrequestId=[0mSk0nrCnSrG9CULoOt6cezAROHwejP8BX
+[90m4:08PM[0m [33mDBG[0m entering gzip: 141.443µs since request start [36mrequestId=[0mSk0nrCnSrG9CULoOt6cezAROHwejP8BX
+[90m4:08PM[0m [33mDBG[0m entering header: 172.005µs since request start [36mrequestId=[0mSk0nrCnSrG9CULoOt6cezAROHwejP8BX
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 211.685µs since request start [36mrequestId=[0mSk0nrCnSrG9CULoOt6cezAROHwejP8BX
+[90m4:08PM[0m [33mDBG[0m entering caching: 255.329µs since request start [36mrequestId=[0mSk0nrCnSrG9CULoOt6cezAROHwejP8BX
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"188.458µs","referer":"","remoteIp":"[::1]:34878","requestMethod":"GET","requestUrl":"/983.01f0a1c3096b4c57.js","responseSize":0,"status":304,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0mSk0nrCnSrG9CULoOt6cezAROHwejP8BX
+[90m4:08PM[0m [33mDBG[0m entering access-log: 10.747µs since request start [36mrequestId=[0mzwTQWn3utt7yqHkwpwql5vYt4UdjzwK4
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 74.874µs since request start [36mrequestId=[0mzwTQWn3utt7yqHkwpwql5vYt4UdjzwK4
+[90m4:08PM[0m [33mDBG[0m entering gzip: 96.286µs since request start [36mrequestId=[0mzwTQWn3utt7yqHkwpwql5vYt4UdjzwK4
+[90m4:08PM[0m [33mDBG[0m entering header: 120.034µs since request start [36mrequestId=[0mzwTQWn3utt7yqHkwpwql5vYt4UdjzwK4
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 163.116µs since request start [36mrequestId=[0mzwTQWn3utt7yqHkwpwql5vYt4UdjzwK4
+[90m4:08PM[0m [33mDBG[0m entering caching: 224.377µs since request start [36mrequestId=[0mzwTQWn3utt7yqHkwpwql5vYt4UdjzwK4
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"197.002µs","referer":"","remoteIp":"[::1]:34878","requestMethod":"GET","requestUrl":"/998.4358309f6d5637b1.js","responseSize":0,"status":304,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0mzwTQWn3utt7yqHkwpwql5vYt4UdjzwK4
+[90m4:08PM[0m [33mDBG[0m entering access-log: 10.223µs since request start [36mrequestId=[0mvxlrgkfrrqrL9x17dm3gUuLTJ1yXSZHm
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 75.553µs since request start [36mrequestId=[0mvxlrgkfrrqrL9x17dm3gUuLTJ1yXSZHm
+[90m4:08PM[0m [33mDBG[0m entering gzip: 105.415µs since request start [36mrequestId=[0mvxlrgkfrrqrL9x17dm3gUuLTJ1yXSZHm
+[90m4:08PM[0m [33mDBG[0m entering access-log: 6.733µs since request start [36mrequestId=[0mUA7dTSJ9m1Ge1iXRqCnsd7WA2WzuCweH
+[90m4:08PM[0m [33mDBG[0m entering header: 135.302µs since request start [36mrequestId=[0mvxlrgkfrrqrL9x17dm3gUuLTJ1yXSZHm
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 46.942µs since request start [36mrequestId=[0mUA7dTSJ9m1Ge1iXRqCnsd7WA2WzuCweH
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 188.032µs since request start [36mrequestId=[0mvxlrgkfrrqrL9x17dm3gUuLTJ1yXSZHm
+[90m4:08PM[0m [33mDBG[0m entering gzip: 78.611µs since request start [36mrequestId=[0mUA7dTSJ9m1Ge1iXRqCnsd7WA2WzuCweH
+[90m4:08PM[0m [33mDBG[0m entering caching: 218.702µs since request start [36mrequestId=[0mvxlrgkfrrqrL9x17dm3gUuLTJ1yXSZHm
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"183.399µs","referer":"","remoteIp":"[::1]:34878","requestMethod":"GET","requestUrl":"/MaterialIcons-Regular.b8846fb877b762df.woff2","responseSize":0,"status":304,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0mvxlrgkfrrqrL9x17dm3gUuLTJ1yXSZHm
+[90m4:08PM[0m [33mDBG[0m entering header: 105.183µs since request start [36mrequestId=[0mUA7dTSJ9m1Ge1iXRqCnsd7WA2WzuCweH
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 248.582µs since request start [36mrequestId=[0mUA7dTSJ9m1Ge1iXRqCnsd7WA2WzuCweH
+[90m4:08PM[0m [33mDBG[0m entering caching: 278.868µs since request start [36mrequestId=[0mUA7dTSJ9m1Ge1iXRqCnsd7WA2WzuCweH
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"268.688µs","referer":"","remoteIp":"[::1]:34880","requestMethod":"GET","requestUrl":"/roboto-latin-500-normal.1dfbc3dbf815e3f3.woff2","responseSize":0,"status":304,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0mUA7dTSJ9m1Ge1iXRqCnsd7WA2WzuCweH
+[90m4:08PM[0m [33mDBG[0m entering access-log: 16.627µs since request start [36mrequestId=[0mWC1o5meLOMnItmWzGYAGxDXemJQXCOD7
+[90m4:08PM[0m [33mDBG[0m entering validate-clean: 129.653µs since request start [36mrequestId=[0mWC1o5meLOMnItmWzGYAGxDXemJQXCOD7
+[90m4:08PM[0m [33mDBG[0m entering gzip: 177.491µs since request start [36mrequestId=[0mWC1o5meLOMnItmWzGYAGxDXemJQXCOD7
+[90m4:08PM[0m [33mDBG[0m entering header: 222.046µs since request start [36mrequestId=[0mWC1o5meLOMnItmWzGYAGxDXemJQXCOD7
+[90m4:08PM[0m [33mDBG[0m entering file-replace: 294.775µs since request start [36mrequestId=[0mWC1o5meLOMnItmWzGYAGxDXemJQXCOD7
+[90m4:08PM[0m [33mDBG[0m entering caching: 342.176µs since request start [36mrequestId=[0mWC1o5meLOMnItmWzGYAGxDXemJQXCOD7
+[90m4:08PM[0m [32mINF[0m  [36mhttpRequest=[0m{"latency":"268.869µs","referer":"","remoteIp":"[::1]:34880","requestMethod":"GET","requestUrl":"/favicon.ico","responseSize":0,"status":304,"userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1"} [36mrequestId=[0mWC1o5meLOMnItmWzGYAGxDXemJQXCOD7

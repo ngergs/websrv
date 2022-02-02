@@ -39,7 +39,7 @@ func (w *eTagResponseWriter) WriteHeader(statusCode int) {
 }
 
 func (handler *CacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Ctx(r.Context()).Debug().Msg("Entering caching handler")
+	logEnter(r.Context(), "caching")
 
 	eTag, ok := handler.hashes[r.URL.Path]
 	if ok {

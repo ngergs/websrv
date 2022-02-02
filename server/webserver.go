@@ -8,18 +8,20 @@ import (
 	"path"
 	"text/template"
 
+	"github.com/ngergs/webserver/v2/filesystem"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 type WebserverHandler struct {
 	fallbackFilepath string
-	fileSystem       fs.FS
+	fileSystem       filesystem.ZipFs
 	config           *Config
 	templateServer   *FileReplaceHandler
+	gzipMediaTypes   []string
 }
 
-func New(fileSystem fs.FS, fallbackFilepath string, config *Config) *WebserverHandler {
+func FileServerHandler(fileSystem filesystem.ZipFs, fallbackFilepath string, config *Config, hasMemoryFs bool) *WebserverHandler {
 	handler := &WebserverHandler{
 		fallbackFilepath: fallbackFilepath,
 		fileSystem:       fileSystem,
@@ -29,11 +31,14 @@ func New(fileSystem fs.FS, fallbackFilepath string, config *Config) *WebserverHa
 			Templates:  make(map[string]*template.Template),
 		},
 	}
+	if hasMemoryFs {
+		handler.gzipMediaTypes = config.GzipMediaTypes
+	}
 	return handler
 }
 
 func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
+	logEnter(r.Context(), "webserver")
 	logger := log.Ctx(r.Context())
 	logger.Debug().Msg("Entering webserver handler")
 	requestPath := r.URL.Path
@@ -49,7 +54,17 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 	}
 	defer file.Close()
-	w.Header().Set("Content-Type", handler.getMediaType(requestPath))
+
+	mediaType := handler.getMediaType(requestPath)
+	w.Header().Set("Content-Type", mediaType)
+	isZipped, err := handler.fileSystem.IsZipped(requestPath)
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to resolve whether file is zipped")
+		http.Error(w, "file not found", http.StatusNotFound)
+	}
+	if isZipped {
+		w.Header().Set("Content-Encoding", "gzip")
+	}
 
 	if r.Method == http.MethodHead {
 		w.WriteHeader(http.StatusOK)
@@ -77,7 +92,7 @@ func (handler *WebserverHandler) tryGetFile(requestPath string) (fs.File, error)
 }
 
 func (handler *WebserverHandler) checkForFallbackFile(logger *zerolog.Logger, w http.ResponseWriter, requestPath string) (file fs.File, requestpath string, finishServing bool) {
-	// requested files do not fall back to index.html
+	// explicitly requested files do not fall back to index.html, only paths do
 	if handler.fallbackFilepath == "" || (path.Ext(requestPath) != "" && path.Ext(requestPath) != ".") {
 		http.Error(w, "file not found", http.StatusNotFound)
 		return nil, "", true

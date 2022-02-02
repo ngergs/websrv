@@ -26,11 +26,13 @@
       ".jpg":  "image/jpeg",
       ".avif": "image/avif",
       ".jxl":  "image/jxl",
+      ".ttf" : "font/ttf",
       ".woff2": "font/woff2"
    },
    "gzip-media-types":[
       "application/javascript",
       "text/css",
-      "text/html; charset=UTF-8"
+      "text/html; charset=UTF-8",
+      "font/ttf"
    ]
 }

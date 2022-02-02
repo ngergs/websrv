@@ -3,8 +3,6 @@ package server
 import (
 	"net/http"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 type HeaderHandler struct {
@@ -14,7 +12,7 @@ type HeaderHandler struct {
 }
 
 func (handler *HeaderHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Ctx(r.Context()).Debug().Msg("Entering header handler")
+	logEnter(r.Context(), "header")
 
 	// set static headers
 	if handler.Headers != nil {
@@ -34,7 +32,6 @@ func (handler *HeaderHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 }
 
 func getLastHeaderEntry(r *http.Request, headerName string) string {
-	log.Debug().Msg("Adding header handler")
 	values := r.Header.Values(headerName)
 	if len(values) > 0 {
 		return values[len(values)-1] //select last value as nginx just appends

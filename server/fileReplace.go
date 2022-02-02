@@ -1,18 +1,19 @@
 package server
 
 import (
-	"io/fs"
 	"net/http"
 	"path"
 	"regexp"
 	"text/template"
 
+	"github.com/ngergs/webserver/v2/filesystem"
+	"github.com/ngergs/webserver/v2/utils"
 	"github.com/rs/zerolog/log"
 )
 
 type FileReplaceHandler struct {
 	Next             http.Handler
-	Filesystem       fs.FS
+	Filesystem       filesystem.ZipFs
 	SourceHeaderName string
 	FileNamePatter   *regexp.Regexp
 	VariableName     string
@@ -21,8 +22,21 @@ type FileReplaceHandler struct {
 }
 
 func (handler *FileReplaceHandler) load(path string) (*template.Template, error) {
-	template := template.New(path)
-	template, err := template.New(path).Delims("[{[{", "}]}]").ParseFS(handler.Filesystem, path)
+	data, err := handler.Filesystem.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	isZipped, err := handler.Filesystem.IsZipped(path)
+	if err != nil {
+		return nil, err
+	}
+	if isZipped {
+		data, err = utils.Unzip(data)
+		if err != nil {
+			return nil, err
+		}
+	}
+	template, err := template.New(path).Delims("[{[{", "}]}]").Parse(string(data))
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +62,7 @@ func (handler *FileReplaceHandler) Serve(w http.ResponseWriter, path string, dat
 }
 
 func (handler *FileReplaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Ctx(r.Context()).Debug().Msg("Entering file replace handler")
+	logEnter(r.Context(), "file-replace")
 	if !handler.FileNamePatter.MatchString(r.URL.Path) {
 		handler.Next.ServeHTTP(w, r)
 		return

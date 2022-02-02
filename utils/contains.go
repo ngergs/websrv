@@ -1,8 +1,8 @@
-package server
+package utils
 
 import "strings"
 
-func contains(list []string, val string) bool {
+func Contains(list []string, val string) bool {
 	for _, el := range list {
 		if el == val {
 			return true
@@ -11,10 +11,10 @@ func contains(list []string, val string) bool {
 	return false
 }
 
-func containsAfterSplit(list []string, splitter string, val string) bool {
+func ContainsAfterSplit(list []string, splitter string, val string) bool {
 	for _, el := range list {
 		splitted := strings.Split(el, splitter)
-		if contains(splitted, val) {
+		if Contains(splitted, val) {
 			return true
 		}
 	}

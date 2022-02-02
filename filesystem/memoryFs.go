@@ -1,4 +1,4 @@
-package filesystems
+package filesystem
 
 import (
 	"fmt"
@@ -8,13 +8,14 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/ngergs/webserver/v2/utils"
 	"github.com/rs/zerolog/log"
 )
 
 // MemoryFilesystem only holds actual files, not the directory entries
 type MemoryFilesystem struct {
-	files           map[string]*memoryFile
-	targetDirLength int
+	files    map[string]*memoryFile
+	isZipped map[string]bool
 }
 
 type memoryFile struct {
@@ -29,53 +30,75 @@ type openMemoryFile struct {
 	file       *memoryFile
 }
 
-func NewMemoryFs(targetDir string) (*MemoryFilesystem, error) {
+func NewMemoryFs(targetDir string, zipFileExtensions []string) (*MemoryFilesystem, error) {
 	targetDir = path.Clean(targetDir)
-	files := make(map[string]*memoryFile)
 	fs := &MemoryFilesystem{
-		files:           files,
-		targetDirLength: len(targetDir),
+		files:    make(map[string]*memoryFile),
+		isZipped: make(map[string]bool),
 	}
-	err := filepath.Walk(targetDir, fs.readFile)
+	err := filepath.Walk(targetDir, getReadFileFunc(fs, len(targetDir), zipFileExtensions))
 	if err != nil {
 		return nil, fmt.Errorf("error reading files into in-memory-fs: %w", err)
 	}
 	return fs, nil
 }
 
-func (fs *MemoryFilesystem) readFile(path string, info fs.FileInfo, err error) error {
-	// remove targetDir part and leading / from path
-	var subPath string
-	if len(path) > fs.targetDirLength {
-		subPath = path[(fs.targetDirLength + 1):]
-	} else {
-		subPath = "."
-	}
-	if err != nil {
-		return err
-	}
-	file, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	var result *memoryFile
-	if info.IsDir() {
-		dirInfo, err := file.ReadDir(0)
+func getReadFileFunc(filesystem *MemoryFilesystem, targetDirLength int, zipFileExtensions []string) func(path string, info fs.FileInfo, err error) error {
+	return func(filePath string, info fs.FileInfo, err error) error {
+		// remove targetDir part and leading / from path
+		var subPath string
+		if len(filePath) > targetDirLength {
+			subPath = filePath[(targetDirLength + 1):]
+		} else {
+			subPath = "."
+		}
 		if err != nil {
 			return err
 		}
-		result = &memoryFile{info: info, dirInfo: dirInfo}
-	} else {
-		data, err := io.ReadAll(file)
+		file, err := os.Open(filePath)
 		if err != nil {
 			return err
 		}
-		result = &memoryFile{data: data, info: info}
+		defer file.Close()
+
+		var result *memoryFile
+		isZipped := false
+		if info.IsDir() {
+			dirInfo, err := file.ReadDir(0)
+			if err != nil {
+				return err
+			}
+			result = &memoryFile{info: info, dirInfo: dirInfo}
+		} else {
+			data, err := io.ReadAll(file)
+
+			if err != nil {
+				return err
+			}
+			if utils.Contains(zipFileExtensions, path.Ext(subPath)) {
+				log.Debug().Msgf("Zipping file %s", subPath)
+				data, err = utils.Zip(data)
+				info = &modifiedSizeInfo{size: int64(len(data)), FileInfo: info}
+				isZipped = true
+				if err != nil {
+					return err
+				}
+			}
+			result = &memoryFile{data: data, info: info}
+		}
+		log.Debug().Msgf("Read into memory-fs: %s", subPath)
+		filesystem.files[subPath] = result
+		filesystem.isZipped[subPath] = isZipped
+		return nil
 	}
-	log.Debug().Msgf("Read into memory-fs: %s", subPath)
-	fs.files[subPath] = result
-	return nil
+}
+
+func (filesystem *MemoryFilesystem) IsZipped(path string) (bool, error) {
+	isZipped, ok := filesystem.isZipped[path]
+	if !ok {
+		return false, fmt.Errorf("could not determine whether file is zipped")
+	}
+	return isZipped, nil
 }
 
 func (fs *MemoryFilesystem) Open(name string) (fs.File, error) {
@@ -84,6 +107,13 @@ func (fs *MemoryFilesystem) Open(name string) (fs.File, error) {
 		return nil, fmt.Errorf("file %s not found", name)
 	}
 	return &openMemoryFile{file: file}, nil
+}
+func (fs *MemoryFilesystem) ReadFile(name string) ([]byte, error) {
+	file, ok := fs.files[name]
+	if !ok {
+		return nil, fmt.Errorf("file %s not found in filesystem", name)
+	}
+	return file.data, nil
 }
 
 func (file *memoryFile) ReadDir(n int) ([]fs.DirEntry, error) {

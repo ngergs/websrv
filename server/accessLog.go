@@ -33,22 +33,25 @@ func (w *metricResponseWriter) WriteHeader(statusCode int) {
 
 func AccessLogHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Ctx(r.Context()).Debug().Msg("Entering access log handler")
+		logEnter(r.Context(), "access-log")
 		start := time.Now()
 		metricResponseWriter := &metricResponseWriter{Next: w}
 		originalPath := r.URL.String()
 		next.ServeHTTP(metricResponseWriter, r)
-		log.Info().
-			Str("requestId", r.Context().Value(requestIdKey).(string)).
-			Dict("httpRequest", zerolog.Dict().
-				Str("requestMethod", r.Method).
-				Str("requestUrl", originalPath).
-				Int("status", metricResponseWriter.StatusCode).
-				Int("responseSize", metricResponseWriter.BytesSend).
-				Str("userAgent", r.UserAgent()).
-				Str("remoteIp", r.RemoteAddr).
-				Str("referer", r.Referer()).
-				Str("latency", time.Since(start).String())).
+		logEvent := log.Info()
+		requestId := r.Context().Value(requestIdKey)
+		if requestId != nil {
+			logEvent = logEvent.Str("requestId", requestId.(string))
+		}
+		logEvent.Dict("httpRequest", zerolog.Dict().
+			Str("requestMethod", r.Method).
+			Str("requestUrl", originalPath).
+			Int("status", metricResponseWriter.StatusCode).
+			Int("responseSize", metricResponseWriter.BytesSend).
+			Str("userAgent", r.UserAgent()).
+			Str("remoteIp", r.RemoteAddr).
+			Str("referer", r.Referer()).
+			Str("latency", time.Since(start).String())).
 			Msg("")
 	})
 }
