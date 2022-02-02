@@ -5,10 +5,10 @@ type OperationType string
 const SecureRandomIdFileReplacer OperationType = "RANDOM-ID"
 
 type Config struct {
-	Headers           map[string]string  `json:"headers"`
+	Headers           map[string]string  `json:"headers,omitempty"`
 	FromHeaderReplace *FromHeaderReplace `json:"from-header-replacer,omitempty"`
 	// needed due to https://github.com/golang/go/issues/32350
-	MediaTypeMap   map[string]string `json:"media-type-map"`
+	MediaTypeMap   map[string]string `json:"media-type-map,omitempty"`
 	GzipMediaTypes []string          `json:"gzip-media-types,omitempty"`
 }
 

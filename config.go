@@ -28,6 +28,16 @@ var prettyLogging = flag.Bool("pretty", false, "Activates zerolog pretty logging
 var targetDir string
 
 var defaultGzipMediaTypes []string = []string{"application/javascript", "text/css", "text/html; charset=UTF-8"}
+var defaultMediaTypeMap map[string]string = map[string]string{
+	".js":    "application/javascript",
+	".css":   "text/css",
+	".html":  "text/html; charset=UTF-8",
+	".jpg":   "image/jpeg",
+	".avif":  "image/avif",
+	".jxl":   "image/jxl",
+	".ttf":   "font/ttf",
+	".woff2": "font/woff2",
+}
 
 func usage() {
 	fmt.Printf("Usage: fileserver {options} [target-path]\nOptions:\n")
@@ -61,6 +71,7 @@ func readConfig() (*server.Config, []string, error) {
 	if *configFile == "" {
 		return &server.Config{
 			GzipMediaTypes: defaultGzipMediaTypes,
+			MediaTypeMap:   defaultMediaTypeMap,
 		}, nil, nil
 	}
 	file, err := os.Open(*configFile)
@@ -76,17 +87,23 @@ func readConfig() (*server.Config, []string, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	gzipFileExtensions := []string{}
+
+	if config.MediaTypeMap == nil {
+		config.MediaTypeMap = defaultMediaTypeMap
+	}
+
 	if !*gzip {
 		config.GzipMediaTypes = []string{}
-	} else {
-		if config.GzipMediaTypes == nil {
-			config.GzipMediaTypes = defaultGzipMediaTypes
-		}
-		for fileExtension, mediaType := range config.MediaTypeMap {
-			if utils.Contains(config.GzipMediaTypes, mediaType) {
-				gzipFileExtensions = append(gzipFileExtensions, fileExtension)
-			}
+		return &config, []string{}, nil
+	}
+	if config.GzipMediaTypes == nil {
+		config.GzipMediaTypes = defaultGzipMediaTypes
+	}
+
+	gzipFileExtensions := []string{}
+	for fileExtension, mediaType := range config.MediaTypeMap {
+		if utils.Contains(config.GzipMediaTypes, mediaType) {
+			gzipFileExtensions = append(gzipFileExtensions, fileExtension)
 		}
 	}
 	return &config, gzipFileExtensions, nil

@@ -33,8 +33,14 @@ func (w *metricResponseWriter) WriteHeader(statusCode int) {
 
 func AccessLogHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		startRaw := r.Context().Value(timerKey)
+		var start time.Time
+		if startRaw != nil {
+			start = startRaw.(time.Time)
+		} else {
+			start = time.Now()
+		}
 		logEnter(r.Context(), "access-log")
-		start := time.Now()
 		metricResponseWriter := &metricResponseWriter{Next: w}
 		originalPath := r.URL.String()
 		next.ServeHTTP(metricResponseWriter, r)
