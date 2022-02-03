@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"net/http"
 	"path"
-	"text/template"
 
 	"github.com/ngergs/webserver/v2/filesystem"
 	"github.com/rs/zerolog"
@@ -17,7 +16,6 @@ type WebserverHandler struct {
 	fallbackFilepath string
 	fileSystem       filesystem.ZipFs
 	config           *Config
-	templateServer   *FileReplaceHandler
 	gzipMediaTypes   []string
 }
 
@@ -26,10 +24,6 @@ func FileServerHandler(fileSystem filesystem.ZipFs, fallbackFilepath string, con
 		fallbackFilepath: fallbackFilepath,
 		fileSystem:       fileSystem,
 		config:           config,
-		templateServer: &FileReplaceHandler{
-			Filesystem: fileSystem,
-			Templates:  make(map[string]*template.Template),
-		},
 	}
 	if hasMemoryFs {
 		handler.gzipMediaTypes = config.GzipMediaTypes

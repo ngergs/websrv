@@ -27,8 +27,8 @@ var memoryFs = flag.Bool("in-memory-fs", false, "Whether to use a in-memory-file
 var prettyLogging = flag.Bool("pretty", false, "Activates zerolog pretty logging")
 var targetDir string
 
-var defaultGzipMediaTypes []string = []string{"application/javascript", "text/css", "text/html; charset=UTF-8"}
-var defaultMediaTypeMap map[string]string = map[string]string{
+var defaultGzipMediaTypes = []string{"application/javascript", "text/css", "text/html; charset=UTF-8"}
+var defaultMediaTypeMap = map[string]string{
 	".js":    "application/javascript",
 	".css":   "text/css",
 	".html":  "text/html; charset=UTF-8",

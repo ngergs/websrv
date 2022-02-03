@@ -10,7 +10,8 @@
       "Cross-Origin-Resource-Policy": "same-site",
       "Cache-Control": "no-cache; must-revalidate",
       "Pragma": "no-cache",
-      "Expect-CT": "enforce, max-age=2592000"
+      "Expect-CT": "enforce, max-age=2592000",
+      "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'; form-action 'none';  font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self' 'nonce-random_csp_nonce' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='; worker-src 'self'"
    },
    "media-type-map":{
       ".js":   "application/javascript",
@@ -27,5 +28,10 @@
       "text/css",
       "text/html; charset=UTF-8",
       "font/ttf"
-   ]
+   ],
+   "angular-csp-replace": {
+      "domain":"localhost",
+      "file-name-pattern": "^main.*\\.js$",
+      "variable-name": "random_csp_nonce"
+   }
 }

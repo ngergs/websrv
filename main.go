@@ -31,11 +31,12 @@ func main() {
 		errChan <- server.Start("webserver", *webServerPort, errChan,
 			server.FileServerHandler(fs, *fallbackFilepath, config, *memoryFs),
 			server.Caching(fs),
-			server.FileReplace(config, fs),
+			server.CspReplace(config, fs),
 			server.Header(config),
 			server.Optional(server.Gzip(config), *gzip),
 			server.ValidateClean(),
 			server.Optional(server.AccessLog(), *accessLog),
+			server.SessionId(config, 10),
 			server.RequestID(),
 			server.Timer(),
 		)

@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"text/template"
+	"time"
 
 	"github.com/ngergs/webserver/v2/filesystem"
 	"github.com/rs/zerolog/log"
@@ -45,19 +46,29 @@ func Caching(filesystem fs.FS) HandlerMiddleware {
 	}
 }
 
-func FileReplace(config *Config, filesystem filesystem.ZipFs) HandlerMiddleware {
+func CspReplace(config *Config, filesystem filesystem.ZipFs) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
-		if config.FromHeaderReplace == nil {
+		if config.AngularCspReplace == nil {
 			return handler
 		}
-		return &FileReplaceHandler{
-			Next:             handler,
-			Filesystem:       filesystem,
-			SourceHeaderName: config.FromHeaderReplace.SourceHeaderName,
-			FileNamePatter:   regexp.MustCompile(config.FromHeaderReplace.FileNamePattern),
-			VariableName:     config.FromHeaderReplace.VariableName,
-			Templates:        make(map[string]*template.Template),
-			MediaTypeMap:     config.MediaTypeMap,
+		return &CspReplaceHandler{
+			Next:           handler,
+			Filesystem:     filesystem,
+			FileNamePatter: regexp.MustCompile(config.AngularCspReplace.FileNamePattern),
+			VariableName:   config.AngularCspReplace.VariableName,
+			Templates:      make(map[string]*template.Template),
+			MediaTypeMap:   config.MediaTypeMap,
+		}
+	}
+}
+
+func SessionId(config *Config, maxAge int) HandlerMiddleware {
+	return func(handler http.Handler) http.Handler {
+		return &SessionCookieHandler{
+			Next:       handler,
+			Domain:     config.AngularCspReplace.Domain,
+			TimeToLife: time.Duration(maxAge) * time.Second,
+			Storage:    make(map[string]time.Time),
 		}
 	}
 }
@@ -67,7 +78,6 @@ func Header(config *Config) HandlerMiddleware {
 		return &HeaderHandler{
 			Next:    handler,
 			Headers: config.Headers,
-			Replace: config.FromHeaderReplace,
 		}
 	}
 }
