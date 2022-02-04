@@ -11,27 +11,7 @@ import (
 
 var sessionIddKey = &contextKey{val: "sessionId"}
 
-const cookieName = "Session-Id"
-
-type SessionCookieHandler struct {
-	Next       http.Handler
-	TimeToLife time.Duration
-	Domain     string
-	Storage    map[string]time.Time
-}
-
-func (handler *SessionCookieHandler) getNewSessionId() string {
-	for {
-		id := utils.GetRandomId(32)
-		if _, ok := handler.Storage[id]; !ok {
-			expires := time.Now().Add(handler.TimeToLife)
-			handler.Storage[id] = expires
-			return id
-		}
-	}
-}
-
-func (handler *SessionCookieHandler) readSessionIdCookie(r *http.Request) (sessionId string, ok bool) {
+func readSessionIdCookie(r *http.Request, cookieName string) (sessionId string, ok bool) {
 	for _, cookie := range r.Cookies() {
 		if cookie.Name == cookieName {
 			return cookie.Value, true
@@ -41,22 +21,24 @@ func (handler *SessionCookieHandler) readSessionIdCookie(r *http.Request) (sessi
 	return "", false
 }
 
-func (handler *SessionCookieHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	logEnter(r.Context(), "session-cookies")
-	sessionId, ok := handler.readSessionIdCookie(r)
-	if !ok {
-		sessionId = handler.getNewSessionId()
-		http.SetCookie(w, &http.Cookie{
-			Name:     cookieName,
-			Value:    sessionId,
-			Domain:   handler.Domain,
-			Path:     "/",
-			MaxAge:   int(handler.TimeToLife.Seconds()),
-			Secure:   true,
-			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
-		})
-	}
-	ctx := context.WithValue(r.Context(), sessionIddKey, sessionId)
-	handler.Next.ServeHTTP(w, r.WithContext(ctx))
+func SessionCookieHandler(next http.Handler, cookieName string, cookieTimeToLife time.Duration) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logEnter(r.Context(), cookieName)
+		sessionId, ok := readSessionIdCookie(r, cookieName)
+		if !ok {
+			// random collisions are not problematic for CSP nonces, so we can just take what we get
+			sessionId = utils.GetRandomId(32)
+			http.SetCookie(w, &http.Cookie{
+				Name:     cookieName,
+				Value:    sessionId,
+				Path:     "/",
+				MaxAge:   int(cookieTimeToLife.Seconds()),
+				Secure:   true,
+				HttpOnly: true,
+				SameSite: http.SameSiteStrictMode,
+			})
+		}
+		ctx := context.WithValue(r.Context(), sessionIddKey, sessionId)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

@@ -5,6 +5,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/ngergs/webserver/v2/filesystem"
@@ -21,6 +22,7 @@ type CspReplaceHandler struct {
 	VariableName   string
 	Templates      map[string]*template.Template
 	MediaTypeMap   map[string]string
+	templatesLock  sync.RWMutex
 }
 
 func (handler *CspReplaceHandler) load(path string) (*template.Template, error) {
@@ -42,12 +44,21 @@ func (handler *CspReplaceHandler) load(path string) (*template.Template, error) 
 	if err != nil {
 		return nil, err
 	}
+	handler.templatesLock.Lock()
+	defer handler.templatesLock.Unlock()
 	handler.Templates[path] = template
 	return template, nil
 }
 
+func (handler *CspReplaceHandler) getTemplate(path string) (template *template.Template, ok bool) {
+	handler.templatesLock.RLock()
+	defer handler.templatesLock.RUnlock()
+	template, ok = handler.Templates[path]
+	return
+}
+
 func (handler *CspReplaceHandler) serveFile(w http.ResponseWriter, path string, data interface{}) error {
-	template, ok := handler.Templates[path]
+	template, ok := handler.getTemplate(path)
 	if !ok {
 		var err error
 		template, err = handler.load(path)
@@ -79,6 +90,11 @@ func (handler *CspReplaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	handler.replaceHeader(w, sessionId.(string))
+	if handler.FileNamePatter == nil {
+		log.Ctx(r.Context()).Warn().Msg("Csp-Replace handler invoced but FileNamePattern has not been set. Skipping file replacement")
+		handler.Next.ServeHTTP(w, r)
+		return
+	}
 	if !handler.FileNamePatter.MatchString(r.URL.Path) {
 		handler.Next.ServeHTTP(w, r)
 		return

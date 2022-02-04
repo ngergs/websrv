@@ -13,7 +13,8 @@ type Config struct {
 }
 
 type AngularCspReplace struct {
-	Domain          string `json:"domain,omitempty"`
-	FileNamePattern string `json:"file-name-pattern,omitempty"`
+	FileNamePattern string `json:"file-name-regex,omitempty"`
 	VariableName    string `json:"variable-name"`
+	CookieName      string `json:"cookie-name"`
+	CookieMaxAge    int    `json:"cookie-max-age"`
 }

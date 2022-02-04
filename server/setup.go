@@ -62,14 +62,9 @@ func CspReplace(config *Config, filesystem filesystem.ZipFs) HandlerMiddleware {
 	}
 }
 
-func SessionId(config *Config, maxAge int) HandlerMiddleware {
+func SessionId(config *Config) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
-		return &SessionCookieHandler{
-			Next:       handler,
-			Domain:     config.AngularCspReplace.Domain,
-			TimeToLife: time.Duration(maxAge) * time.Second,
-			Storage:    make(map[string]time.Time),
-		}
+		return SessionCookieHandler(handler, config.AngularCspReplace.CookieName, time.Duration(config.AngularCspReplace.CookieMaxAge)*time.Second)
 	}
 }
 

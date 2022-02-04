@@ -30,8 +30,9 @@
       "font/ttf"
    ],
    "angular-csp-replace": {
-      "domain":"localhost",
-      "file-name-pattern": "^main.*\\.js$",
-      "variable-name": "random_csp_nonce"
+      "file-name-regex": "^main.*\\.js$",
+      "variable-name": "random_csp_nonce",
+      "cookie-name": "Nounce-Id",
+      "cookie-max-age": 30
    }
 }
