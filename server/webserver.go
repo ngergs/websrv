@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -8,6 +9,7 @@ import (
 	"path"
 
 	"github.com/ngergs/webserver/v2/filesystem"
+	"github.com/ngergs/webserver/v2/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -24,6 +26,7 @@ func FileServerHandler(fileSystem filesystem.ZipFs, fallbackFilepath string, con
 		fallbackFilepath: fallbackFilepath,
 		fileSystem:       fileSystem,
 		config:           config,
+		gzipMediaTypes:   config.GzipMediaTypes,
 	}
 	if hasMemoryFs {
 		handler.gzipMediaTypes = config.GzipMediaTypes
@@ -36,13 +39,13 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	logger := log.Ctx(r.Context())
 	requestPath := r.URL.Path
 
-	file, requestPath, err := handler.getFileOrFallback(logger, requestPath)
+	file, requestPath, err := handler.getFileOrFallback(r.Context(), logger, requestPath)
 	if err != nil {
 		logger.Error().Err(err).Msgf("file %s not found", r.URL.Path)
 		http.Error(w, "file not found", http.StatusNotFound)
 		return
 	}
-	defer file.Close()
+	defer utils.Close(r.Context(), file)
 
 	logger.Debug().Msgf("Serving file %s", requestPath)
 	err = handler.setContentHeader(w, requestPath)
@@ -55,7 +58,7 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	writeResponse(w, r, file)
 }
 
-func (handler *WebserverHandler) getFileOrFallback(logger *zerolog.Logger, requestPath string) (file fs.File, requestpath string, err error) {
+func (handler *WebserverHandler) getFileOrFallback(ctx context.Context, logger *zerolog.Logger, requestPath string) (file fs.File, requestpath string, err error) {
 	file, err = handler.fileSystem.Open(requestPath)
 	if err != nil {
 		logger.Debug().Err(err).Msgf("file %s not found", requestPath)
@@ -63,7 +66,7 @@ func (handler *WebserverHandler) getFileOrFallback(logger *zerolog.Logger, reque
 	}
 	fileInfo, err := file.Stat()
 	if fileInfo.IsDir() {
-		defer file.Close()
+		defer utils.Close(ctx, file)
 		return nil, requestPath, fmt.Errorf("requested file is directory")
 	}
 	return file, requestPath, err

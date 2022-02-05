@@ -1,6 +1,7 @@
 package filesystem
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -59,7 +60,7 @@ func getReadFileFunc(filesystem *MemoryFilesystem, targetDirLength int, zipFileE
 		if err != nil {
 			return err
 		}
-		defer file.Close()
+		defer utils.Close(context.Background(), file)
 
 		var result *memoryFile
 		isZipped := false

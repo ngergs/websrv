@@ -49,7 +49,7 @@ func GzipHandler(next http.Handler, gzipMediaTypes []string) http.Handler {
 		logEnter(r.Context(), "gzip")
 		if utils.ContainsAfterSplit(r.Header.Values("Accept-Encoding"), ",", "gzip") {
 			gzipResponseWriter := &gzipResponseWriter{Next: w, GzipMediaTypes: gzipMediaTypes}
-			defer gzipResponseWriter.Close()
+			defer utils.Close(r.Context(), gzipResponseWriter)
 			w = gzipResponseWriter
 		}
 		next.ServeHTTP(w, r)

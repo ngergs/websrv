@@ -45,7 +45,7 @@ func AccessLogHandler(next http.Handler) http.Handler {
 		originalPath := r.URL.String()
 		next.ServeHTTP(metricResponseWriter, r)
 		logEvent := log.Info()
-		requestId := r.Context().Value(requestIdKey)
+		requestId := r.Context().Value(RequestIdKey)
 		if requestId != nil {
 			logEvent = logEvent.Str("requestId", requestId.(string))
 		}

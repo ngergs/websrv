@@ -8,11 +8,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type contextKey struct {
+type ContextKey struct {
 	val string
 }
 
-var requestIdKey = &contextKey{val: "requestId"}
+var RequestIdKey = &ContextKey{val: "requestId"}
 
 func RequestIdToCtxHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +21,7 @@ func RequestIdToCtxHandler(next http.Handler) http.Handler {
 		requestId := utils.GetRandomId(32)
 		log := log.With().Str("requestId", requestId).Logger()
 		ctx = log.WithContext(ctx)
-		ctx = context.WithValue(ctx, requestIdKey, requestId)
+		ctx = context.WithValue(ctx, RequestIdKey, requestId)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

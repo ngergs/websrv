@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var timerKey = &contextKey{val: "requestId"}
+var timerKey = &ContextKey{val: "requestId"}
 
 func TimerStartTOCtxHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

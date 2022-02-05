@@ -67,6 +67,8 @@ func init() {
 	targetDir = args[0]
 }
 
+// readConfig reads and deserializes the configFile flag parameter.
+// Returns a default Configuration with default mediatype file extension mappings as well as default gzip media types. if the configFile flag parameter has not been set.
 func readConfig() (*server.Config, []string, error) {
 	if *configFile == "" {
 		return &server.Config{

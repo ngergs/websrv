@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var sessionIddKey = &contextKey{val: "sessionId"}
+var SessionIddKey = &ContextKey{val: "sessionId"}
 
 func readSessionIdCookie(r *http.Request, cookieName string) (sessionId string, ok bool) {
 	for _, cookie := range r.Cookies() {
@@ -17,7 +17,7 @@ func readSessionIdCookie(r *http.Request, cookieName string) (sessionId string, 
 			return cookie.Value, true
 		}
 	}
-	log.Ctx(r.Context()).Debug().Msgf("Cookie %s expired %d", cookieName)
+	log.Ctx(r.Context()).Debug().Msgf("Cookie %s not present in request", cookieName)
 	return "", false
 }
 
@@ -33,12 +33,13 @@ func SessionCookieHandler(next http.Handler, cookieName string, cookieTimeToLife
 				Value:    sessionId,
 				Path:     "/",
 				MaxAge:   int(cookieTimeToLife.Seconds()),
+				Expires:  time.Now().Add(cookieTimeToLife),
 				Secure:   true,
 				HttpOnly: true,
 				SameSite: http.SameSiteStrictMode,
 			})
 		}
-		ctx := context.WithValue(r.Context(), sessionIddKey, sessionId)
+		ctx := context.WithValue(r.Context(), SessionIddKey, sessionId)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
