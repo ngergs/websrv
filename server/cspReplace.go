@@ -83,7 +83,7 @@ func (handler *CspReplaceHandler) replaceHeader(w http.ResponseWriter, sessionId
 func (handler *CspReplaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logEnter(r.Context(), "csp-replace")
 
-	sessionId := r.Context().Value(SessionIddKey)
+	sessionId := r.Context().Value(SessionIdKey)
 	if sessionId == nil {
 		log.Warn().Msg("SessionId not present in context")
 		sessionId = "" // stil replace to not leak the value that will be replaced

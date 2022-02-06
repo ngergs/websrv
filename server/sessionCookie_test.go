@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
@@ -16,7 +17,8 @@ const cookieLifeTime = time.Duration(10) * time.Second
 
 func TestSessionCookieShouldBeAdded(t *testing.T) {
 	// Setup test to get a session cookie
-	w, r, handler := getSessionCookieHandlerWithMocks(t)
+	w, r, next := getDefaultHandlerMocks()
+	handler := server.SessionCookieHandler(next, cookieName, cookieLifeTime)
 	handler.ServeHTTP(w, r)
 	w.mock.AssertExpectations(t)
 
@@ -38,27 +40,31 @@ func TestSessionCookieShouldBeAdded(t *testing.T) {
 	expiresTime := time.Now().Add(cookieLifeTime)
 	assert.True(t, cookie.Expires.After(expiresTime.Add(-time.Duration(1)*time.Second)))
 	assert.True(t, cookie.Expires.Before(expiresTime.Add(time.Duration(1)*time.Second)))
+
+	cookieValue := getCookieFromCtx(t, next.r.Context())
+	assert.NotEqual(t, "", cookieValue)
 }
 
 func TestSessionCookieShouldNotAddedIfPresent(t *testing.T) {
 	// Setup test to get a session cookie
-	w, r, handler := getSessionCookieHandlerWithMocks(t)
-	r.Header.Set("Cookie", cookieName+"=test")
+	requestCookieValue := "test123"
+	w, r, next := getDefaultHandlerMocks()
+	handler := server.SessionCookieHandler(next, cookieName, cookieLifeTime)
+	r.Header.Set("Cookie", cookieName+"="+requestCookieValue)
 	handler.ServeHTTP(w, r)
 
-	// check that cookie has not been set
+	// check that cookie has not been set in response
 	_, ok := w.Header()["Set-Cookie"]
 	assert.False(t, ok)
+
+	cookieValue := getCookieFromCtx(t, next.r.Context())
+	assert.Equal(t, requestCookieValue, cookieValue)
 }
 
-func getSessionCookieHandlerWithMocks(t *testing.T) (*mockResponseWriter, *http.Request, http.Handler) {
-	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	handler := server.SessionCookieHandler(next, cookieName, cookieLifeTime)
-	w := &mockResponseWriter{}
-	r := &http.Request{Header: make(map[string][]string)}
-	var responseHeader http.Header = make(map[string][]string)
-	w.mock.On("Header").Return(responseHeader)
-	return w, r, handler
+func getCookieFromCtx(t *testing.T, ctx context.Context) string {
+	cookieVal := ctx.Value(server.SessionIdKey)
+	assert.NotNil(t, cookieVal)
+	return cookieVal.(string)
 }
 
 // parseSetCookie extracts a Cookie from the Set-Cookie header. The SameSite part is returned as a separate string, as the std lib http.readSetCookies method is private.

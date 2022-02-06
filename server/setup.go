@@ -46,6 +46,7 @@ func Caching(filesystem fs.FS) HandlerMiddleware {
 	}
 }
 
+// CspReplace has the hard requirement that a session cookie is present in the context, see server.SessionCookie to add one.
 func CspReplace(config *Config, filesystem filesystem.ZipFs) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		if config.AngularCspReplace == nil {

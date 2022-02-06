@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var SessionIddKey = &ContextKey{val: "sessionId"}
+var SessionIdKey = &ContextKey{val: "sessionId"}
 
 func readSessionIdCookie(r *http.Request, cookieName string) (sessionId string, ok bool) {
 	for _, cookie := range r.Cookies() {
@@ -39,7 +39,7 @@ func SessionCookieHandler(next http.Handler, cookieName string, cookieTimeToLife
 				SameSite: http.SameSiteStrictMode,
 			})
 		}
-		ctx := context.WithValue(r.Context(), SessionIddKey, sessionId)
+		ctx := context.WithValue(r.Context(), SessionIdKey, sessionId)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

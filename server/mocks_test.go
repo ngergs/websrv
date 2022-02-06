@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/stretchr/testify/mock"
@@ -22,4 +23,25 @@ func (w *mockResponseWriter) Write(data []byte) (int, error) {
 
 func (w *mockResponseWriter) WriteHeader(statusCode int) {
 	w.mock.Called(statusCode)
+}
+
+type mockHandler struct {
+	w http.ResponseWriter
+	r *http.Request
+}
+
+func (handler *mockHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	handler.w = w
+	handler.r = r
+}
+
+// getDefaultHandlerMocks provides default mocks used for handler testing
+func getDefaultHandlerMocks() (w *mockResponseWriter, r *http.Request, next *mockHandler) {
+	next = &mockHandler{}
+	w = &mockResponseWriter{}
+	r = &http.Request{Header: make(map[string][]string)}
+	r = r.WithContext(context.Background())
+	var responseHeader http.Header = make(map[string][]string)
+	w.mock.On("Header").Return(responseHeader)
+	return
 }
