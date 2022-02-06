@@ -33,7 +33,7 @@ func (w *metricResponseWriter) WriteHeader(statusCode int) {
 
 func AccessLogHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		startRaw := r.Context().Value(timerKey)
+		startRaw := r.Context().Value(TimerKey)
 		var start time.Time
 		if startRaw != nil {
 			start = startRaw.(time.Time)

@@ -18,6 +18,8 @@ const cookieLifeTime = time.Duration(10) * time.Second
 func TestSessionCookieShouldBeAdded(t *testing.T) {
 	// Setup test to get a session cookie
 	w, r, next := getDefaultHandlerMocks()
+	var responseHeader http.Header = make(map[string][]string)
+	w.mock.On("Header").Return(responseHeader)
 	handler := server.SessionCookieHandler(next, cookieName, cookieLifeTime)
 	handler.ServeHTTP(w, r)
 	w.mock.AssertExpectations(t)
@@ -37,9 +39,9 @@ func TestSessionCookieShouldBeAdded(t *testing.T) {
 	assert.Equal(t, cookieName, cookie.Name)
 	assert.Equal(t, int(cookieLifeTime.Seconds()), cookie.MaxAge)
 	// allow some error here as this is set internally when the cookie is created
-	expiresTime := time.Now().Add(cookieLifeTime)
-	assert.True(t, cookie.Expires.After(expiresTime.Add(-time.Duration(1)*time.Second)))
-	assert.True(t, cookie.Expires.Before(expiresTime.Add(time.Duration(1)*time.Second)))
+	expectedExpiresTime := time.Now().Add(cookieLifeTime)
+	assert.True(t, cookie.Expires.After(expectedExpiresTime.Add(-time.Duration(1)*time.Second)))
+	assert.True(t, cookie.Expires.Before(expectedExpiresTime.Add(time.Duration(1)*time.Second)))
 
 	cookieValue := getCookieFromCtx(t, next.r.Context())
 	assert.NotEqual(t, "", cookieValue)
@@ -49,11 +51,13 @@ func TestSessionCookieShouldNotAddedIfPresent(t *testing.T) {
 	// Setup test to get a session cookie
 	requestCookieValue := "test123"
 	w, r, next := getDefaultHandlerMocks()
+	var responseHeader http.Header = make(map[string][]string)
+	w.mock.On("Header").Return(responseHeader)
 	handler := server.SessionCookieHandler(next, cookieName, cookieLifeTime)
 	r.Header.Set("Cookie", cookieName+"="+requestCookieValue)
 	handler.ServeHTTP(w, r)
 
-	// check that cookie has not been set in response
+	//make sure that cookie has not been set in response
 	_, ok := w.Header()["Set-Cookie"]
 	assert.False(t, ok)
 

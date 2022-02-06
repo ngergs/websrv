@@ -25,6 +25,13 @@ func (w *mockResponseWriter) WriteHeader(statusCode int) {
 	w.mock.Called(statusCode)
 }
 
+func (w *mockResponseWriter) mockStatusWrite(expectedtStatus int) {
+	var responseHeader http.Header = make(map[string][]string)
+	w.mock.On("Write", mock.Anything).Return(123, nil)
+	w.mock.On("Header").Return(responseHeader)
+	w.mock.On("WriteHeader", expectedtStatus)
+}
+
 type mockHandler struct {
 	w http.ResponseWriter
 	r *http.Request
@@ -41,7 +48,5 @@ func getDefaultHandlerMocks() (w *mockResponseWriter, r *http.Request, next *moc
 	w = &mockResponseWriter{}
 	r = &http.Request{Header: make(map[string][]string)}
 	r = r.WithContext(context.Background())
-	var responseHeader http.Header = make(map[string][]string)
-	w.mock.On("Header").Return(responseHeader)
 	return
 }
