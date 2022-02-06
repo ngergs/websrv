@@ -15,8 +15,7 @@ import (
 
 // MemoryFilesystem only holds actual files, not the directory entries
 type MemoryFilesystem struct {
-	files    map[string]*memoryFile
-	isZipped map[string]bool
+	files map[string]*memoryFile
 }
 
 type memoryFile struct {
@@ -24,6 +23,7 @@ type memoryFile struct {
 	info      fs.FileInfo
 	dirInfo   []fs.DirEntry
 	dirOffset int
+	isZipped  bool
 }
 
 type openMemoryFile struct {
@@ -34,8 +34,7 @@ type openMemoryFile struct {
 func NewMemoryFs(targetDir string, zipFileExtensions []string) (*MemoryFilesystem, error) {
 	targetDir = path.Clean(targetDir)
 	fs := &MemoryFilesystem{
-		files:    make(map[string]*memoryFile),
-		isZipped: make(map[string]bool),
+		files: make(map[string]*memoryFile),
 	}
 	err := filepath.Walk(targetDir, getReadFileFunc(fs, len(targetDir), zipFileExtensions))
 	if err != nil {
@@ -69,7 +68,7 @@ func getReadFileFunc(filesystem *MemoryFilesystem, targetDirLength int, zipFileE
 			if err != nil {
 				return err
 			}
-			result = &memoryFile{info: info, dirInfo: dirInfo}
+			result = &memoryFile{info: info, dirInfo: dirInfo, isZipped: isZipped}
 		} else {
 			data, err := io.ReadAll(file)
 
@@ -85,21 +84,20 @@ func getReadFileFunc(filesystem *MemoryFilesystem, targetDirLength int, zipFileE
 					return err
 				}
 			}
-			result = &memoryFile{data: data, info: info}
+			result = &memoryFile{data: data, info: info, isZipped: isZipped}
 		}
 		log.Debug().Msgf("Read into memory-fs: %s", subPath)
 		filesystem.files[subPath] = result
-		filesystem.isZipped[subPath] = isZipped
 		return nil
 	}
 }
 
 func (filesystem *MemoryFilesystem) IsZipped(path string) (bool, error) {
-	isZipped, ok := filesystem.isZipped[path]
+	file, ok := filesystem.files[path]
 	if !ok {
 		return false, fmt.Errorf("could not determine whether file is zipped")
 	}
-	return isZipped, nil
+	return file.isZipped, nil
 }
 
 func (fs *MemoryFilesystem) Open(name string) (fs.File, error) {
