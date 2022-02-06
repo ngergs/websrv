@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ngergs/webserver/v2/server"
+	"github.com/ngergs/webserver/server"
 	"github.com/stretchr/testify/assert"
 )
 

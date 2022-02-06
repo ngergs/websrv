@@ -1,4 +1,4 @@
-module github.com/ngergs/webserver/v2
+module github.com/ngergs/webserver
 
 go 1.17
 

@@ -8,7 +8,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/ngergs/webserver/v2/filesystem"
+	"github.com/ngergs/webserver/filesystem"
 	"github.com/rs/zerolog/log"
 )
 

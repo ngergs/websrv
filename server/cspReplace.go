@@ -8,8 +8,8 @@ import (
 	"sync"
 	"text/template"
 
-	"github.com/ngergs/webserver/v2/filesystem"
-	"github.com/ngergs/webserver/v2/utils"
+	"github.com/ngergs/webserver/filesystem"
+	"github.com/ngergs/webserver/utils"
 	"github.com/rs/zerolog/log"
 )
 

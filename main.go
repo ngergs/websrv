@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/ngergs/webserver/v2/filesystem"
-	"github.com/ngergs/webserver/v2/server"
+	"github.com/ngergs/webserver/filesystem"
+	"github.com/ngergs/webserver/server"
 	"github.com/rs/zerolog/log"
 )
 
