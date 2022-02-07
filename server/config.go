@@ -1,5 +1,9 @@
 package server
 
+import (
+	"github.com/ngergs/webserver/utils"
+)
+
 type OperationType string
 
 const SecureRandomIdFileReplacer OperationType = "RANDOM-ID"
@@ -17,4 +21,14 @@ type AngularCspReplace struct {
 	VariableName    string `json:"variable-name"`
 	CookieName      string `json:"cookie-name"`
 	CookieMaxAge    int    `json:"cookie-max-age"`
+}
+
+func (config *Config) GzipFileExtensions() []string {
+	result := make([]string, 0)
+	for fileExtension, mediaType := range config.MediaTypeMap {
+		if utils.Contains(config.GzipMediaTypes, mediaType) {
+			result = append(result, fileExtension)
+		}
+	}
+	return result
 }

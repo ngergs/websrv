@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/ngergs/webserver/server"
-	"github.com/ngergs/webserver/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -73,16 +72,6 @@ func GetDefaultConfig() *server.Config {
 	}
 }
 
-func GetGzipFileExtension(config *server.Config) []string {
-	result := make([]string, 0)
-	for fileExtension, mediaType := range config.MediaTypeMap {
-		if utils.Contains(config.GzipMediaTypes, mediaType) {
-			result = append(result, fileExtension)
-		}
-	}
-	return result
-}
-
 // readConfig reads and deserializes the configFile flag parameter.
 // Returns a default Configuration with default mediatype file extension mappings as well as default gzip media types. if the configFile flag parameter has not been set.
 func readConfig() (*server.Config, error) {
@@ -113,13 +102,6 @@ func readConfig() (*server.Config, error) {
 	}
 	if config.GzipMediaTypes == nil {
 		config.GzipMediaTypes = defaultGzipMediaTypes
-	}
-
-	gzipFileExtensions := []string{}
-	for fileExtension, mediaType := range config.MediaTypeMap {
-		if utils.Contains(config.GzipMediaTypes, mediaType) {
-			gzipFileExtensions = append(gzipFileExtensions, fileExtension)
-		}
 	}
 	return &config, nil
 }

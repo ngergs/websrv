@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strconv"
 	"time"
-
-	"github.com/ngergs/webserver/filesystem"
 )
 
 // HandlerMiddleware wraps a received handler with another wrapper handler to add functionality
@@ -44,7 +42,7 @@ func Caching(filesystem fs.FS) HandlerMiddleware {
 }
 
 // CspReplace has the hard requirement that a session cookie is present in the context, see server.SessionCookie to add one.
-func CspReplace(config *Config, filesystem filesystem.ZipFs) HandlerMiddleware {
+func CspReplace(config *Config, filesystem fs.ReadFileFS) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		if config.AngularCspReplace == nil {
 			return handler

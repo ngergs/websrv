@@ -2,14 +2,13 @@ package server
 
 import (
 	"context"
+	"io/fs"
 	"net/http"
 	"path"
 	"regexp"
 	"strings"
 	"sync"
 
-	"github.com/ngergs/webserver/filesystem"
-	"github.com/ngergs/webserver/utils"
 	"github.com/rs/zerolog/log"
 )
 
@@ -17,7 +16,7 @@ const cspHeaderName = "Content-Security-Policy"
 
 type CspReplaceHandler struct {
 	Next           http.Handler
-	Filesystem     filesystem.ZipFs
+	Filesystem     fs.ReadFileFS
 	FileNamePatter *regexp.Regexp
 	VariableName   string
 	Replacer       map[string]*replacerCollection
@@ -29,16 +28,6 @@ func (handler *CspReplaceHandler) load(path string) (*replacerCollection, error)
 	data, err := handler.Filesystem.ReadFile(path)
 	if err != nil {
 		return nil, err
-	}
-	isZipped, err := handler.Filesystem.IsZipped(path)
-	if err != nil {
-		return nil, err
-	}
-	if isZipped {
-		data, err = utils.Unzip(data)
-		if err != nil {
-			return nil, err
-		}
 	}
 	replacer, err := ReplacerCollectionFromInput(data, handler.VariableName)
 	if err != nil {

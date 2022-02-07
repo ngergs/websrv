@@ -13,8 +13,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// MemoryFilesystem only holds actual files, not the directory entries
-type MemoryFilesystem struct {
+// MemoryFS only holds actual files, not the directory entries
+type MemoryFS struct {
 	files map[string]*memoryFile
 }
 
@@ -23,7 +23,6 @@ type memoryFile struct {
 	info      fs.FileInfo
 	dirInfo   []fs.DirEntry
 	dirOffset int
-	isZipped  bool
 }
 
 type openMemoryFile struct {
@@ -31,19 +30,19 @@ type openMemoryFile struct {
 	file       *memoryFile
 }
 
-func NewMemoryFs(targetDir string, zipFileExtensions []string) (*MemoryFilesystem, error) {
+func NewMemoryFs(targetDir string) (*MemoryFS, error) {
 	targetDir = path.Clean(targetDir)
-	fs := &MemoryFilesystem{
+	fs := &MemoryFS{
 		files: make(map[string]*memoryFile),
 	}
-	err := filepath.Walk(targetDir, getReadFileFunc(fs, len(targetDir), zipFileExtensions))
+	err := filepath.Walk(targetDir, getReadFileFunc(fs, len(targetDir)))
 	if err != nil {
 		return nil, fmt.Errorf("error reading files into in-memory-fs: %w", err)
 	}
 	return fs, nil
 }
 
-func getReadFileFunc(filesystem *MemoryFilesystem, targetDirLength int, zipFileExtensions []string) func(path string, info fs.FileInfo, err error) error {
+func getReadFileFunc(filesystem *MemoryFS, targetDirLength int) func(path string, info fs.FileInfo, err error) error {
 	return func(filePath string, info fs.FileInfo, err error) error {
 		// remove targetDir part and leading / from path
 		var subPath string
@@ -62,29 +61,20 @@ func getReadFileFunc(filesystem *MemoryFilesystem, targetDirLength int, zipFileE
 		defer utils.Close(context.Background(), file)
 
 		var result *memoryFile
-		isZipped := false
 		if info.IsDir() {
 			dirInfo, err := file.ReadDir(0)
 			if err != nil {
 				return err
 			}
-			result = &memoryFile{info: info, dirInfo: dirInfo, isZipped: isZipped}
+			result = &memoryFile{info: info, dirInfo: dirInfo}
 		} else {
 			data, err := io.ReadAll(file)
 
 			if err != nil {
 				return err
 			}
-			if utils.Contains(zipFileExtensions, path.Ext(subPath)) {
-				log.Debug().Msgf("Zipping file %s", subPath)
-				data, err = utils.Zip(data)
-				info = &modifiedSizeInfo{size: int64(len(data)), FileInfo: info}
-				isZipped = true
-				if err != nil {
-					return err
-				}
-			}
-			result = &memoryFile{data: data, info: info, isZipped: isZipped}
+			//info = &modifiedSizeInfo{size: int64(len(data)), FileInfo: info}
+			result = &memoryFile{data: data, info: info}
 		}
 		log.Debug().Msgf("Read into memory-fs: %s", subPath)
 		filesystem.files[subPath] = result
@@ -92,22 +82,32 @@ func getReadFileFunc(filesystem *MemoryFilesystem, targetDirLength int, zipFileE
 	}
 }
 
-func (filesystem *MemoryFilesystem) IsZipped(path string) (bool, error) {
-	file, ok := filesystem.files[path]
-	if !ok {
-		return false, fmt.Errorf("could not determine whether file is zipped")
+// Zip returns a deep copy of the filesystem where all files that match the given zip file extension are zipped.
+// Files that do not match are absent in the zipped version of the in memoryfilesystem.
+func (fs *MemoryFS) Zip(zipFileExtensions []string) (*MemoryFS, error) {
+	zippedFiles := make(map[string]*memoryFile)
+	for filepath, file := range fs.files {
+		if utils.Contains(zipFileExtensions, path.Ext(filepath)) {
+			log.Debug().Msgf("Zipping %s", filepath)
+			zipped, err := utils.Zip(file.data)
+			if err != nil {
+				return nil, err
+			}
+			info := &modifiedSizeInfo{size: int64(len(zipped)), FileInfo: file.info}
+			zippedFiles[filepath] = &memoryFile{data: zipped, info: info}
+		}
 	}
-	return file.isZipped, nil
+	return &MemoryFS{files: zippedFiles}, nil
 }
 
-func (fs *MemoryFilesystem) Open(name string) (fs.File, error) {
+func (fs *MemoryFS) Open(name string) (fs.File, error) {
 	file, ok := fs.files[name]
 	if !ok {
 		return nil, fmt.Errorf("file %s not found", name)
 	}
 	return &openMemoryFile{file: file}, nil
 }
-func (fs *MemoryFilesystem) ReadFile(name string) ([]byte, error) {
+func (fs *MemoryFS) ReadFile(name string) ([]byte, error) {
 	file, ok := fs.files[name]
 	if !ok {
 		return nil, fmt.Errorf("file %s not found in filesystem", name)

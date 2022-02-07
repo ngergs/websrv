@@ -8,47 +8,91 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/ngergs/webserver/filesystem"
 	"github.com/ngergs/webserver/utils"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 type WebserverHandler struct {
-	fallbackFilepath string
-	fileSystem       filesystem.ZipFs
-	config           *Config
-	gzipMediaTypes   []string
+	fetch              fileFetch
+	mediaTypeMap       map[string]string
+	gzipMediaTypes     []string
+	gzipFileExtensions []string
 }
 
-func FileServerHandler(fileSystem filesystem.ZipFs, fallbackFilepath string, config *Config, hasMemoryFs bool) *WebserverHandler {
-	handler := &WebserverHandler{
-		fallbackFilepath: fallbackFilepath,
-		fileSystem:       fileSystem,
-		config:           config,
-		gzipMediaTypes:   config.GzipMediaTypes,
+type fileFetch func(ctx context.Context, requestPath string, zipOk bool) (file fs.File, path string, zipped bool, err error)
+
+func fetchWrapper(nextZip fileFetch, nextUnzip fileFetch) fileFetch {
+	return func(ctx context.Context, path string, zipOk bool) (fs.File, string, bool, error) {
+		if zipOk && nextZip != nil {
+			return nextZip(ctx, path, zipOk)
+		}
+		return nextUnzip(ctx, path, zipOk)
 	}
-	if hasMemoryFs {
-		handler.gzipMediaTypes = config.GzipMediaTypes
+}
+
+func fsFetch(name string, filesystem fs.FS, zipped bool, next fileFetch) fileFetch {
+	if filesystem == nil {
+		log.Debug().Msgf("filesystem absent for fetcher %s, skipping configuration", name)
+		return nil
+	}
+	return func(ctx context.Context, path string, zipOk bool) (fs.File, string, bool, error) {
+		file, err := filesystem.Open(path)
+		log.Ctx(ctx).Debug().Msgf("fileFetch %s file miss for %s, trying next", name, path)
+		if err != nil {
+			if next != nil {
+				return next(ctx, path, zipOk)
+			}
+		}
+		return file, path, zipped, err
+	}
+}
+
+func fallbackFetch(name string, filesystem fs.FS, zipped bool, fallbackFilepath string) fileFetch {
+	if filesystem == nil {
+		log.Debug().Msgf("filesystem absent for fetcher %s, skipping configuration", name)
+		return nil
+	}
+	return func(ctx context.Context, path string, zipOk bool) (fs.File, string, bool, error) {
+		if zipped && !zipOk {
+			return nil, "", false, fmt.Errorf("requested unzipped file %s from zipped fallback", name)
+		}
+		file, err := filesystem.Open(fallbackFilepath)
+		return file, fallbackFilepath, zipped, err
+	}
+}
+
+// FileServerHandler implements the actual fileserver logic. zipfs can be set to nil if no pre-zipped file have been prepared.
+func FileServerHandler(fs fs.FS, zipfs fs.FS, fallbackFilepath string, config *Config) *WebserverHandler {
+	fallbackFetcher := fetchWrapper(fallbackFetch("zipped", zipfs, true, fallbackFilepath),
+		fallbackFetch("unzipped", fs, false, fallbackFilepath))
+	fetcher := fetchWrapper(fsFetch("zipped", zipfs, true, fallbackFetcher),
+		fsFetch("unzipped", fs, false, fallbackFetcher))
+	handler := &WebserverHandler{
+		fetch:              fetcher,
+		mediaTypeMap:       config.MediaTypeMap,
+		gzipMediaTypes:     config.GzipMediaTypes,
+		gzipFileExtensions: config.GzipFileExtensions(),
 	}
 	return handler
 }
 
 func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	logEnter(r.Context(), "webserver")
-	logger := log.Ctx(r.Context())
-	requestPath := r.URL.Path
+	ctx := r.Context()
+	logEnter(ctx, "webserver")
+	logger := log.Ctx(ctx)
 
-	file, requestPath, err := handler.getFileOrFallback(r.Context(), logger, requestPath)
+	zipOk := utils.ContainsAfterSplit(r.Header.Values("Accept-Encoding"), ",", "gzip") &&
+		utils.Contains(handler.gzipFileExtensions, path.Ext(r.URL.Path))
+	file, servedPath, zipped, err := handler.fetch(ctx, r.URL.Path, zipOk)
 	if err != nil {
 		logger.Error().Err(err).Msgf("file %s not found", r.URL.Path)
 		http.Error(w, "file not found", http.StatusNotFound)
 		return
 	}
-	defer utils.Close(r.Context(), file)
+	defer utils.Close(ctx, file)
 
-	logger.Debug().Msgf("Serving file %s", requestPath)
-	err = handler.setContentHeader(w, requestPath)
+	logger.Debug().Msgf("Serving file %s", servedPath)
+	err = handler.setContentHeader(w, servedPath, zipped)
 	if err != nil {
 		logger.Error().Err(err).Msgf("content header error")
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -58,44 +102,13 @@ func (handler *WebserverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	writeResponse(w, r, file)
 }
 
-func (handler *WebserverHandler) getFileOrFallback(ctx context.Context, logger *zerolog.Logger, requestPath string) (file fs.File, requestpath string, err error) {
-	file, err = handler.fileSystem.Open(requestPath)
-	if err != nil {
-		logger.Debug().Err(err).Msgf("file %s not found", requestPath)
-		return handler.checkForFallbackFile(logger, requestPath)
-	}
-	fileInfo, err := file.Stat()
-	if fileInfo.IsDir() {
-		defer utils.Close(ctx, file)
-		return nil, requestPath, fmt.Errorf("requested file is directory")
-	}
-	return file, requestPath, err
-}
-
-func (handler *WebserverHandler) checkForFallbackFile(logger *zerolog.Logger, requestPath string) (file fs.File, requestpath string, err error) {
-	// explicitly requested files do not fall back to index.html, only paths do
-	if handler.fallbackFilepath == "" || (path.Ext(requestPath) != "" && path.Ext(requestPath) != ".") {
-		return nil, "", fmt.Errorf("fallback file not relevant for directories: %s", requestPath)
-	}
-	requestPath = handler.fallbackFilepath
-	file, err = handler.fileSystem.Open(handler.fallbackFilepath)
-	if err != nil {
-		return nil, "", fmt.Errorf("fallback file %s not found", requestPath)
-	}
-	return file, requestPath, err
-}
-
-func (handler *WebserverHandler) setContentHeader(w http.ResponseWriter, requestPath string) error {
-	mediaType, ok := handler.config.MediaTypeMap[path.Ext(requestPath)]
+func (handler *WebserverHandler) setContentHeader(w http.ResponseWriter, requestPath string, zipped bool) error {
+	mediaType, ok := handler.mediaTypeMap[path.Ext(requestPath)]
 	if !ok {
 		mediaType = "application/octet-stream"
 	}
 	w.Header().Set("Content-Type", mediaType)
-	isZipped, err := handler.fileSystem.IsZipped(requestPath)
-	if err != nil {
-		return fmt.Errorf("failed to resolve whether file is zipped: %s", requestPath)
-	}
-	if isZipped {
+	if zipped {
 		w.Header().Set("Content-Encoding", "gzip")
 	}
 	return nil
