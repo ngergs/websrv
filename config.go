@@ -39,15 +39,14 @@ var defaultMediaTypeMap = map[string]string{
 	".woff2": "font/woff2",
 }
 
-func usage() {
-	fmt.Printf("Usage: fileserver {options} [target-path]\nOptions:\n")
-	flag.PrintDefaults()
-}
-
-func init() {
+func setup() {
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s {options} [target-path]\nOptions:\n", os.Args[0])
+		flag.PrintDefaults()
+	}
 	flag.Parse()
 	if *help {
-		usage()
+		flag.Usage()
 		os.Exit(0)
 	}
 	if *debugLogging {
@@ -61,33 +60,47 @@ func init() {
 	args := flag.Args()
 	if len(args) != 1 {
 		log.Error().Msgf("Unexpected number of arguments: %d\n", len(args))
-		usage()
+		flag.Usage()
 		os.Exit(1)
 	}
 	targetDir = args[0]
 }
 
+func GetDefaultConfig() *server.Config {
+	return &server.Config{
+		GzipMediaTypes: defaultGzipMediaTypes,
+		MediaTypeMap:   defaultMediaTypeMap,
+	}
+}
+
+func GetGzipFileExtension(config *server.Config) []string {
+	result := make([]string, 0)
+	for fileExtension, mediaType := range config.MediaTypeMap {
+		if utils.Contains(config.GzipMediaTypes, mediaType) {
+			result = append(result, fileExtension)
+		}
+	}
+	return result
+}
+
 // readConfig reads and deserializes the configFile flag parameter.
 // Returns a default Configuration with default mediatype file extension mappings as well as default gzip media types. if the configFile flag parameter has not been set.
-func readConfig() (*server.Config, []string, error) {
+func readConfig() (*server.Config, error) {
 	if *configFile == "" {
-		return &server.Config{
-			GzipMediaTypes: defaultGzipMediaTypes,
-			MediaTypeMap:   defaultMediaTypeMap,
-		}, nil, nil
+		return GetDefaultConfig(), nil
 	}
 	file, err := os.Open(*configFile)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	var config server.Config
 	err = json.Unmarshal(data, &config)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	if config.MediaTypeMap == nil {
@@ -96,7 +109,7 @@ func readConfig() (*server.Config, []string, error) {
 
 	if !*gzip {
 		config.GzipMediaTypes = []string{}
-		return &config, []string{}, nil
+		return &config, nil
 	}
 	if config.GzipMediaTypes == nil {
 		config.GzipMediaTypes = defaultGzipMediaTypes
@@ -108,5 +121,5 @@ func readConfig() (*server.Config, []string, error) {
 			gzipFileExtensions = append(gzipFileExtensions, fileExtension)
 		}
 	}
-	return &config, gzipFileExtensions, nil
+	return &config, nil
 }

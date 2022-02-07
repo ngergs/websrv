@@ -5,28 +5,25 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
-	"text/template"
 	"time"
 
 	"github.com/ngergs/webserver/filesystem"
-	"github.com/rs/zerolog/log"
 )
 
 // HandlerMiddleware wraps a received handler with another wrapper handler to add functionality
 type HandlerMiddleware func(handler http.Handler) http.Handler
 
-// Starts a http server. Blocks till an error occurs.
-func Start(name string, port int, errChan chan<- error, handler http.Handler, handlerSetups ...HandlerMiddleware) error {
+// Builds a http server from the provided options.
+func Build(port int, handler http.Handler, handlerSetups ...HandlerMiddleware) *http.Server {
 	//	handler = server.New(filesystem, *fallbackFilepath, config)
 	for _, handlerSetup := range handlerSetups {
 		handler = handlerSetup(handler)
 	}
-	fileserver := &http.Server{
+	server := &http.Server{
 		Addr:    ":" + strconv.Itoa(port),
 		Handler: handler,
 	}
-	log.Info().Msgf("Starting %s server on port %d", name, port)
-	return fileserver.ListenAndServe()
+	return server
 }
 
 func Optional(middleware HandlerMiddleware, isActive bool) HandlerMiddleware {
@@ -57,7 +54,7 @@ func CspReplace(config *Config, filesystem filesystem.ZipFs) HandlerMiddleware {
 			Filesystem:     filesystem,
 			FileNamePatter: regexp.MustCompile(config.AngularCspReplace.FileNamePattern),
 			VariableName:   config.AngularCspReplace.VariableName,
-			Templates:      make(map[string]*template.Template),
+			Replacer:       make(map[string]*replacerCollection),
 			MediaTypeMap:   config.MediaTypeMap,
 		}
 	}

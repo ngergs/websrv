@@ -9,7 +9,8 @@ import (
 )
 
 func main() {
-	config, gzipFileExtensions, err := readConfig()
+	setup()
+	config, err := readConfig()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error reading -config: See server.config.go for the expected structure.")
 	}
@@ -17,7 +18,7 @@ func main() {
 	var fs filesystem.ZipFs
 	if *memoryFs {
 		log.Info().Msg("Using the in-memory-filesystem")
-		fs, err = filesystem.NewMemoryFs(targetDir, gzipFileExtensions)
+		fs, err = filesystem.NewMemoryFs(targetDir, GetGzipFileExtension(config))
 		if err != nil {
 			log.Fatal().Err(err).Msg("Error preparing read-only filesystem.")
 		}
@@ -28,7 +29,7 @@ func main() {
 
 	errChan := make(chan error)
 	go func() {
-		errChan <- server.Start("webserver", *webServerPort, errChan,
+		webserver := server.Build(*webServerPort,
 			server.FileServerHandler(fs, *fallbackFilepath, config, *memoryFs),
 			server.Caching(fs),
 			server.Optional(server.CspReplace(config, fs), config.AngularCspReplace != nil),
@@ -38,15 +39,17 @@ func main() {
 			server.ValidateClean(),
 			server.Optional(server.AccessLog(), *accessLog),
 			server.RequestID(),
-			server.Timer(),
-		)
+			server.Timer())
+		log.Info().Msgf("Starting webserver server on port %d", *webServerPort)
+		errChan <- webserver.ListenAndServe()
 	}()
 	if *health {
 		go func() {
-			errChan <- server.Start("healthserver", *healthPort, errChan,
+			healthServer := server.Build(*healthPort,
 				server.HealthCheckHandler(),
 				server.Optional(server.AccessLog(), *healthAccessLog),
 			)
+			errChan <- healthServer.ListenAndServe()
 		}()
 	}
 	for err := range errChan {

@@ -1,12 +1,12 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"path"
 	"regexp"
 	"strings"
 	"sync"
-	"text/template"
 
 	"github.com/ngergs/webserver/filesystem"
 	"github.com/ngergs/webserver/utils"
@@ -20,12 +20,12 @@ type CspReplaceHandler struct {
 	Filesystem     filesystem.ZipFs
 	FileNamePatter *regexp.Regexp
 	VariableName   string
-	Templates      map[string]*template.Template
+	Replacer       map[string]*replacerCollection
 	MediaTypeMap   map[string]string
-	templatesLock  sync.RWMutex
+	ReplacerLock   sync.RWMutex
 }
 
-func (handler *CspReplaceHandler) load(path string) (*template.Template, error) {
+func (handler *CspReplaceHandler) load(path string) (*replacerCollection, error) {
 	data, err := handler.Filesystem.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -40,38 +40,34 @@ func (handler *CspReplaceHandler) load(path string) (*template.Template, error) 
 			return nil, err
 		}
 	}
-	template, err := template.New(path).Delims("[{[{", "}]}]").Parse(string(data))
+	replacer, err := ReplacerCollectionFromInput(data, handler.VariableName)
 	if err != nil {
 		return nil, err
 	}
-	handler.templatesLock.Lock()
-	defer handler.templatesLock.Unlock()
-	handler.Templates[path] = template
-	return template, nil
+	handler.ReplacerLock.Lock()
+	defer handler.ReplacerLock.Unlock()
+	handler.Replacer[path] = replacer
+	return replacer, nil
 }
 
-func (handler *CspReplaceHandler) getTemplate(path string) (template *template.Template, ok bool) {
-	handler.templatesLock.RLock()
-	defer handler.templatesLock.RUnlock()
-	template, ok = handler.Templates[path]
+func (handler *CspReplaceHandler) getTemplate(path string) (replacer *replacerCollection, ok bool) {
+	handler.ReplacerLock.RLock()
+	defer handler.ReplacerLock.RUnlock()
+	replacer, ok = handler.Replacer[path]
 	return
 }
 
-func (handler *CspReplaceHandler) serveFile(w http.ResponseWriter, path string, data interface{}) error {
-	template, ok := handler.getTemplate(path)
+func (handler *CspReplaceHandler) serveFile(ctx context.Context, w http.ResponseWriter, path string, input string) error {
+	replacer, ok := handler.getTemplate(path)
 	if !ok {
 		var err error
-		template, err = handler.load(path)
+		replacer, err = handler.load(path)
 		if err != nil {
 			return err
 		}
 	}
-	template, err := template.Clone()
-	if err != nil {
-		return err
-	}
 	w.Header().Set("Content-Type", handler.getMediaType(path))
-	return template.Execute(w, data)
+	return replacer.Replace(ctx, w, input)
 }
 
 func (handler *CspReplaceHandler) replaceHeader(w http.ResponseWriter, sessionId string) {
@@ -99,7 +95,7 @@ func (handler *CspReplaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		handler.Next.ServeHTTP(w, r)
 		return
 	}
-	err := handler.serveFile(w, r.URL.Path, map[string]string{handler.VariableName: sessionId.(string)})
+	err := handler.serveFile(r.Context(), w, r.URL.Path, sessionId.(string))
 	if err != nil {
 		log.Err(err).Msgf("error serving template file %s", r.URL.Path)
 		http.Error(w, "Error serving file.", http.StatusInternalServerError)
