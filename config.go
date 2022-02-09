@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -17,7 +18,8 @@ var debugLogging = flag.Bool("debug", false, "Log debug level")
 var configFile = flag.String("config-file", "", "Optional file that contains more involved config settings, see server/config.go for the structure.")
 var fallbackFilepath = flag.String("fallback-file", "index.html", "Filepath relative to targetDir which serves as fallback. Set to empty to disable.")
 var webServerPort = flag.Int("port", 8080, "Port under which the webserver runs.")
-var gzip = flag.Bool("gzip", true, "Whether to send gzip encoded response. See config-file for setting the detailed types. As default gzip is used when activated for test/css, text/html and application/javascript")
+var gzipActive = flag.Bool("gzip", true, "Whether to send gzip encoded response. See config-file for setting the detailed types. As default gzip is used when activated for test/css, text/html and application/javascript")
+var gzipCompressionLevel = flag.Int("gzip-level", gzip.DefaultCompression, "The compression level used for gzip compression. See the golang gzip documentation for details. Only applies to on-the-fly compression. The in-memory-fs (when used) uses for static files always gzip.BestCompression")
 var health = flag.Bool("health", true, "Whether to start the health check endpoint (/ under a separate port)")
 var healthAccessLog = flag.Bool("health-access-log", false, "Prints an access log for the health check endpoint to stdout.")
 var healthPort = flag.Int("health-port", 8081, "Different port under which the health check endpoint runs.")
@@ -96,7 +98,7 @@ func readConfig() (*server.Config, error) {
 		config.MediaTypeMap = defaultMediaTypeMap
 	}
 
-	if !*gzip {
+	if !*gzipActive {
 		config.GzipMediaTypes = []string{}
 		return &config, nil
 	}

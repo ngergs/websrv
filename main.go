@@ -25,7 +25,7 @@ func main() {
 			log.Fatal().Err(err).Msg("Error preparing read-only filesystem.")
 		}
 		unzipfs = memoryFs
-		if *gzip {
+		if *gzipActive {
 			log.Debug().Msg("Zipping in memory filesystem")
 			zipfs, err = memoryFs.Zip(config.GzipFileExtensions())
 			if err != nil {
@@ -43,7 +43,7 @@ func main() {
 			server.FileServerHandler(unzipfs, zipfs, *fallbackFilepath, config),
 			server.Caching(unzipfs),
 			server.Optional(server.CspReplace(config, unzipfs), config.AngularCspReplace != nil),
-			server.Optional(server.Gzip(config), *gzip),
+			server.Optional(server.Gzip(config, *gzipCompressionLevel), *gzipActive),
 			server.Optional(server.SessionId(config), config.AngularCspReplace != nil),
 			server.Header(config),
 			server.ValidateClean(),

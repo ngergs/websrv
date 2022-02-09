@@ -9,25 +9,38 @@ import (
 )
 
 type gzipResponseWriter struct {
-	Next           http.ResponseWriter
-	GzipMediaTypes []string
-	zipWriter      *gzip.Writer
-	selectedWriter io.Writer
+	Next             http.ResponseWriter
+	CompressionLevel int
+	GzipMediaTypes   []string
+	zipWriter        *gzip.Writer
+	selectedWriter   io.Writer
 }
 
 func (w *gzipResponseWriter) Header() http.Header {
 	return w.Next.Header()
 }
 
+func (w *gzipResponseWriter) initWriter() error {
+	if w.Header().Get("Content-Encoding") == "" &&
+		utils.Contains(w.GzipMediaTypes, w.Header().Get("Content-Type")) {
+		zipWriter, err := gzip.NewWriterLevel(w.Next, w.CompressionLevel)
+		if err != nil {
+			return err
+		}
+		w.zipWriter = zipWriter
+		w.selectedWriter = w.zipWriter
+		w.Header().Set("Content-Encoding", "gzip")
+	} else {
+		w.selectedWriter = w.Next
+	}
+	return nil
+}
+
 func (w *gzipResponseWriter) Write(data []byte) (int, error) {
 	if w.selectedWriter == nil {
-		if w.Header().Get("Content-Encoding") == "" &&
-			utils.Contains(w.GzipMediaTypes, w.Header().Get("Content-Type")) {
-			w.zipWriter = gzip.NewWriter(w.Next)
-			w.selectedWriter = w.zipWriter
-			w.Header().Set("Content-Encoding", "gzip")
-		} else {
-			w.selectedWriter = w.Next
+		err := w.initWriter()
+		if err != nil {
+			return 0, err
 		}
 	}
 	return w.selectedWriter.Write(data)
@@ -44,11 +57,14 @@ func (w *gzipResponseWriter) Close() error {
 	return w.zipWriter.Close()
 }
 
-func GzipHandler(next http.Handler, gzipMediaTypes []string) http.Handler {
+func GzipHandler(next http.Handler, compressionLevel int, gzipMediaTypes []string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logEnter(r.Context(), "gzip")
 		if utils.ContainsAfterSplit(r.Header.Values("Accept-Encoding"), ",", "gzip") {
-			gzipResponseWriter := &gzipResponseWriter{Next: w, GzipMediaTypes: gzipMediaTypes}
+			gzipResponseWriter := &gzipResponseWriter{
+				Next:             w,
+				CompressionLevel: compressionLevel,
+				GzipMediaTypes:   gzipMediaTypes}
 			defer utils.Close(r.Context(), gzipResponseWriter)
 			w = gzipResponseWriter
 		}

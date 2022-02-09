@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 
@@ -8,7 +9,8 @@ import (
 )
 
 type mockResponseWriter struct {
-	mock mock.Mock
+	mock         mock.Mock
+	receivedData bytes.Buffer
 }
 
 func (w *mockResponseWriter) Header() http.Header {
@@ -17,8 +19,7 @@ func (w *mockResponseWriter) Header() http.Header {
 }
 
 func (w *mockResponseWriter) Write(data []byte) (int, error) {
-	args := w.mock.Called(data)
-	return args.Int(0), args.Error(1)
+	return w.receivedData.Write(data)
 }
 
 func (w *mockResponseWriter) WriteHeader(statusCode int) {
@@ -27,19 +28,22 @@ func (w *mockResponseWriter) WriteHeader(statusCode int) {
 
 func (w *mockResponseWriter) mockStatusWrite(expectedtStatus int) {
 	var responseHeader http.Header = make(map[string][]string)
-	w.mock.On("Write", mock.Anything).Return(123, nil)
 	w.mock.On("Header").Return(responseHeader)
 	w.mock.On("WriteHeader", expectedtStatus)
 }
 
 type mockHandler struct {
-	w http.ResponseWriter
-	r *http.Request
+	w             http.ResponseWriter
+	r             *http.Request
+	serveHttpFunc func(w http.ResponseWriter, r *http.Request)
 }
 
 func (handler *mockHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handler.w = w
 	handler.r = r
+	if handler.serveHttpFunc != nil {
+		handler.serveHttpFunc(w, r)
+	}
 }
 
 // getDefaultHandlerMocks provides default mocks used for handler testing

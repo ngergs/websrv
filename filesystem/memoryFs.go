@@ -1,6 +1,7 @@
 package filesystem
 
 import (
+	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
@@ -73,31 +74,12 @@ func getReadFileFunc(filesystem *MemoryFS, targetDirLength int) func(path string
 			if err != nil {
 				return err
 			}
-			//info = &modifiedSizeInfo{size: int64(len(data)), FileInfo: info}
 			result = &memoryFile{data: data, info: info}
 		}
 		log.Debug().Msgf("Read into memory-fs: %s", subPath)
 		filesystem.files[subPath] = result
 		return nil
 	}
-}
-
-// Zip returns a deep copy of the filesystem where all files that match the given zip file extension are zipped.
-// Files that do not match are absent in the zipped version of the in memoryfilesystem.
-func (fs *MemoryFS) Zip(zipFileExtensions []string) (*MemoryFS, error) {
-	zippedFiles := make(map[string]*memoryFile)
-	for filepath, file := range fs.files {
-		if utils.Contains(zipFileExtensions, path.Ext(filepath)) {
-			log.Debug().Msgf("Zipping %s", filepath)
-			zipped, err := utils.Zip(file.data)
-			if err != nil {
-				return nil, err
-			}
-			info := &modifiedSizeInfo{size: int64(len(zipped)), FileInfo: file.info}
-			zippedFiles[filepath] = &memoryFile{data: zipped, info: info}
-		}
-	}
-	return &MemoryFS{files: zippedFiles}, nil
 }
 
 func (fs *MemoryFS) Open(name string) (fs.File, error) {
@@ -115,27 +97,31 @@ func (fs *MemoryFS) ReadFile(name string) ([]byte, error) {
 	return file.data, nil
 }
 
-func (file *memoryFile) ReadDir(n int) ([]fs.DirEntry, error) {
-	if !file.info.IsDir() {
-		return make([]fs.DirEntry, 0), fmt.Errorf("not a directory")
-	}
-	if n <= 0 {
-		return file.dirInfo, nil
-	}
-	if len(file.dirInfo) <= file.dirOffset {
-		return make([]fs.DirEntry, 0), io.EOF
-	}
-	if len(file.dirInfo) < file.dirOffset+n {
-		n = len(file.dirInfo) - file.dirOffset
-	}
-	fmt.Printf("%d\n", n)
-	result := file.dirInfo[file.dirOffset : file.dirOffset+n]
-	file.dirOffset += n
-	return result, nil
+type modifiedSizeInfo struct {
+	size int64
+	fs.FileInfo
 }
 
-func (open *openMemoryFile) ReadDir(n int) ([]fs.DirEntry, error) {
-	return open.file.ReadDir(n)
+func (mod *modifiedSizeInfo) Size() int64 {
+	return mod.size
+}
+
+// Zip returns a deep copy of the filesystem where all files that match the given zip file extension are zipped.
+// Files that do not match are absent in the zipped version of the in memoryfilesystem.
+func (fs *MemoryFS) Zip(zipFileExtensions []string) (*MemoryFS, error) {
+	zippedFiles := make(map[string]*memoryFile)
+	for filepath, file := range fs.files {
+		if utils.Contains(zipFileExtensions, path.Ext(filepath)) {
+			log.Debug().Msgf("Zipping %s", filepath)
+			zipped, err := utils.Zip(file.data, gzip.BestCompression)
+			if err != nil {
+				return nil, err
+			}
+			info := &modifiedSizeInfo{size: int64(len(zipped)), FileInfo: file.info}
+			zippedFiles[filepath] = &memoryFile{data: zipped, info: info}
+		}
+	}
+	return &MemoryFS{files: zippedFiles}, nil
 }
 
 func (open *openMemoryFile) Stat() (fs.FileInfo, error) {

@@ -73,9 +73,9 @@ func Header(config *Config) HandlerMiddleware {
 	}
 }
 
-func Gzip(config *Config) HandlerMiddleware {
+func Gzip(config *Config, compressionLevel int) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
-		return GzipHandler(handler, config.GzipMediaTypes)
+		return GzipHandler(handler, compressionLevel, config.GzipMediaTypes)
 	}
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"context"
 	"net/http"
 	"testing"
@@ -32,7 +33,7 @@ func BenchmarkServer(b *testing.B) {
 		server.FileServerHandler(fs, zipfs, *fallbackFilepath, config),
 		server.Caching(fs),
 		server.CspReplace(config, fs),
-		server.Gzip(config),
+		server.Gzip(config, gzip.DefaultCompression),
 		server.SessionId(config),
 		server.Header(config),
 		server.ValidateClean(),

@@ -25,10 +25,10 @@ func Unzip(in []byte) ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func Zip(in []byte) ([]byte, error) {
+func Zip(in []byte, level int) ([]byte, error) {
 	var result bytes.Buffer
 	inReader := bytes.NewReader(in)
-	gzipWriter, err := gzip.NewWriterLevel(&result, gzip.BestCompression)
+	gzipWriter, err := gzip.NewWriterLevel(&result, level)
 	if err != nil {
 		return nil, err
 	}
