@@ -20,14 +20,14 @@ type MemoryFS struct {
 }
 
 type memoryFile struct {
-	data      []byte
-	info      fs.FileInfo
-	dirInfo   []fs.DirEntry
-	dirOffset int
+	data    []byte
+	info    fs.FileInfo
+	dirInfo []fs.DirEntry
 }
 
 type openMemoryFile struct {
 	readOffset int
+	dirOffset  int
 	file       *memoryFile
 }
 
@@ -134,6 +134,20 @@ func (open *openMemoryFile) Read(dst []byte) (int, error) {
 	n := copy(dst, open.file.data[open.readOffset:])
 	open.readOffset += n
 	return n, nil
+}
+func (open *openMemoryFile) ReadDir(n int) ([]fs.DirEntry, error) {
+	if open.dirOffset >= len(open.file.dirInfo) {
+		return []fs.DirEntry{}, io.EOF
+	}
+	if n <= 0 {
+		n = len(open.file.dirInfo) - open.dirOffset
+	}
+	if n > len(open.file.dirInfo)-open.dirOffset {
+		n = len(open.file.dirInfo) - open.dirOffset
+	}
+	result := open.file.dirInfo[open.dirOffset : open.dirOffset+n]
+	open.dirOffset += n
+	return result, nil
 }
 
 func (open *openMemoryFile) WriteTo(w io.Writer) (int64, error) {

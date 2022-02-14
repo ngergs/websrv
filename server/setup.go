@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 // HandlerMiddleware wraps a received handler with another wrapper handler to add functionality
@@ -35,8 +37,10 @@ func Optional(middleware HandlerMiddleware, isActive bool) HandlerMiddleware {
 
 func Caching(filesystem fs.FS) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
-		cacheHandler := &CacheHandler{Next: handler, FileSystem: filesystem}
-		cacheHandler.Init()
+		cacheHandler, err := NewCacheHandler(handler, filesystem)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error setting up cache handler")
+		}
 		return cacheHandler
 	}
 }

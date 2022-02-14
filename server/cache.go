@@ -13,7 +13,7 @@ import (
 type CacheHandler struct {
 	Next       http.Handler
 	FileSystem fs.FS
-	hashes     map[string]string
+	Hashes     map[string]string
 }
 
 type eTagResponseWriter struct {
@@ -41,7 +41,7 @@ func (w *eTagResponseWriter) WriteHeader(statusCode int) {
 func (handler *CacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logEnter(r.Context(), "caching")
 
-	eTag, ok := handler.hashes[r.URL.Path]
+	eTag, ok := handler.Hashes[r.URL.Path]
 	if ok {
 		ifNoneMatch := r.Header.Get("If-None-Match")
 		if ifNoneMatch == eTag {
@@ -54,11 +54,15 @@ func (handler *CacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handler.Next.ServeHTTP(w, r)
 }
 
-// Init computes and stores the hashes for all files
-func (handler *CacheHandler) Init() error {
+// NewCacheHandler computes and stores the hashes for all files
+func NewCacheHandler(next http.Handler, filesystem fs.FS) (*CacheHandler, error) {
 	// compute hashes
-	handler.hashes = make(map[string]string)
-	return fs.WalkDir(handler.FileSystem, ".", func(path string, d fs.DirEntry, err error) error {
+	handler := &CacheHandler{
+		Next:       next,
+		FileSystem: filesystem,
+		Hashes:     make(map[string]string),
+	}
+	return handler, fs.WalkDir(handler.FileSystem, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -75,7 +79,7 @@ func (handler *CacheHandler) Init() error {
 			return err
 		}
 		hash := sha256.Sum256(data)
-		handler.hashes[path] = base64.StdEncoding.EncodeToString(hash[:])
+		handler.Hashes[path] = base64.StdEncoding.EncodeToString(hash[:])
 		return nil
 	})
 }
