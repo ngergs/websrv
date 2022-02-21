@@ -1,8 +1,8 @@
 package filesystem
 
 import (
+	"io"
 	"io/fs"
-	"io/ioutil"
 )
 
 // MemoryFilesystem only holds actual files, not the directory entries
@@ -16,5 +16,5 @@ func (fs *ReadFileFS) ReadFile(name string) ([]byte, error) {
 		return nil, err
 	}
 	defer file.Close()
-	return ioutil.ReadAll(file)
+	return io.ReadAll(file)
 }
