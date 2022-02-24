@@ -9,18 +9,24 @@ type OperationType string
 const SecureRandomIdFileReplacer OperationType = "RANDOM-ID"
 
 type Config struct {
+	// Static headers to be set
 	Headers           map[string]string  `json:"headers,omitempty"`
 	AngularCspReplace *AngularCspReplace `json:"angular-csp-replace,omitempty"`
-	// needed due to https://github.com/golang/go/issues/32350
-	MediaTypeMap   map[string]string `json:"media-type-map,omitempty"`
-	GzipMediaTypes []string          `json:"gzip-media-types,omitempty"`
+	// Mapping of file extension to Media-Type, needed due to https://github.com/golang/go/issues/32350
+	MediaTypeMap map[string]string `json:"media-type-map,omitempty"`
+	// Media-Types for which gzipping should be applied (if activated and client has set the Accept-Encoding: gzip HTTP-Header)
+	GzipMediaTypes []string `json:"gzip-media-types,omitempty"`
 }
 
 type AngularCspReplace struct {
+	// (secret) placeholder which will be replaced with the session id when serving
+	VariableName string `json:"variable-name"`
+	// Regex for which files the Variable-Name should be replaced
 	FileNamePattern string `json:"file-name-regex,omitempty"`
-	VariableName    string `json:"variable-name"`
-	CookieName      string `json:"cookie-name"`
-	CookieMaxAge    int    `json:"cookie-max-age"`
+	// Name of the session-id cookie
+	CookieName string `json:"cookie-name"`
+	// Max-Age setting for the session-id cookie, 30 seconds should be sufficient
+	CookieMaxAge int `json:"cookie-max-age"`
 }
 
 func (config *Config) GzipFileExtensions() []string {

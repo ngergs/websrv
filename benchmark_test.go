@@ -9,10 +9,12 @@ import (
 
 	"github.com/ngergs/webserver/filesystem"
 	"github.com/ngergs/webserver/server"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 func BenchmarkServer(b *testing.B) {
+        zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	config := GetDefaultConfig()
 	config.AngularCspReplace = &server.AngularCspReplace{
 		FileNamePattern: ".*",
