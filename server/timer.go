@@ -8,9 +8,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var TimerKey = &ContextKey{val: "requestId"}
+// TimerKey is the ContextKey under which the timing start time.Time can be found
+var TimerKey = &ContextKey{val: "timerStart"}
 
-func TimerStartTOCtxHandler(next http.Handler) http.Handler {
+// TimerStartToCtxHandler starts a timer and adds it to the request context under the TimerKey key
+func TimerStartToCtxHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, TimerKey, time.Now())

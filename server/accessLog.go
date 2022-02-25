@@ -31,6 +31,7 @@ func (w *metricResponseWriter) WriteHeader(statusCode int) {
 	w.Next.WriteHeader(statusCode)
 }
 
+// AccessLogHandler returns a http.Handler that adds access-logging on the info level.
 func AccessLogHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		startRaw := r.Context().Value(TimerKey)

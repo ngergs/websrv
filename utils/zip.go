@@ -6,6 +6,7 @@ import (
 	"io"
 )
 
+// Unzip unzips the input byte slice.
 func Unzip(in []byte) ([]byte, error) {
 	inReader := bytes.NewReader(in)
 	gzipReader, err := gzip.NewReader(inReader)
@@ -25,6 +26,7 @@ func Unzip(in []byte) ([]byte, error) {
 	return result.Bytes(), nil
 }
 
+// Zip zips the input byte slice with the given gzip compression level.
 func Zip(in []byte, level int) ([]byte, error) {
 	var result bytes.Buffer
 	inReader := bytes.NewReader(in)

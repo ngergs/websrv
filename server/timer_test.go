@@ -10,7 +10,7 @@ import (
 
 func TestAddingStartTime(t *testing.T) {
 	w, r, next := getDefaultHandlerMocks()
-	handler := server.TimerStartTOCtxHandler(next)
+	handler := server.TimerStartToCtxHandler(next)
 	handler.ServeHTTP(w, r)
 	timerStartRaw := next.r.Context().Value(server.TimerKey)
 	assert.NotNil(t, timerStartRaw)

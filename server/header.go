@@ -4,6 +4,7 @@ import (
 	"net/http"
 )
 
+// HeaderHandler implements the http.Handler interface and adds the static headers provided in the Headers map to the response.
 type HeaderHandler struct {
 	Next    http.Handler
 	Headers map[string]string

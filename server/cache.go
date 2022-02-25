@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// CacheHandler implements a http.Handler that supports Caching via the ETag and If-None-Match HTTP-Headers.
 type CacheHandler struct {
 	Next       http.Handler
 	FileSystem fs.FS

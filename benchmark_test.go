@@ -14,9 +14,9 @@ import (
 )
 
 func BenchmarkServer(b *testing.B) {
-        zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	config := GetDefaultConfig()
-	config.AngularCspReplace = &server.AngularCspReplace{
+	config.AngularCspReplace = &server.AngularCspReplaceConfig{
 		FileNamePattern: ".*",
 		VariableName:    "testt",
 		CookieName:      "Nonce-Id",

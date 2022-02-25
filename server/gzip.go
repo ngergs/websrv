@@ -57,6 +57,8 @@ func (w *gzipResponseWriter) Close() error {
 	return w.zipWriter.Close()
 }
 
+// GzipHandler is a handler that compressed responses if the HTTP Content-Type response header is part of the gzipMediaTypes
+// and if the request hat the Accept-Encoding=gzip HTTP request Header set.
 func GzipHandler(next http.Handler, compressionLevel int, gzipMediaTypes []string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logEnter(r.Context(), "gzip")

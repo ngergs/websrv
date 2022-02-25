@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// SessionIdKey is the ContextKey under which the current sessionId can be found
 var SessionIdKey = &ContextKey{val: "sessionId"}
 
 func readSessionIdCookie(r *http.Request, cookieName string) (sessionId string, ok bool) {
@@ -21,6 +22,8 @@ func readSessionIdCookie(r *http.Request, cookieName string) (sessionId string, 
 	return "", false
 }
 
+// SessionCookieHandler reads the cookieName cookie from the request and adds if to the context unter the SessionIdKey if present.
+// If absent it generates a new sessionId and adds it to the context and the HTTP Set-Cookie Response header.
 func SessionCookieHandler(next http.Handler, cookieName string, cookieTimeToLife time.Duration) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logEnter(r.Context(), cookieName)

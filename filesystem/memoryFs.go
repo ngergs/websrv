@@ -31,12 +31,13 @@ type openMemoryFile struct {
 	file       *memoryFile
 }
 
-func NewMemoryFs(targetDir string) (*MemoryFS, error) {
-	targetDir = path.Clean(targetDir)
+// NewMemoryFs initials a memory filesystem from the given targetPath
+func NewMemoryFs(targetPath string) (*MemoryFS, error) {
+	targetPath = path.Clean(targetPath)
 	fs := &MemoryFS{
 		files: make(map[string]*memoryFile),
 	}
-	err := filepath.Walk(targetDir, getReadFileFunc(fs, len(targetDir)))
+	err := filepath.Walk(targetPath, getReadFileFunc(fs, len(targetPath)))
 	if err != nil {
 		return nil, fmt.Errorf("error reading files into in-memory-fs: %w", err)
 	}
@@ -82,6 +83,7 @@ func getReadFileFunc(filesystem *MemoryFS, targetDirLength int) func(path string
 	}
 }
 
+// Open opens the given file from the in memory filesystem.
 func (fs *MemoryFS) Open(name string) (fs.File, error) {
 	file, ok := fs.files[name]
 	if !ok {
@@ -89,6 +91,8 @@ func (fs *MemoryFS) Open(name string) (fs.File, error) {
 	}
 	return &openMemoryFile{file: file}, nil
 }
+
+// More efficient shortcur to read a complete file content from the in memory filesystem.
 func (fs *MemoryFS) ReadFile(name string) ([]byte, error) {
 	file, ok := fs.files[name]
 	if !ok {
@@ -124,9 +128,12 @@ func (fs *MemoryFS) Zip(zipFileExtensions []string) (*MemoryFS, error) {
 	return &MemoryFS{files: zippedFiles}, nil
 }
 
+// Stat returns the file stats.
 func (open *openMemoryFile) Stat() (fs.FileInfo, error) {
 	return open.file.info, nil
 }
+
+// Reads the content of the openMemoryFile into the provided dst. Returns the number of bytes written and io.EOF when finished.
 func (open *openMemoryFile) Read(dst []byte) (int, error) {
 	if open.readOffset >= len(open.file.data) {
 		return 0, io.EOF
@@ -135,6 +142,9 @@ func (open *openMemoryFile) Read(dst []byte) (int, error) {
 	open.readOffset += n
 	return n, nil
 }
+
+// ReadDir returns the first n entries from the current directory.
+// For n<=0 al entries are returnes.
 func (open *openMemoryFile) ReadDir(n int) ([]fs.DirEntry, error) {
 	if open.dirOffset >= len(open.file.dirInfo) {
 		return []fs.DirEntry{}, io.EOF
@@ -150,6 +160,7 @@ func (open *openMemoryFile) ReadDir(n int) ([]fs.DirEntry, error) {
 	return result, nil
 }
 
+// WriteTo provides a more efficient way to directly write a file content into an io.Writer.
 func (open *openMemoryFile) WriteTo(w io.Writer) (int64, error) {
 	if open.readOffset >= len(open.file.data) {
 		return 0, io.EOF

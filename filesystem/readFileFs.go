@@ -5,11 +5,12 @@ import (
 	"io/fs"
 )
 
-// MemoryFilesystem only holds actual files, not the directory entries
+// ReadFileFS wraps a fs.FS and adds the ReadFile method
 type ReadFileFS struct {
 	fs.FS
 }
 
+// ReadFile is a more concise way to directly read a file into memory.
 func (fs *ReadFileFS) ReadFile(name string) ([]byte, error) {
 	file, err := fs.Open(name)
 	if err != nil {

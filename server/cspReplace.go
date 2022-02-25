@@ -14,8 +14,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// CspHeaderName is the Content-Security-Policy HTTP-Header name
 const CspHeaderName = "Content-Security-Policy"
 
+// CspReplaceHandler implements the http.Handler interface and fixes the Angular style-src CSP issue. The variableName is replaced
+// in files that match the FileNamePattern as well as in the Content-Security-Policy header.
 type CspReplaceHandler struct {
 	Next           http.Handler
 	Filesystem     fs.ReadFileFS
@@ -58,7 +61,7 @@ func (handler *CspReplaceHandler) serveFile(ctx context.Context, w http.Response
 		}
 	}
 	w.Header().Set("Content-Type", handler.getMediaType(path))
-	return replacer.Replace(ctx, w, input)
+	return replacer.Replace(w, input)
 }
 
 func (handler *CspReplaceHandler) replaceHeader(w http.ResponseWriter, sessionId string) {
@@ -101,14 +104,13 @@ func (handler *CspReplaceHandler) getMediaType(requestPath string) string {
 	return mediaType
 }
 
-// stringReplacer structures from here on
-
+// ReplacerCollection is a series of replacer implementations which are used to effectively replace a given string by pre-splitting the target template.
 type ReplacerCollection struct {
 	replacer []replacer
 }
 
 type replacer interface {
-	Replace(ctx context.Context, w io.Writer, input string) error
+	Replace(w io.Writer, input string) error
 }
 
 type staticCopy struct {
@@ -117,22 +119,23 @@ type staticCopy struct {
 
 type inputCopy struct{}
 
-func (replacer *staticCopy) Replace(ctx context.Context, w io.Writer, input string) error {
+func (replacer *staticCopy) Replace(w io.Writer, input string) error {
 	r := bytes.NewReader(replacer.data)
 	_, err := io.Copy(w, r)
 	return err
 }
 
-func (replacer *inputCopy) Replace(ctx context.Context, w io.Writer, input string) error {
+func (replacer *inputCopy) Replace(w io.Writer, input string) error {
 	data := []byte(input)
 	r := bytes.NewReader(data)
 	_, err := io.Copy(w, r)
 	return err
 }
 
-func (replacer *ReplacerCollection) Replace(ctx context.Context, w io.Writer, input string) error {
+// Replace replaces the template placeholder with the input string and writes the result to the io.Writer w.
+func (replacer *ReplacerCollection) Replace(w io.Writer, input string) error {
 	for _, subreplacer := range replacer.replacer {
-		err := subreplacer.Replace(ctx, w, input)
+		err := subreplacer.Replace(w, input)
 		if err != nil {
 			return err
 		}
@@ -140,6 +143,7 @@ func (replacer *ReplacerCollection) Replace(ctx context.Context, w io.Writer, in
 	return nil
 }
 
+// ReplacerCollectionFromInput constructs a replacer that prepares the input data into a template where the toReplace string will be replaced.
 func ReplacerCollectionFromInput(data []byte, toReplace string) (*ReplacerCollection, error) {
 	fragments := strings.Split(string(data), toReplace)
 	// build replacement chain

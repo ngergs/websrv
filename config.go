@@ -67,6 +67,7 @@ func setup() {
 	targetDir = args[0]
 }
 
+// GetDefaultConfig returns the default configuration used when none is provided.
 func GetDefaultConfig() *server.Config {
 	return &server.Config{
 		GzipMediaTypes: defaultGzipMediaTypes,

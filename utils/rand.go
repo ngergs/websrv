@@ -11,6 +11,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
+// GetRandomId generates a random string id using [a-zA-Z0-9] with the given length n
 func GetRandomId(n int) string {
 	b := make([]rune, n)
 	for i := range b {
