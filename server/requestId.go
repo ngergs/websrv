@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ngergs/webserver/utils"
+	"github.com/ngergs/websrv/utils"
 	"github.com/rs/zerolog/log"
 )
 

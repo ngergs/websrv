@@ -49,5 +49,5 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/webserver:${{ steps.semrel.outputs.version }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/webserver:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/websrv:${{ steps.semrel.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/websrv:latest

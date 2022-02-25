@@ -1,4 +1,4 @@
-# Webserver
+# websrv
 
 This is a little webserver implementation using only dependencies from the go standard library (besides testing and logging).
 The webserver is supposed to serve a folder containing e.g. a static website. 

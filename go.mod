@@ -1,8 +1,8 @@
-module github.com/ngergs/webserver
+module github.com/ngergs/websrv
 
 go 1.17
 
-replace github.com/ngergs/webserver => ./
+replace github.com/ngergs/websrv => ./
 
 require (
 	github.com/rs/zerolog v1.26.1

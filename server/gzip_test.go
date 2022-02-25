@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/ngergs/webserver/server"
-	"github.com/ngergs/webserver/utils"
+	"github.com/ngergs/websrv/server"
+	"github.com/ngergs/websrv/utils"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/ngergs/webserver/server"
+	"github.com/ngergs/websrv/server"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )

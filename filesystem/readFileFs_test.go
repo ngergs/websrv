@@ -5,7 +5,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/ngergs/webserver/filesystem"
+	"github.com/ngergs/websrv/filesystem"
 	"github.com/stretchr/testify/assert"
 )
 

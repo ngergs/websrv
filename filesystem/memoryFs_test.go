@@ -8,8 +8,8 @@ import (
 	"path"
 	"testing"
 
-	"github.com/ngergs/webserver/filesystem"
-	"github.com/ngergs/webserver/utils"
+	"github.com/ngergs/websrv/filesystem"
+	"github.com/ngergs/websrv/utils"
 	"github.com/stretchr/testify/assert"
 )
 

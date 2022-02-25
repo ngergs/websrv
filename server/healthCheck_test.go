@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/ngergs/webserver/server"
+	"github.com/ngergs/websrv/server"
 )
 
 func TestHealthCheck(t *testing.T) {

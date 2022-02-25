@@ -1,8 +1,6 @@
 package server
 
-import (
-	"github.com/ngergs/webserver/utils"
-)
+import "github.com/ngergs/websrv/utils"
 
 // Config holds the advanced server config options
 type Config struct {
