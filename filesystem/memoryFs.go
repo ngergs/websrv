@@ -176,7 +176,7 @@ func (open *openMemoryFile) WriteTo(w io.Writer) (int64, error) {
 }
 
 // Close does nothing for in memory files
-func (file *openMemoryFile) Close() error {
+func (open *openMemoryFile) Close() error {
 	// in memory file does nothing on error
 	return nil
 }

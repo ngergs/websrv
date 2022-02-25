@@ -26,7 +26,7 @@ func Build(port int, handler http.Handler, handlerSetups ...HandlerMiddleware) *
 	return server
 }
 
-// Optional sets the middleware if the isActive condition is fullfilled
+// Optional sets the middleware if the isActive condition is fulfilled
 func Optional(middleware HandlerMiddleware, isActive bool) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		if isActive {
