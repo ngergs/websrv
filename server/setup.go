@@ -104,7 +104,7 @@ func AccessLog() HandlerMiddleware {
 	}
 }
 
-// RequestId adds a middleware that adds a randomly generated request id to the request context.
+// RequestID adds a middleware that adds a randomly generated request id to the request context.
 func RequestID() HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		return RequestIdToCtxHandler(handler)

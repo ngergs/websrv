@@ -92,7 +92,7 @@ func (fs *MemoryFS) Open(name string) (fs.File, error) {
 	return &openMemoryFile{file: file}, nil
 }
 
-// More efficient shortcur to read a complete file content from the in memory filesystem.
+// ReadFile is a more efficient shortcut to read a complete file content from the in memory filesystem.
 func (fs *MemoryFS) ReadFile(name string) ([]byte, error) {
 	file, ok := fs.files[name]
 	if !ok {
@@ -175,6 +175,7 @@ func (open *openMemoryFile) WriteTo(w io.Writer) (int64, error) {
 	return int64(open.readOffset), nil
 }
 
+// Close does nothing for in memory files
 func (file *openMemoryFile) Close() error {
 	// in memory file does nothing on error
 	return nil
