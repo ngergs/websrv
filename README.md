@@ -53,7 +53,7 @@ Options:
 ```
 
 ## Advanced configs
-More involved configs can be provided via the config-file option. See [https://github.com/ngergs/webserver/blob/main/config-example.json](config-example.json) for an exmaple. The structure is as follows:
+More involved configs can be provided via the config-file option. See [config-example.json](config-example.json) for an exmaple. The structure is as follows:
 
 ```go
 type Config struct {
