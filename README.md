@@ -20,9 +20,22 @@ The following limited handler features are provided in the server package:
 * CspReplace: See [my blog](https://ngergs.de/content/angular/style-csp-fix) about fixing Angular CSP regarding style-src.
 
 ## Usage
-The path to this folder has to be provided as command line argument. There are a number of various optional settings.
+
+## Docker container
+You can use the ngergs/websrv docker container, the entrypoint is set to the websrv executable.
+
+### Compilation from Source
+Compile from source:
+```bash
+git clone https://github.com/ngergs/websrv
+go build
 ```
-Usage: ./webserver {options} [target-path]
+
+## Usage
+The path to this folder has to be provided as command line argument. There are a number of various optional settings.
+
+```
+Usage: ./websrv {options} [target-path]
 Options:
   -access-log
         Prints an acess log for the file server endpoint.
