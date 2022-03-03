@@ -58,7 +58,6 @@ func CspReplace(config *Config, filesystem fs.ReadFileFS) HandlerMiddleware {
 			Filesystem:     filesystem,
 			FileNamePatter: regexp.MustCompile(config.AngularCspReplace.FileNamePattern),
 			VariableName:   config.AngularCspReplace.VariableName,
-			Replacer:       make(map[string]*ReplacerCollection),
 			MediaTypeMap:   config.MediaTypeMap,
 		}
 	}

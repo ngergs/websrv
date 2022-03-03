@@ -85,7 +85,6 @@ func getMockedCspHandler(t *testing.T) (handler *server.CspReplaceHandler, fs fs
 		Filesystem:     fs,
 		FileNamePatter: regexp.MustCompile(".*"),
 		VariableName:   variableName,
-		Replacer:       make(map[string]*server.ReplacerCollection),
 		MediaTypeMap:   map[string]string{".js": "application/javascript"},
 	}
 	r.URL = &url.URL{Path: path}

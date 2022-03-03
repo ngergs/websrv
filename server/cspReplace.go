@@ -24,9 +24,9 @@ type CspReplaceHandler struct {
 	Filesystem     fs.ReadFileFS
 	FileNamePatter *regexp.Regexp
 	VariableName   string
-	Replacer       map[string]*ReplacerCollection
 	MediaTypeMap   map[string]string
-	ReplacerLock   sync.RWMutex
+	// use case of sync.Map: "(1) when the entry for a given key is only ever written once but read many times, as in caches that only grow"
+	replacer sync.Map //map[string]*ReplacerCollection
 }
 
 func (handler *CspReplaceHandler) load(path string) (*ReplacerCollection, error) {
@@ -38,17 +38,16 @@ func (handler *CspReplaceHandler) load(path string) (*ReplacerCollection, error)
 	if err != nil {
 		return nil, err
 	}
-	handler.ReplacerLock.Lock()
-	defer handler.ReplacerLock.Unlock()
-	handler.Replacer[path] = replacer
-	return replacer, nil
+	storedReplacer, _ := handler.replacer.LoadOrStore(path, replacer)
+	return storedReplacer.(*ReplacerCollection), nil
 }
 
-func (handler *CspReplaceHandler) getTemplate(path string) (replacer *ReplacerCollection, ok bool) {
-	handler.ReplacerLock.RLock()
-	defer handler.ReplacerLock.RUnlock()
-	replacer, ok = handler.Replacer[path]
-	return
+func (handler *CspReplaceHandler) getTemplate(path string) (*ReplacerCollection, bool) {
+	replacer, ok := handler.replacer.Load(path)
+	if !ok {
+		return nil, ok
+	}
+	return replacer.(*ReplacerCollection), ok
 }
 
 func (handler *CspReplaceHandler) serveFile(ctx context.Context, w http.ResponseWriter, path string, input string) error {
