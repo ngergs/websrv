@@ -59,7 +59,7 @@ func main() {
 				server.HealthCheckHandler(),
 				server.Optional(server.AccessLog(), *healthAccessLog),
 			)
-			log.Info().Msgf("Starting webserver server on port %d", *healthPort)
+			log.Info().Msgf("Starting healthcheck server on port %d", *healthPort)
 			errChan <- healthServer.ListenAndServe()
 		}()
 	}
