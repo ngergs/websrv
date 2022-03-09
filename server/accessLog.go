@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -49,13 +50,10 @@ func AccessLogHandler(next http.Handler) http.Handler {
 		if requestId != nil {
 			logEvent = logEvent.Str("requestId", requestId.(string))
 		}
-		scheme := "http"
-		if r.TLS != nil {
-			scheme = "https"
-		}
+
 		logEvent.Dict("httpRequest", zerolog.Dict().
 			Str("requestMethod", r.Method).
-			Str("requestUrl", scheme+"://"+r.Host+"/"+r.URL.Path).
+			Str("requestUrl", getFullUrl(r)).
 			Int("status", metricResponseWriter.StatusCode).
 			Int("responseSize", metricResponseWriter.BytesSend).
 			Str("userAgent", r.UserAgent()).
@@ -64,4 +62,20 @@ func AccessLogHandler(next http.Handler) http.Handler {
 			Str("latency", time.Since(start).String())).
 			Msg("")
 	})
+}
+
+func getFullUrl(r *http.Request) string {
+	var sb strings.Builder
+	if r.TLS == nil {
+		sb.WriteString("http")
+	} else {
+		sb.WriteString("https")
+	}
+	sb.WriteString("://")
+	sb.WriteString(r.Host)
+	if !strings.HasPrefix(r.URL.Path, "/") {
+		sb.WriteString("/")
+	}
+	sb.WriteString(r.URL.Path)
+	return sb.String()
 }
