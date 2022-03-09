@@ -43,16 +43,19 @@ func AccessLogHandler(next http.Handler) http.Handler {
 		}
 		logEnter(r.Context(), "access-log")
 		metricResponseWriter := &metricResponseWriter{Next: w}
-		originalPath := r.URL.String()
 		next.ServeHTTP(metricResponseWriter, r)
 		logEvent := log.Info()
 		requestId := r.Context().Value(RequestIdKey)
 		if requestId != nil {
 			logEvent = logEvent.Str("requestId", requestId.(string))
 		}
+		scheme := "http"
+		if r.TLS != nil {
+			scheme = "https"
+		}
 		logEvent.Dict("httpRequest", zerolog.Dict().
 			Str("requestMethod", r.Method).
-			Str("requestUrl", originalPath).
+			Str("requestUrl", scheme+"://"+r.Host+"/"+r.URL.Path).
 			Int("status", metricResponseWriter.StatusCode).
 			Int("responseSize", metricResponseWriter.BytesSend).
 			Str("userAgent", r.UserAgent()).
