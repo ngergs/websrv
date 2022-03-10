@@ -26,6 +26,7 @@ var healthPort = flag.Int("health-port", 8081, "Different port under which the h
 var help = flag.Bool("help", false, "Prints the help.")
 var memoryFs = flag.Bool("in-memory-fs", false, "Whether to use a in-memory-filesystem. I.e. prefetch the target directory into the heap.")
 var prettyLogging = flag.Bool("pretty", false, "Activates zerolog pretty logging")
+var shutdownTimeout = flag.Int("shutdown-timeout", 10, "Timeout for the graceful shutdown in seconds.")
 var targetDir string
 
 var defaultGzipMediaTypes = []string{"application/javascript", "text/css", "text/html; charset=UTF-8"}
