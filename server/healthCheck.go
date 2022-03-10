@@ -14,6 +14,7 @@ func HealthCheckConditionalHandler(condition func() bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if condition() {
 			w.WriteHeader(http.StatusOK)
+			return
 		}
 		w.WriteHeader(http.StatusServiceUnavailable)
 	})
