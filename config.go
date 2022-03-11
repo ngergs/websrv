@@ -39,6 +39,7 @@ var defaultMediaTypeMap = map[string]string{
 	".jxl":   "image/jxl",
 	".ttf":   "font/ttf",
 	".woff2": "font/woff2",
+        ".txt":   "text/plain",
 }
 
 func setup() {
