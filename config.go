@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 
+	stdlog "log"
+
 	"github.com/ngergs/websrv/server"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -67,6 +69,9 @@ func setup() {
 		os.Exit(1)
 	}
 	targetDir = args[0]
+
+	stdlog.SetFlags(0)
+	stdlog.SetOutput(log.Logger)
 }
 
 // GetDefaultConfig returns the default configuration used when none is provided.
