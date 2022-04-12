@@ -38,7 +38,8 @@ func main() {
 		server.RequestID(),
 		server.Timer())
 	log.Info().Msgf("Starting webserver server on port %d", *webServerPort)
-	server.AddGracefulShutdown(sigtermCtx, &wg, webserver, time.Duration(*shutdownTimeout)*time.Second)
+	srvCtx := context.WithValue(sigtermCtx, server.ServerName, "file server")
+	server.AddGracefulShutdown(srvCtx, &wg, webserver, time.Duration(*shutdownDelay)*time.Second, time.Duration(*shutdownTimeout)*time.Second)
 	go func() { errChan <- webserver.ListenAndServe() }()
 
 	if *health {
@@ -47,7 +48,8 @@ func main() {
 			server.Optional(server.AccessLog(), *healthAccessLog),
 		)
 		log.Info().Msgf("Starting healthcheck server on port %d", *healthPort)
-		server.AddGracefulShutdown(sigtermCtx, &wg, healthServer, time.Duration(*shutdownTimeout)*time.Second)
+		healthCtx := context.WithValue(sigtermCtx, server.ServerName, "health server")
+		server.AddGracefulShutdown(healthCtx, &wg, healthServer, 0, time.Duration(*shutdownTimeout)*time.Second)
 		go func() { errChan <- healthServer.ListenAndServe() }()
 	}
 

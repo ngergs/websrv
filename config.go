@@ -29,6 +29,7 @@ var help = flag.Bool("help", false, "Prints the help.")
 var memoryFs = flag.Bool("in-memory-fs", false, "Whether to use a in-memory-filesystem. I.e. prefetch the target directory into the heap.")
 var prettyLogging = flag.Bool("pretty", false, "Activates zerolog pretty logging")
 var shutdownTimeout = flag.Int("shutdown-timeout", 10, "Timeout for the graceful shutdown in seconds.")
+var shutdownDelay = flag.Int("shutdown-delay", 5, "Delay before shutting down the server in seconds. To make sure that the load balancing of the surrounding infrastructure had time to update.")
 var targetDir string
 
 var defaultGzipMediaTypes = []string{"application/javascript", "text/css", "text/html; charset=UTF-8"}
@@ -41,7 +42,7 @@ var defaultMediaTypeMap = map[string]string{
 	".jxl":   "image/jxl",
 	".ttf":   "font/ttf",
 	".woff2": "font/woff2",
-        ".txt":   "text/plain",
+	".txt":   "text/plain",
 }
 
 func setup() {
