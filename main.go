@@ -49,7 +49,7 @@ func main() {
 		)
 		log.Info().Msgf("Starting healthcheck server on port %d", *healthPort)
 		healthCtx := context.WithValue(sigtermCtx, server.ServerName, "health server")
-		server.AddGracefulShutdown(healthCtx, &wg, healthServer, 0, time.Duration(*shutdownTimeout)*time.Second)
+		server.AddGracefulShutdown(healthCtx, &wg, healthServer, time.Duration(*shutdownDelay)*time.Second, time.Duration(*shutdownTimeout)*time.Second)
 		go func() { errChan <- healthServer.ListenAndServe() }()
 	}
 
