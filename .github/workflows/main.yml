@@ -40,6 +40,7 @@ jobs:
           context: .
           file: ./Dockerfile
           load: true
+          pull: true
       - uses: go-semantic-release/action@v1
         id: semrel
         with:
