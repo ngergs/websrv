@@ -42,19 +42,21 @@ func main() {
 	server.AddGracefulShutdown(srvCtx, &wg, webserver, time.Duration(*shutdownDelay)*time.Second, time.Duration(*shutdownTimeout)*time.Second)
 	go func() { errChan <- webserver.ListenAndServe() }()
 
+	go logErrors(errChan)
+
+	// stop health server after everything else has stopped
 	if *health {
 		healthServer := server.Build(*healthPort,
 			server.HealthCheckHandler(),
 			server.Optional(server.AccessLog(), *healthAccessLog),
 		)
 		log.Info().Msgf("Starting healthcheck server on port %d", *healthPort)
-		healthCtx := context.WithValue(sigtermCtx, server.ServerName, "health server")
-		server.AddGracefulShutdown(healthCtx, &wg, healthServer, time.Duration(*shutdownDelay)*time.Second, time.Duration(*shutdownTimeout)*time.Second)
-		go func() { errChan <- healthServer.ListenAndServe() }()
+		healthCtx := context.WithValue(context.Background(), server.ServerName, "health server")
+		// 1 second is sufficient for health checks to shut down
+		server.RunTillWaitGroupFinishes(healthCtx, &wg, healthServer, errChan, time.Duration(1)*time.Second)
+	} else {
+		wg.Wait()
 	}
-
-	go logErrors(errChan)
-	wg.Wait()
 }
 
 // initFs loads the non-zipped and zipped fs according to the config

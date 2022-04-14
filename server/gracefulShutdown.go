@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -26,12 +27,7 @@ func AddGracefulShutdown(ctx context.Context, wg *sync.WaitGroup, shutdowner Shu
 	wg.Add(1)
 	go func() {
 		<-ctx.Done()
-		serverName := ctx.Value(ServerName)
-		if serverName != nil {
-			log.Info().Msgf("%s: Graceful shutdown with delay %.0fs and timeout %.0fs", serverName, shutdownDelay.Seconds(), timeout.Seconds())
-		} else {
-			log.Info().Msgf("Graceful shutdown with delay %.0fs and timeout %.0fs", shutdownDelay.Seconds(), timeout.Seconds())
-		}
+		logShutdown(ctx, shutdownDelay, timeout)
 		time.Sleep(shutdownDelay)
 		shutdownCtx, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
 		defer cancel()
@@ -41,6 +37,28 @@ func AddGracefulShutdown(ctx context.Context, wg *sync.WaitGroup, shutdowner Shu
 			log.Warn().Err(err).Msg("Error during graceful shutdown")
 		}
 	}()
+}
+
+// RunTillWaitGroupFinishes runs the server argument until the WaitGroup wg finishes.
+// Subsequently, a graceful shutdown with the given timeout argument is executed.
+// Blocks till then.
+func RunTillWaitGroupFinishes(ctx context.Context, wg *sync.WaitGroup, server *http.Server, errChan chan<- error, timeout time.Duration) {
+	go func() { errChan <- server.ListenAndServe() }()
+	wg.Wait()
+	logShutdown(ctx, 0, timeout)
+	shutdownCtx, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
+	defer cancel()
+	server.Shutdown(shutdownCtx)
+}
+
+// logShutdown logs the relevant info for the shutdown and extracts the optional server name from the context
+func logShutdown(ctx context.Context, shutdownDelay time.Duration, timeout time.Duration) {
+	serverName := ctx.Value(ServerName)
+	if serverName != nil {
+		log.Info().Msgf("%s: Graceful shutdown with delay %.0fs and timeout %.0fs", serverName, shutdownDelay.Seconds(), timeout.Seconds())
+	} else {
+		log.Info().Msgf("Graceful shutdown with delay %.0fs and timeout %.0fs", shutdownDelay.Seconds(), timeout.Seconds())
+	}
 }
 
 // SigTermCtx intercepts the syscall.SIGTERM and returns the information in the form of a wrapped context whose cancel function is called when the SIGTERM signal is received.
