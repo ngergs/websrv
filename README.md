@@ -24,6 +24,9 @@ The following limited handler features are provided in the server package:
 ## Docker container
 You can use the ngergs/websrv docker container, the entrypoint is set to the websrv executable.
 
+## Binary build
+All releases starting with v1.4.3 have binary builds attached to them for linux, windows and osx.
+
 ### Compilation from Source
 Compile from source:
 ```bash
