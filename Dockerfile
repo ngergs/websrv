@@ -1,4 +1,5 @@
 FROM golang:1.18-alpine as build-container
+ARG VERSION=snapshot
 
 COPY . /root/app
 WORKDIR /root
@@ -6,7 +7,7 @@ WORKDIR /root
 RUN apk --no-cache add git && \
   go install github.com/google/go-licenses@latest && \
   cd app && \
-  CGO_ENABLED=0 GOOD=linux GOARCH=amd64 go build -a -ldflags '-s -w' && \
+  CGO_ENABLED=0 GOOD=linux GOARCH=amd64 go build -a -ldflags "-s -w -X 'main.version=${VERSION}'" && \
   go-licenses save ./... --save_path=legal
 
 FROM gcr.io/distroless/static

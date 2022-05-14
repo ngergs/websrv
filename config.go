@@ -15,6 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var version = "snapshot"
 var accessLog = flag.Bool("access-log", false, "Prints an acess log for the file server endpoint.")
 var debugLogging = flag.Bool("debug", false, "Log debug level")
 var configFile = flag.String("config-file", "", "Optional file that contains more involved config settings, see server/config.go for the structure.")
@@ -73,6 +74,7 @@ func setup() {
 
 	stdlog.SetFlags(0)
 	stdlog.SetOutput(log.Logger)
+	log.Info().Msgf("This is websrv version %s", version)
 }
 
 // GetDefaultConfig returns the default configuration used when none is provided.
