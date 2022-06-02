@@ -1,5 +1,8 @@
 name: release
 
+env:
+  go-version: '^1.18.3'
+
 on:
   push:
     branches: [ main ]
@@ -13,7 +16,7 @@ jobs:
       - name: Run tests
         uses: ngergs/composite-actions/go-test@main
         with:
-          go-version: '^1.18.0'
+          go-version: ${{ env.go-version }}
       - name: Determine release
         uses:  ngergs/composite-actions/prepare-semantic-release@main
         id: semrel
@@ -56,7 +59,8 @@ jobs:
         uses: ngergs/composite-actions/release-go-binary@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          go-version: '^1.18.0'
+          binary-name: websrv
+          go-version: ${{ env.go-version }}
           go-os: ${{ matrix.go-os }}
           go-arch: ${{ matrix.go-arch }}
           release-version: ${{ needs.test-and-pre-release.outputs.version }}
