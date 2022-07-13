@@ -31,7 +31,7 @@ func BenchmarkServer(b *testing.B) {
 		log.Fatal().Err(err).Msg("error zipping in-memory-fs for benchmark")
 	}
 	errChan := make(chan error)
-	webserver := server.Build(*webServerPort,
+	webserver := server.Build(*webServerPort, time.Duration(1)*time.Second, time.Duration(1)*time.Second, time.Duration(1)*time.Second,
 		server.FileServerHandler(fs, zipfs, *fallbackFilepath, config),
 		server.Caching(fs),
 		server.CspReplace(config, fs),

@@ -26,7 +26,7 @@ func main() {
 	unzipfs, zipfs := initFs(config)
 
 	errChan := make(chan error)
-	webserver := server.Build(*webServerPort,
+	webserver := server.Build(*webServerPort, time.Duration(*readTimeout)*time.Second, time.Duration(*writeTimeout)*time.Second, time.Duration(*idleTimeout)*time.Second,
 		server.FileServerHandler(unzipfs, zipfs, *fallbackFilepath, config),
 		server.Caching(unzipfs),
 		server.Optional(server.CspReplace(config, unzipfs), config.AngularCspReplace != nil),
@@ -46,7 +46,7 @@ func main() {
 
 	// stop health server after everything else has stopped
 	if *health {
-		healthServer := server.Build(*healthPort,
+		healthServer := server.Build(*healthPort, time.Duration(*readTimeout)*time.Second, time.Duration(*writeTimeout)*time.Second, time.Duration(*idleTimeout)*time.Second,
 			server.HealthCheckHandler(),
 			server.Optional(server.AccessLog(), *healthAccessLog),
 		)

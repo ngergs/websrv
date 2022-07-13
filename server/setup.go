@@ -14,14 +14,18 @@ import (
 type HandlerMiddleware func(handler http.Handler) http.Handler
 
 // Build a http server from the provided options.
-func Build(port int, handler http.Handler, handlerSetups ...HandlerMiddleware) *http.Server {
+func Build(port int, readTimeout time.Duration, writeTimeout time.Duration, idleTimeout time.Duration,
+	handler http.Handler, handlerSetups ...HandlerMiddleware) *http.Server {
 	//	handler = server.New(filesystem, *fallbackFilepath, config)
 	for _, handlerSetup := range handlerSetups {
 		handler = handlerSetup(handler)
 	}
 	server := &http.Server{
-		Addr:    ":" + strconv.Itoa(port),
-		Handler: handler,
+		Addr:         ":" + strconv.Itoa(port),
+		Handler:      handler,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
 	}
 	return server
 }
