@@ -60,12 +60,22 @@ Options:
         Different port under which the health check endpoint runs. (default 8081)
   -help
         Prints the help.
+  -idle-timeout int
+        Timeout for idle TCP connections with keep-alive in seconds. (default 30)
   -in-memory-fs
         Whether to use a in-memory-filesystem. I.e. prefetch the target directory into the heap.
   -port int
         Port under which the webserver runs. (default 8080)
   -pretty
         Activates zerolog pretty logging
+  -read-timeout int
+        Timeout to read the entire request in seconds. (default 10)
+  -shutdown-delay int
+        Delay before shutting down the server in seconds. To make sure that the load balancing of the surrounding infrastructure had time to update. (default 5)
+  -shutdown-timeout int
+        Timeout for the graceful shutdown in seconds. (default 10)
+  -write-timeout int
+        Timeout to write the complete response in seconds. (default 10)
 ```
 
 ## Advanced configs
