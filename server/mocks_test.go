@@ -9,8 +9,8 @@ import (
 )
 
 type mockResponseWriter struct {
-	mock         mock.Mock
 	receivedData bytes.Buffer
+	mock         mock.Mock
 }
 
 func (w *mockResponseWriter) Header() http.Header {

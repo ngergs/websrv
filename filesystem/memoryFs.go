@@ -26,9 +26,9 @@ type memoryFile struct {
 }
 
 type openMemoryFile struct {
+	file       *memoryFile
 	readOffset int
 	dirOffset  int
-	file       *memoryFile
 }
 
 // NewMemoryFs initials a memory filesystem from the given targetPath
@@ -102,8 +102,8 @@ func (fs *MemoryFS) ReadFile(name string) ([]byte, error) {
 }
 
 type modifiedSizeInfo struct {
-	size int64
 	fs.FileInfo
+	size int64
 }
 
 func (mod *modifiedSizeInfo) Size() int64 {

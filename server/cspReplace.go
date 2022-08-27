@@ -20,13 +20,13 @@ const CspHeaderName = "Content-Security-Policy"
 // CspReplaceHandler implements the http.Handler interface and fixes the Angular style-src CSP issue. The variableName is replaced
 // in files that match the FileNamePattern as well as in the Content-Security-Policy header.
 type CspReplaceHandler struct {
+	// use case of sync.Map: "(1) when the entry for a given key is only ever written once but read many times, as in caches that only grow"
+	replacer       sync.Map //map[string]*ReplacerCollection
 	Next           http.Handler
 	Filesystem     fs.ReadFileFS
 	FileNamePatter *regexp.Regexp
-	VariableName   string
 	MediaTypeMap   map[string]string
-	// use case of sync.Map: "(1) when the entry for a given key is only ever written once but read many times, as in caches that only grow"
-	replacer sync.Map //map[string]*ReplacerCollection
+	VariableName   string
 }
 
 func (handler *CspReplaceHandler) load(path string) (*ReplacerCollection, error) {

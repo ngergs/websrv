@@ -10,10 +10,10 @@ import (
 
 type gzipResponseWriter struct {
 	Next             http.ResponseWriter
-	CompressionLevel int
-	GzipMediaTypes   []string
-	zipWriter        *gzip.Writer
 	selectedWriter   io.Writer
+	zipWriter        *gzip.Writer
+	GzipMediaTypes   []string
+	CompressionLevel int
 }
 
 func (w *gzipResponseWriter) Header() http.Header {
