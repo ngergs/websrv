@@ -26,21 +26,7 @@ jobs:
     outputs:
       version: ${{ steps.semrel.outputs.version }}
       release-notes-cache-key: ${{ steps.semrel.outputs.release-notes-cache-key }}
-  release-docker:
-    needs: test-and-pre-release
-    if: needs.test-and-pre-release.outputs.version != ''
-    runs-on: ubuntu-latest
-    steps:
-      - name: Release docker
-        uses: ngergs/composite-actions/release-docker@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          docker-image-name: websrv
-          dockerhub-username:  ${{ secrets.DOCKERHUB_USERNAME }}
-          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
-          release-version: ${{ needs.test-and-pre-release.outputs.version }}
-          release-notes-cache-key: ${{ needs.test-and-pre-release.outputs.release-notes-cache-key }}
-  release-binary:
+  release:
     needs: test-and-pre-release
     if: needs.test-and-pre-release.outputs.version != ''
     permissions:
@@ -63,5 +49,22 @@ jobs:
           go-version: ${{ env.go-version }}
           go-os: ${{ matrix.go-os }}
           go-arch: ${{ matrix.go-arch }}
+          release-version: ${{ needs.test-and-pre-release.outputs.version }}
+          release-notes-cache-key: ${{ needs.test-and-pre-release.outputs.release-notes-cache-key }}
+      - name: Prepare licenses
+        if: ${{ matrix.go-os == 'linux' && matrix.go-arch == 'amd64' }}
+        shell: bash
+        run: |
+          go install github.com/google/go-licenses@latest && \
+          $(go env GOPATH)/bin/go-licenses save ./... --save_path=legal
+      - name: Release docker
+        if: ${{ matrix.go-os == 'linux' && matrix.go-arch == 'amd64' }}
+        uses: ngergs/composite-actions/release-docker@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-checkout: false
+          docker-image-name: websrv
+          dockerhub-username:  ${{ secrets.DOCKERHUB_USERNAME }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
           release-version: ${{ needs.test-and-pre-release.outputs.version }}
           release-notes-cache-key: ${{ needs.test-and-pre-release.outputs.release-notes-cache-key }}
