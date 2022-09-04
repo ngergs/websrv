@@ -84,7 +84,7 @@ func Header(config *Config) HandlerMiddleware {
 	}
 }
 
-// Gzip adds a on-demand gzipping middleware.
+// Gzip adds an on-demand gzipping middleware.
 // Gzip is only applied when the Accept-Encoding: gzip HTTP request header is present
 // and the Content-Type of the response matches the config options.
 func Gzip(config *Config, compressionLevel int) HandlerMiddleware {
@@ -93,7 +93,7 @@ func Gzip(config *Config, compressionLevel int) HandlerMiddleware {
 	}
 }
 
-// ValidateClean adds the validate middleware and prevent path transversal attacks by cleaning the request path.
+// ValidateClean adds to the validate middleware and prevent path transversal attacks by cleaning the request path.
 func ValidateClean() HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		return ValidateCleanHandler(handler)

@@ -3,6 +3,7 @@ package server_test
 import (
 	"context"
 	"github.com/ngergs/websrv/server"
+	"github.com/rs/zerolog/log"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -78,7 +79,10 @@ func getMockedCspHandler(t *testing.T) (handler *server.CspReplaceHandler, fs fs
 
 	w, r, next := getDefaultHandlerMocks()
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(nextHandlerResponse))
+		_, err := w.Write([]byte(nextHandlerResponse))
+		if err != nil {
+			log.Error().Msgf("Failed to send response: %v", err)
+		}
 	}
 	handler = &server.CspReplaceHandler{
 		Next:           next,

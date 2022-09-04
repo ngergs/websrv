@@ -6,7 +6,7 @@ import (
 )
 
 // ValidateCleanHandler returns HTTP 405 if the request method is not GET or HEAD.
-// Also relative paths are rejected with HTTP 400.
+// Also, relative paths are rejected with HTTP 400.
 func ValidateCleanHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logEnter(r.Context(), "validate-clean")

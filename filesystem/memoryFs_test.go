@@ -2,6 +2,7 @@ package filesystem_test
 
 import (
 	"compress/gzip"
+	"context"
 	"github.com/ngergs/websrv/filesystem"
 	"io"
 	"io/fs"
@@ -70,7 +71,7 @@ func TestMemoryFsZipNonMatch(t *testing.T) {
 func getStatsContent(t *testing.T, fs fs.FS, path string) ([]byte, fs.FileInfo) {
 	file, err := fs.Open(path)
 	assert.Nil(t, err)
-	defer file.Close()
+	defer utils.Close(context.Background(), file)
 	stat, err := file.Stat()
 	assert.Nil(t, err)
 	data, err := io.ReadAll(file)

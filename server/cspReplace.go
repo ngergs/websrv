@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"io/fs"
 	"net/http"
@@ -50,7 +49,7 @@ func (handler *CspReplaceHandler) getTemplate(path string) (*ReplacerCollection,
 	return replacer.(*ReplacerCollection), ok
 }
 
-func (handler *CspReplaceHandler) serveFile(ctx context.Context, w http.ResponseWriter, path string, input string) error {
+func (handler *CspReplaceHandler) serveFile(w http.ResponseWriter, path string, input string) error {
 	replacer, ok := handler.getTemplate(path)
 	if !ok {
 		var err error
@@ -88,7 +87,7 @@ func (handler *CspReplaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		handler.Next.ServeHTTP(w, r)
 		return
 	}
-	err := handler.serveFile(r.Context(), w, r.URL.Path, sessionId.(string))
+	err := handler.serveFile(w, r.URL.Path, sessionId.(string))
 	if err != nil {
 		log.Err(err).Msgf("error serving template file %s", r.URL.Path)
 		http.Error(w, "Error serving file.", http.StatusInternalServerError)

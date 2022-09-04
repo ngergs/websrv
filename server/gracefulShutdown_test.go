@@ -3,6 +3,7 @@ package server_test
 import (
 	"context"
 	"github.com/ngergs/websrv/server"
+	"github.com/rs/zerolog/log"
 	"sync"
 	"syscall"
 	"testing"
@@ -60,7 +61,10 @@ func TestGracefulShutdownTimeout(t *testing.T) {
 func TestSigTermCtx(t *testing.T) {
 	sigtermCtx := server.SigTermCtx(context.Background())
 	assert.False(t, isChannelClosed(sigtermCtx.Done()))
-	syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
+	err := syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
+	if err != nil {
+		log.Err(err).Msg("Sigterm failed")
+	}
 	assert.True(t, isChannelClosed(sigtermCtx.Done()))
 }
 

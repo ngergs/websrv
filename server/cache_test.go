@@ -14,7 +14,8 @@ func TestEtagSetting(t *testing.T) {
 	path := "dummy_random.js"
 	w, r, next := getDefaultHandlerMocks()
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte{}) // dummy write to trigger ETAg setting
+		_, err := w.Write([]byte{}) // dummy write to trigger ETAg setting
+		assert.Nil(t, err)
 	}
 	cacheHandler := getCacheHandler(t, next)
 	r.URL = &url.URL{Path: path}
@@ -29,7 +30,8 @@ func TestNoEtagOnError(t *testing.T) {
 	w, r, next := getDefaultHandlerMocks()
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte{}) // dummy write to trigger ETAg setting
+		_, err := w.Write([]byte{}) // dummy write to trigger ETAg setting
+		assert.Nil(t, err)
 	}
 	cacheHandler := getCacheHandler(t, next)
 	r.URL = &url.URL{Path: path}

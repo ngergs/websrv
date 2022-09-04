@@ -9,7 +9,7 @@ func HealthCheckHandler() http.Handler {
 	})
 }
 
-// HealthChecConditionalkHandler is a conditional healthcheck handler that returns HTTP 200 when the condition argument function returns true and HTTP 503 if not.
+// HealthCheckConditionalHandler is a conditional healthcheck handler that returns HTTP 200 when the condition argument function returns true and HTTP 503 if not.
 func HealthCheckConditionalHandler(condition func() bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if condition() {
