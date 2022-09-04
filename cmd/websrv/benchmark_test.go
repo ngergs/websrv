@@ -42,7 +42,12 @@ func BenchmarkServer(b *testing.B) {
 		server.AccessLog(),
 		server.RequestID(),
 		server.Timer())
-	defer webserver.Shutdown(context.Background())
+	defer func() {
+		err := webserver.Shutdown(context.Background())
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to shutdown server")
+		}
+	}()
 	go func() {
 		log.Info().Msgf("Starting webserver server on port %d", *webServerPort)
 		errChan <- webserver.ListenAndServe()
@@ -62,7 +67,10 @@ func BenchmarkServer(b *testing.B) {
 			if err != nil {
 				log.Fatal().Err(err).Msg("Get request failed")
 			}
-			resp.Body.Close()
+			err = resp.Body.Close()
+			if err != nil {
+				log.Fatal().Err(err).Msg("Failed to close request body")
+			}
 		}
 	}
 

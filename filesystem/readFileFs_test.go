@@ -1,11 +1,11 @@
 package filesystem_test
 
 import (
+	"github.com/ngergs/websrv/filesystem"
 	"os"
 	"path"
 	"testing"
 
-	"github.com/ngergs/websrv/filesystem"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,7 +14,7 @@ func TestReadFileFs(t *testing.T) {
 	assert.Nil(t, err)
 
 	osFs := os.DirFS(testDir)
-	readFileFs := &filesystem.ReadFileFS{osFs}
+	readFileFs := &filesystem.ReadFileFS{FS: osFs}
 	readFileFsData, err := readFileFs.ReadFile(testFile)
 	assert.Nil(t, err)
 

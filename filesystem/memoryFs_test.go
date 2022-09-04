@@ -2,18 +2,18 @@ package filesystem_test
 
 import (
 	"compress/gzip"
+	"github.com/ngergs/websrv/filesystem"
 	"io"
 	"io/fs"
 	"os"
 	"path"
 	"testing"
 
-	"github.com/ngergs/websrv/filesystem"
-	"github.com/ngergs/websrv/utils"
+	"github.com/ngergs/websrv/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-const testDir = "../benchmark"
+const testDir = "../test/benchmark"
 const testFile = "dummy_random.js"
 
 // TestMemoryFsReadFile tests is ReadFile from the fs.ReadFileFS interface works

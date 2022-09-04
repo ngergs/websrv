@@ -1,10 +1,9 @@
 package server_test
 
 import (
+	"github.com/ngergs/websrv/server"
 	"net/http"
 	"testing"
-
-	"github.com/ngergs/websrv/server"
 )
 
 func TestHealthCheck(t *testing.T) {

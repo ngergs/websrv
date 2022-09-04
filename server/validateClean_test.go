@@ -1,11 +1,11 @@
 package server_test
 
 import (
+	"github.com/ngergs/websrv/server"
 	"net/http"
 	"net/url"
 	"testing"
 
-	"github.com/ngergs/websrv/server"
 	"github.com/stretchr/testify/assert"
 )
 

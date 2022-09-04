@@ -2,11 +2,11 @@ package server_test
 
 import (
 	"compress/gzip"
+	"github.com/ngergs/websrv/server"
 	"net/http"
 	"testing"
 
-	"github.com/ngergs/websrv/server"
-	"github.com/ngergs/websrv/utils"
+	"github.com/ngergs/websrv/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 

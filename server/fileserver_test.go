@@ -2,21 +2,21 @@ package server_test
 
 import (
 	"compress/gzip"
+	"github.com/ngergs/websrv/server"
 	"net/http"
 	"net/url"
 	"testing"
 
 	"github.com/ngergs/websrv/filesystem"
-	"github.com/ngergs/websrv/server"
-	"github.com/ngergs/websrv/utils"
+	"github.com/ngergs/websrv/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-const testDir = "../benchmark"
+const testDir = "../test/benchmark"
 const testFile = "dummy_random.js"
 const fallbackFile = "index.html"
 
-//TestFileServerSimpleServe check sif a plain file without any extras is delivered
+// TestFileServerSimpleServe check sif a plain file without any extras is delivered
 func TestFileServerSimpleServe(t *testing.T) {
 	w, _, r := getHandlerMockWithPath(t, testFile)
 	handler, originalFileData, _ := getWebserverHandler(t, []string{})
@@ -24,7 +24,7 @@ func TestFileServerSimpleServe(t *testing.T) {
 	assert.Equal(t, originalFileData, w.receivedData.Bytes())
 }
 
-//TestWebServerSimpleServe check sif a plain file without any extras is delivered
+// TestWebServerSimpleServe check sif a plain file without any extras is delivered
 func TestFileServerFallback(t *testing.T) {
 	w, _, r := getHandlerMockWithPath(t, "non-existing")
 	handler, _, originalFallbackData := getWebserverHandler(t, []string{})
@@ -32,7 +32,7 @@ func TestFileServerFallback(t *testing.T) {
 	assert.Equal(t, originalFallbackData, w.receivedData.Bytes())
 }
 
-//TestWebServerSimpleServe check sif a plain file without any extras is delivered
+// TestWebServerSimpleServe check sif a plain file without any extras is delivered
 func TestFileServerZip(t *testing.T) {
 	w, responseHeader, r := getHandlerMockWithPath(t, testFile)
 	r.Header.Set("Accept-Encoding", "gzip")

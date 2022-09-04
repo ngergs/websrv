@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/ngergs/websrv/utils"
+	"github.com/ngergs/websrv/internal/utils"
 )
 
 type gzipResponseWriter struct {

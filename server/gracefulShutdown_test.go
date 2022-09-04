@@ -2,12 +2,12 @@ package server_test
 
 import (
 	"context"
+	"github.com/ngergs/websrv/server"
 	"sync"
 	"syscall"
 	"testing"
 	"time"
 
-	"github.com/ngergs/websrv/server"
 	"github.com/stretchr/testify/assert"
 )
 

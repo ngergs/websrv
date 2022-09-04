@@ -1,4 +1,5 @@
 .idea
-websrv
+.vscode
+/websrv
 *.out
 

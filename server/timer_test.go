@@ -1,10 +1,10 @@
 package server_test
 
 import (
+	"github.com/ngergs/websrv/server"
 	"testing"
 	"time"
 
-	"github.com/ngergs/websrv/server"
 	"github.com/stretchr/testify/assert"
 )
 

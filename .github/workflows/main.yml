@@ -51,6 +51,7 @@ jobs:
           go-arch: ${{ matrix.go-arch }}
           release-version: ${{ needs.test-and-pre-release.outputs.version }}
           release-notes-cache-key: ${{ needs.test-and-pre-release.outputs.release-notes-cache-key }}
+          go-build-path: "./cmd/websrv/"
       - name: Prepare licenses
         if: ${{ matrix.go-os == 'linux' && matrix.go-arch == 'amd64' }}
         shell: bash
@@ -68,3 +69,4 @@ jobs:
           dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
           release-version: ${{ needs.test-and-pre-release.outputs.version }}
           release-notes-cache-key: ${{ needs.test-and-pre-release.outputs.release-notes-cache-key }}
+          dockerfile: build/Dockerfile

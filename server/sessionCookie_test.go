@@ -2,13 +2,13 @@ package server_test
 
 import (
 	"context"
+	"github.com/ngergs/websrv/server"
 	"net/http"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/ngergs/websrv/server"
 	"github.com/stretchr/testify/assert"
 )
 

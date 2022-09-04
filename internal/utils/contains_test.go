@@ -3,7 +3,7 @@ package utils_test
 import (
 	"testing"
 
-	"github.com/ngergs/websrv/utils"
+	"github.com/ngergs/websrv/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 

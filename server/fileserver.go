@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/ngergs/websrv/utils"
+	"github.com/ngergs/websrv/internal/utils"
 	"github.com/rs/zerolog/log"
 )
 

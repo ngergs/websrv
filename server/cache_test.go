@@ -1,12 +1,12 @@
 package server_test
 
 import (
+	"github.com/ngergs/websrv/server"
 	"net/http"
 	"net/url"
 	"testing"
 
 	"github.com/ngergs/websrv/filesystem"
-	"github.com/ngergs/websrv/server"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,7 +60,7 @@ func TestCacheMissCallsNext(t *testing.T) {
 }
 
 func getCacheHandler(t *testing.T, next http.Handler) *server.CacheHandler {
-	fs, err := filesystem.NewMemoryFs("../benchmark")
+	fs, err := filesystem.NewMemoryFs("../test/benchmark")
 	assert.Nil(t, err)
 	cacheHandler, err := server.NewCacheHandler(next, fs)
 	assert.Nil(t, err)
