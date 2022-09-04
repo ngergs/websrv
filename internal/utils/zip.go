@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"compress/gzip"
+	"github.com/rs/zerolog/log"
 	"io"
 )
 
@@ -13,7 +14,12 @@ func Unzip(in []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer gzipReader.Close()
+	defer func() {
+		err := gzipReader.Close()
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to close gzip reader")
+		}
+	}()
 	var result bytes.Buffer
 	_, err = result.ReadFrom(gzipReader)
 	if err != nil {
@@ -34,7 +40,12 @@ func Zip(in []byte, level int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer gzipWriter.Close()
+	defer func() {
+		err := gzipWriter.Close()
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to close gzip writer")
+		}
+	}()
 	_, err = io.Copy(gzipWriter, inReader)
 	if err != nil {
 		return nil, err
