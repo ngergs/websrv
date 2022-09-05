@@ -22,7 +22,7 @@ func BenchmarkServer(b *testing.B) {
 		CookieName:      "Nonce-Id",
 		CookieMaxAge:    10,
 	}
-	fs, err := filesystem.NewMemoryFs("benchmark")
+	fs, err := filesystem.NewMemoryFs("../../test/benchmark")
 	if err != nil {
 		log.Fatal().Err(err).Msg("error preparing in-memory-fs for benchmark")
 	}
@@ -58,6 +58,7 @@ func BenchmarkServer(b *testing.B) {
 	defer client.CloseIdleConnections()
 	r, _ := http.NewRequest("GET", "http://"+webserver.Addr+"/dummy_random.js", nil)
 	r.Header.Set("Accept-Encoding", "gzip")
+        b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		select {
 		case err = <-errChan:
