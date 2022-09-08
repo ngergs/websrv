@@ -36,7 +36,7 @@ func TestGracefulShutdown(t *testing.T) {
 	assert.False(t, shutdowner.Closed)
 	cancel()
 	assert.False(t, shutdowner.Closed)
-	time.Sleep(shutdowner.ShutdownTime)
+	time.Sleep(2 * shutdowner.ShutdownTime)
 	assert.True(t, shutdowner.Closed)
 }
 
