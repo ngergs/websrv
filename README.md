@@ -31,7 +31,7 @@ All releases starting with v1.4.3 have binary builds attached to them for linux,
 Compile from source:
 ```bash
 git clone https://github.com/ngergs/websrv
-go build
+go build ./cmd/websrv
 ```
 
 ## Usage
