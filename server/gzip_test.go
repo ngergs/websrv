@@ -26,20 +26,16 @@ func testZipHandler(t *testing.T, acceptEncoding string, contentType string, exp
 	w, r, next := getDefaultHandlerMocks()
 	r.Header.Set("Accept-Encoding", acceptEncoding)
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", contentType)
 		_, err := w.Write([]byte(originalTestMessage))
 		assert.Nil(t, err)
 	}
 
 	gzipHandler := server.GzipHandler(next, gzipCompression, gzipMediaTypes)
-	var responseHeader http.Header = map[string][]string{"Content-Type": {contentType}}
-	if acceptEncoding == "gzip" {
-		w.mock.On("Header").Return(responseHeader)
-	}
 	gzipHandler.ServeHTTP(w, r)
 
-	w.mock.AssertExpectations(t)
 	if expectZipped {
-		assert.Equal(t, []string{"gzip"}, responseHeader["Content-Encoding"])
+		assert.Equal(t, "gzip", w.Result().Header.Get("Content-Encoding"))
 	}
 	var expectedResponse []byte
 	if expectZipped {
@@ -50,6 +46,6 @@ func testZipHandler(t *testing.T, acceptEncoding string, contentType string, exp
 		expectedResponse = []byte(originalTestMessage)
 
 	}
-	assert.Equal(t, expectedResponse, w.receivedData.Bytes())
+	assert.Equal(t, expectedResponse, getReceivedData(t, w.Result().Body))
 
 }

@@ -18,11 +18,8 @@ const cookieLifeTime = time.Duration(10) * time.Second
 func TestSessionCookieShouldBeAdded(t *testing.T) {
 	// Setup test to get a session cookie
 	w, r, next := getDefaultHandlerMocks()
-	var responseHeader http.Header = make(map[string][]string)
-	w.mock.On("Header").Return(responseHeader)
 	handler := server.SessionCookieHandler(next, cookieName, cookieLifeTime)
 	handler.ServeHTTP(w, r)
-	w.mock.AssertExpectations(t)
 
 	// check that cookie has been set and parse it
 	responseCookie, ok := w.Header()["Set-Cookie"]
@@ -51,8 +48,6 @@ func TestSessionCookieShouldNotAddedIfPresent(t *testing.T) {
 	// Setup test to get a session cookie
 	requestCookieValue := "test123"
 	w, r, next := getDefaultHandlerMocks()
-	var responseHeader http.Header = make(map[string][]string)
-	w.mock.On("Header").Return(responseHeader)
 	handler := server.SessionCookieHandler(next, cookieName, cookieLifeTime)
 	r.Header.Set("Cookie", cookieName+"="+requestCookieValue)
 	handler.ServeHTTP(w, r)

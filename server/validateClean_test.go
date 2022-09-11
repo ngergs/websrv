@@ -11,11 +11,10 @@ import (
 
 func TestValidateWrongMethod(t *testing.T) {
 	w, r, next := getDefaultHandlerMocks()
-	w.mockStatusWrite(405)
 	r.Method = http.MethodPost
 	handler := server.ValidateCleanHandler(next)
 	handler.ServeHTTP(w, r)
-	w.mock.AssertExpectations(t)
+	assert.Equal(t, http.StatusMethodNotAllowed, w.Result().StatusCode)
 }
 
 func TestNonAbsolutePathRejection(t *testing.T) {
@@ -24,10 +23,9 @@ func TestNonAbsolutePathRejection(t *testing.T) {
 	assert.Nil(t, err)
 	r.Method = http.MethodGet
 	r.URL = url
-	w.mockStatusWrite(400)
 	handler := server.ValidateCleanHandler(next)
 	handler.ServeHTTP(w, r)
-	w.mock.AssertExpectations(t)
+	assert.Equal(t, http.StatusBadRequest, w.Result().StatusCode)
 }
 
 func TestCleanPathTransversalAttack(t *testing.T) {

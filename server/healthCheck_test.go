@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"github.com/ngergs/websrv/server"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 )
@@ -9,21 +10,18 @@ import (
 func TestHealthCheck(t *testing.T) {
 	w, r, _ := getDefaultHandlerMocks()
 	handler := server.HealthCheckHandler()
-	w.mock.On("WriteHeader", http.StatusOK)
 	handler.ServeHTTP(w, r)
-	w.mock.AssertExpectations(t)
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 }
 
 func TestConditionalHealthCheck(t *testing.T) {
 	w, r, _ := getDefaultHandlerMocks()
 	handler := server.HealthCheckConditionalHandler(func() bool { return true })
-	w.mock.On("WriteHeader", http.StatusOK)
 	handler.ServeHTTP(w, r)
-	w.mock.AssertExpectations(t)
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 
 	w, r, _ = getDefaultHandlerMocks()
 	handler = server.HealthCheckConditionalHandler(func() bool { return false })
-	w.mock.On("WriteHeader", http.StatusServiceUnavailable)
 	handler.ServeHTTP(w, r)
-	w.mock.AssertExpectations(t)
+	assert.Equal(t, http.StatusServiceUnavailable, w.Result().StatusCode)
 }

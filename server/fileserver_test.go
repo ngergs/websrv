@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"github.com/ngergs/websrv/server"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 
@@ -18,41 +19,41 @@ const fallbackFile = "index.html"
 
 // TestFileServerSimpleServe check sif a plain file without any extras is delivered
 func TestFileServerSimpleServe(t *testing.T) {
-	w, _, r := getHandlerMockWithPath(t, testFile)
+	w, r := getHandlerMockWithPath(t, testFile)
 	handler, originalFileData, _ := getWebserverHandler(t, []string{})
 	handler.ServeHTTP(w, r)
-	assert.Equal(t, originalFileData, w.receivedData.Bytes())
+	assert.Equal(t, originalFileData, getReceivedData(t, w.Result().Body))
 }
 
 // TestWebServerSimpleServe check sif a plain file without any extras is delivered
 func TestFileServerFallback(t *testing.T) {
-	w, _, r := getHandlerMockWithPath(t, "non-existing")
+	w, r := getHandlerMockWithPath(t, "non-existing")
 	handler, _, originalFallbackData := getWebserverHandler(t, []string{})
 	handler.ServeHTTP(w, r)
-	assert.Equal(t, originalFallbackData, w.receivedData.Bytes())
+	assert.Equal(t, originalFallbackData, getReceivedData(t, w.Result().Body))
 }
 
 // TestWebServerSimpleServe check sif a plain file without any extras is delivered
 func TestFileServerZip(t *testing.T) {
-	w, responseHeader, r := getHandlerMockWithPath(t, testFile)
+	w, r := getHandlerMockWithPath(t, testFile)
 	r.Header.Set("Accept-Encoding", "gzip")
 	handler, originalFileData, _ := getWebserverHandler(t, []string{"application/javascript"})
 	originalFileDataZipped, err := utils.Zip(originalFileData, gzip.BestCompression)
 	assert.Nil(t, err)
 	handler.ServeHTTP(w, r)
-	assert.Equal(t, originalFileDataZipped, w.receivedData.Bytes())
-	assert.Equal(t, "gzip", responseHeader.Get("Content-Encoding"))
+	assert.Equal(t, originalFileDataZipped, getReceivedData(t, w.Result().Body))
+	assert.Equal(t, "gzip", w.Result().Header.Get("Content-Encoding"))
 }
 
 func TestFileServerZipFallback(t *testing.T) {
-	w, responseHeader, r := getHandlerMockWithPath(t, "non-existing")
+	w, r := getHandlerMockWithPath(t, "non-existing")
 	r.Header.Set("Accept-Encoding", "gzip")
 	handler, _, originalFallbackData := getWebserverHandler(t, []string{"text/html"})
 	originalFileDataZipped, err := utils.Zip(originalFallbackData, gzip.BestCompression)
 	assert.Nil(t, err)
 	handler.ServeHTTP(w, r)
-	assert.Equal(t, originalFileDataZipped, w.receivedData.Bytes())
-	assert.Equal(t, "gzip", responseHeader.Get("Content-Encoding"))
+	assert.Equal(t, originalFileDataZipped, getReceivedData(t, w.Result().Body))
+	assert.Equal(t, "gzip", w.Result().Header.Get("Content-Encoding"))
 }
 
 func getWebserverHandler(t *testing.T, zipMediaTypes []string) (handler http.Handler, originalData []byte, fallbackData []byte) {
@@ -70,12 +71,10 @@ func getWebserverHandler(t *testing.T, zipMediaTypes []string) (handler http.Han
 	}), originalData, fallbackData
 }
 
-func getHandlerMockWithPath(t *testing.T, path string) (responseWriter *mockResponseWriter, responseHeader *http.Header, request *http.Request) {
+func getHandlerMockWithPath(t *testing.T, path string) (responseWriter *httptest.ResponseRecorder, request *http.Request) {
 	w, r, _ := getDefaultHandlerMocks()
 	url, err := url.Parse(path)
 	assert.Nil(t, err)
 	r.URL = url
-	rHeader := http.Header(make(map[string][]string))
-	w.mock.On("Header").Return(rHeader)
-	return w, &rHeader, r
+	return w, r
 }

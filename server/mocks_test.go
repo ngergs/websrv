@@ -1,36 +1,13 @@
 package server_test
 
 import (
-	"bytes"
 	"context"
+	"github.com/stretchr/testify/assert"
+	"io"
 	"net/http"
-
-	"github.com/stretchr/testify/mock"
+	"net/http/httptest"
+	"testing"
 )
-
-type mockResponseWriter struct {
-	receivedData bytes.Buffer
-	mock         mock.Mock
-}
-
-func (w *mockResponseWriter) Header() http.Header {
-	args := w.mock.Called()
-	return args.Get(0).(http.Header)
-}
-
-func (w *mockResponseWriter) Write(data []byte) (int, error) {
-	return w.receivedData.Write(data)
-}
-
-func (w *mockResponseWriter) WriteHeader(statusCode int) {
-	w.mock.Called(statusCode)
-}
-
-func (w *mockResponseWriter) mockStatusWrite(expectedtStatus int) {
-	var responseHeader http.Header = make(map[string][]string)
-	w.mock.On("Header").Return(responseHeader)
-	w.mock.On("WriteHeader", expectedtStatus)
-}
 
 type mockHandler struct {
 	w             http.ResponseWriter
@@ -47,10 +24,16 @@ func (handler *mockHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // getDefaultHandlerMocks provides default mocks used for handler testing
-func getDefaultHandlerMocks() (w *mockResponseWriter, r *http.Request, next *mockHandler) {
+func getDefaultHandlerMocks() (w *httptest.ResponseRecorder, r *http.Request, next *mockHandler) {
 	next = &mockHandler{}
-	w = &mockResponseWriter{}
+	w = httptest.NewRecorder()
 	r = &http.Request{Header: make(map[string][]string)}
 	r = r.WithContext(context.Background())
 	return
+}
+
+func getReceivedData(t *testing.T, r io.Reader) []byte {
+	data, err := io.ReadAll(r)
+	assert.Nil(t, err)
+	return data
 }

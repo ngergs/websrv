@@ -19,11 +19,9 @@ func TestEtagSetting(t *testing.T) {
 	}
 	cacheHandler := getCacheHandler(t, next)
 	r.URL = &url.URL{Path: path}
-	var responseHeader http.Header = make(map[string][]string)
-	w.mock.On("Header").Return(responseHeader)
 	cacheHandler.ServeHTTP(w, r)
-	w.mock.AssertExpectations(t)
-	assert.Equal(t, cacheHandler.Hashes[path], responseHeader.Get("ETag"))
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+	assert.Equal(t, cacheHandler.Hashes[path], w.Result().Header.Get("ETag"))
 }
 func TestNoEtagOnError(t *testing.T) {
 	path := "dummy_random.js"
@@ -35,9 +33,8 @@ func TestNoEtagOnError(t *testing.T) {
 	}
 	cacheHandler := getCacheHandler(t, next)
 	r.URL = &url.URL{Path: path}
-	w.mock.On("WriteHeader", http.StatusAccepted).Return()
 	cacheHandler.ServeHTTP(w, r)
-	w.mock.AssertExpectations(t) // call to "Header" has not been mocked -> ETag has not been set
+	assert.Equal(t, "", w.Result().Header.Get("ETag"))
 }
 
 func TestNotModifiedResponse(t *testing.T) {
@@ -46,9 +43,8 @@ func TestNotModifiedResponse(t *testing.T) {
 	cacheHandler := getCacheHandler(t, next)
 	r.URL = &url.URL{Path: path}
 	r.Header.Set("If-None-Match", cacheHandler.Hashes[path])
-	w.mock.On("WriteHeader", http.StatusNotModified)
 	cacheHandler.ServeHTTP(w, r)
-	w.mock.AssertExpectations(t)
+	assert.Equal(t, http.StatusNotModified, w.Result().StatusCode)
 }
 
 func TestCacheMissCallsNext(t *testing.T) {
