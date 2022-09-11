@@ -13,47 +13,64 @@ import (
 )
 
 type dummyShutdowner struct {
-	Ctx          context.Context
-	Closed       bool
+	mutex        sync.RWMutex
+	ctx          context.Context
+	closed       bool
 	ShutdownTime time.Duration
 }
 
 func (shutdowner *dummyShutdowner) Shutdown(ctx context.Context) error {
-	shutdowner.Ctx = ctx
+	shutdowner.mutex.Lock()
+	shutdowner.ctx = ctx
+	shutdowner.mutex.Unlock()
 	time.Sleep(shutdowner.ShutdownTime)
-	shutdowner.Closed = true
+	shutdowner.mutex.Lock()
+	defer shutdowner.mutex.Unlock()
+	shutdowner.closed = true
 	return nil
+}
+
+func (shutdowner *dummyShutdowner) isClosed() bool {
+	shutdowner.mutex.RLock()
+	defer shutdowner.mutex.RUnlock()
+	return shutdowner.closed
+}
+
+func (shutdowner *dummyShutdowner) getCtx() context.Context {
+	shutdowner.mutex.RLock()
+	defer shutdowner.mutex.RUnlock()
+	return shutdowner.ctx
 }
 
 func TestGracefulShutdown(t *testing.T) {
 	var wg sync.WaitGroup
 	shutdowner := &dummyShutdowner{
-		Closed:       false,
+		closed:       false,
 		ShutdownTime: time.Duration(100) * time.Millisecond,
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	server.AddGracefulShutdown(ctx, &wg, shutdowner, 0, time.Duration(1)*time.Second)
-	assert.False(t, shutdowner.Closed)
+	assert.False(t, shutdowner.isClosed())
 	cancel()
-	assert.False(t, shutdowner.Closed)
+	assert.False(t, shutdowner.isClosed())
 	time.Sleep(2 * shutdowner.ShutdownTime)
-	assert.True(t, shutdowner.Closed)
+	assert.True(t, shutdowner.isClosed())
 }
 
 func TestGracefulShutdownTimeout(t *testing.T) {
 	var wg sync.WaitGroup
 	timeoutDuration := time.Duration(1) * time.Second
 	shutdowner := &dummyShutdowner{
-		Closed:       false,
+		closed:       false,
 		ShutdownTime: 10 * timeoutDuration,
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	server.AddGracefulShutdown(ctx, &wg, shutdowner, 0, timeoutDuration)
-	assert.Nil(t, shutdowner.Ctx)
+	assert.Nil(t, shutdowner.getCtx())
 	cancel()
 	time.Sleep(time.Duration(100) * time.Millisecond) // wait some time to propagate the cancellation
-	assert.NotNil(t, shutdowner.Ctx)
-	deadline, ok := shutdowner.Ctx.Deadline()
+	assert.NotNil(t, shutdowner.getCtx())
+	deadline, ok := shutdowner.getCtx().Deadline()
 	assert.True(t, ok)
 	assert.True(t, deadline.Before(time.Now().Add(timeoutDuration)))
 }
