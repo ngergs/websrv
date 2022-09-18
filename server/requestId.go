@@ -2,9 +2,9 @@ package server
 
 import (
 	"context"
+	"github.com/ngergs/websrv/internal/random"
 	"net/http"
 
-	"github.com/ngergs/websrv/internal/utils"
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,10 +18,11 @@ var RequestIdKey = &ContextKey{val: "requestId"}
 
 // RequestIdToCtxHandler generates a random request-id and adds it to the request context under the RequestIdKey.
 func RequestIdToCtxHandler(next http.Handler) http.Handler {
+	randGen := random.NewBufferedRandomIdGenerator(32, 16)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logEnter(r.Context(), "request-id")
 		ctx := r.Context()
-		requestId := utils.GetRandomId(32)
+		requestId := randGen.GetRandomId()
 		ctx = log.With().Str("requestId", requestId).Logger().WithContext(ctx)
 		ctx = context.WithValue(ctx, RequestIdKey, requestId)
 		next.ServeHTTP(w, r.WithContext(ctx))
