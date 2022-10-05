@@ -48,7 +48,10 @@ func RunTillWaitGroupFinishes(ctx context.Context, wg *sync.WaitGroup, server *h
 	logShutdown(ctx, 0, timeout)
 	shutdownCtx, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
 	defer cancel()
-	server.Shutdown(shutdownCtx)
+	err := server.Shutdown(shutdownCtx)
+	if err != nil {
+		errChan <- err
+	}
 }
 
 // logShutdown logs the relevant info for the shutdown and extracts the optional server name from the context
