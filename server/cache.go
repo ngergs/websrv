@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
-	"github.com/ngergs/websrv/internal/sync"
+	"github.com/ngergs/websrv/internal/syncwrap"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
@@ -15,7 +15,7 @@ import (
 // The next handler in the chain is only called when a cache mismatch occurs.
 type cacheHandler struct {
 	Next   http.Handler
-	Hashes *sync.Map[string, string]
+	Hashes *syncwrap.Map[string, string]
 }
 
 // bufferedResponseWriter buffers the output response (to calculate the hash) but passes status codes and headers just through
@@ -80,6 +80,6 @@ func NewCacheHandler(next http.Handler) *cacheHandler {
 	// compute hashes
 	return &cacheHandler{
 		Next:   next,
-		Hashes: sync.NewMap[string, string](),
+		Hashes: syncwrap.NewMap[string, string](),
 	}
 }

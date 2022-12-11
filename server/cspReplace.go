@@ -2,15 +2,14 @@ package server
 
 import (
 	"bytes"
+	"github.com/ngergs/websrv/internal/syncwrap"
+	"github.com/rs/zerolog/log"
 	"io"
 	"io/fs"
 	"net/http"
 	"path"
 	"regexp"
 	"strings"
-	"sync"
-
-	"github.com/rs/zerolog/log"
 )
 
 // CspHeaderName is the Content-Security-Policy HTTP-Header name
@@ -20,7 +19,7 @@ const CspHeaderName = "Content-Security-Policy"
 // in files that match the FileNamePattern as well as in the Content-Security-Policy header.
 type CspReplaceHandler struct {
 	// use case of sync.Map: "(1) when the entry for a given key is only ever written once but read many times, as in caches that only grow"
-	replacer       sync.Map //map[string]*ReplacerCollection
+	replacer       syncwrap.SyncMap[string, *ReplacerCollection]
 	Next           http.Handler
 	Filesystem     fs.ReadFileFS
 	FileNamePatter *regexp.Regexp
@@ -28,7 +27,8 @@ type CspReplaceHandler struct {
 	VariableName   string
 }
 
-func (handler *CspReplaceHandler) load(path string) (*ReplacerCollection, error) {
+// loadTemplate loads a new template from the given path and stores it in the replacer syncMap
+func (handler *CspReplaceHandler) loadTemplate(path string) (*ReplacerCollection, error) {
 	data, err := handler.Filesystem.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -38,22 +38,14 @@ func (handler *CspReplaceHandler) load(path string) (*ReplacerCollection, error)
 		return nil, err
 	}
 	storedReplacer, _ := handler.replacer.LoadOrStore(path, replacer)
-	return storedReplacer.(*ReplacerCollection), nil
-}
-
-func (handler *CspReplaceHandler) getTemplate(path string) (*ReplacerCollection, bool) {
-	replacer, ok := handler.replacer.Load(path)
-	if !ok {
-		return nil, ok
-	}
-	return replacer.(*ReplacerCollection), ok
+	return storedReplacer, nil
 }
 
 func (handler *CspReplaceHandler) serveFile(w http.ResponseWriter, path string, input string) error {
-	replacer, ok := handler.getTemplate(path)
+	replacer, ok := handler.replacer.Load(path)
 	if !ok {
 		var err error
-		replacer, err = handler.load(path)
+		replacer, err = handler.loadTemplate(path)
 		if err != nil {
 			return err
 		}
@@ -79,7 +71,7 @@ func (handler *CspReplaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	handler.replaceHeader(w, sessionId.(string))
 	if handler.FileNamePatter == nil {
-		log.Ctx(r.Context()).Warn().Msg("Csp-Replace handler invoced but FileNamePattern has not been set. Skipping file replacement")
+		log.Ctx(r.Context()).Warn().Msg("Csp-Replace handler invoked but FileNamePattern has not been set. Skipping file replacement")
 		handler.Next.ServeHTTP(w, r)
 		return
 	}
@@ -117,7 +109,7 @@ type staticCopy struct {
 
 type inputCopy struct{}
 
-func (replacer *staticCopy) Replace(w io.Writer, input string) error {
+func (replacer *staticCopy) Replace(w io.Writer, _ string) error {
 	r := bytes.NewReader(replacer.data)
 	_, err := io.Copy(w, r)
 	return err
