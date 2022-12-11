@@ -16,7 +16,7 @@ import (
 )
 
 var version = "snapshot"
-var accessLog = flag.Bool("access-log", false, "Prints an acess log for the file server endpoint.")
+var accessLog = flag.Bool("access-log", false, "Prints an access log for the file server endpoint.")
 var debugLogging = flag.Bool("debug", false, "Log debug level")
 var configFile = flag.String("config-file", "", "Optional file that contains more involved config settings, see server/config.go for the structure.")
 var fallbackFilepath = flag.String("fallback-file", "index.html", "Filepath relative to targetDir which serves as fallback. Set to empty to disable.")

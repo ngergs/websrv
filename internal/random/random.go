@@ -7,10 +7,10 @@ import (
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-// BufferedRandomIdGenerator is used to fetch random generator ids while avoiding a mutex.
+// bufferedRandomIdGenerator is used to fetch random generator ids while avoiding a mutex.
 // The random ids are prefetched ina single goroutine in the background.
 // You have to call close to stop this goroutine.
-type BufferedRandomIdGenerator struct {
+type bufferedRandomIdGenerator struct {
 	idLength int
 	rand     *rand.Rand
 	ch       chan string
@@ -18,14 +18,14 @@ type BufferedRandomIdGenerator struct {
 }
 
 // GetRandomId returns a prefetched random id. Blocks till one is received.
-func (gen *BufferedRandomIdGenerator) GetRandomId() string {
+func (gen *bufferedRandomIdGenerator) GetRandomId() string {
 	return <-gen.ch
 }
 
 // NewBufferedRandomIdGenerator instantiates a new generator with the given buffer size.
-// The BufferedRandomIdGenerator has to be closed to avoid leaking the prefetch go routine.
-func NewBufferedRandomIdGenerator(idLength int, bufferSize int) *BufferedRandomIdGenerator {
-	gen := &BufferedRandomIdGenerator{
+// The bufferedRandomIdGenerator has to be closed to avoid leaking the prefetch go routine.
+func NewBufferedRandomIdGenerator(idLength int, bufferSize int) *bufferedRandomIdGenerator {
+	gen := &bufferedRandomIdGenerator{
 		idLength: idLength,
 		// use a non default source to avoid automatic mutex via the rand default source
 		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -37,8 +37,8 @@ func NewBufferedRandomIdGenerator(idLength int, bufferSize int) *BufferedRandomI
 }
 
 // prefetchRandomIds is called internally to prefetch random ids.
-// as we want to avoid mutexes only one version will be called per BufferedRandomIdGenerator.
-func (gen *BufferedRandomIdGenerator) prefetchRandomIds() {
+// as we want to avoid mutexes only one version will be called per bufferedRandomIdGenerator.
+func (gen *bufferedRandomIdGenerator) prefetchRandomIds() {
 	for true {
 		select {
 		case <-gen.closed:
@@ -55,7 +55,7 @@ func (gen *BufferedRandomIdGenerator) prefetchRandomIds() {
 }
 
 // Close stops the background prefetch process. Does not error.
-func (gen *BufferedRandomIdGenerator) Close() error {
+func (gen *bufferedRandomIdGenerator) Close() error {
 	close(gen.closed)
 	return nil
 }

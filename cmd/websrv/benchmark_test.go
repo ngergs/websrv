@@ -33,7 +33,7 @@ func BenchmarkServer(b *testing.B) {
 	errChan := make(chan error)
 	webserver := server.Build(*webServerPort, time.Duration(1)*time.Second, time.Duration(1)*time.Second, time.Duration(1)*time.Second,
 		server.FileServerHandler(fs, zipfs, *fallbackFilepath, config),
-		server.Caching(fs),
+		server.Caching(),
 		server.CspReplace(config, fs),
 		server.Gzip(config, gzip.DefaultCompression),
 		server.SessionId(config),
@@ -58,7 +58,7 @@ func BenchmarkServer(b *testing.B) {
 	defer client.CloseIdleConnections()
 	r, _ := http.NewRequest("GET", "http://"+webserver.Addr+"/dummy_random.js", nil)
 	r.Header.Set("Accept-Encoding", "gzip")
-        b.ResetTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		select {
 		case err = <-errChan:

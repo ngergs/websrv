@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strconv"
 	"time"
-
-	"github.com/rs/zerolog/log"
 )
 
 // HandlerMiddleware wraps a received handler with another wrapper handler to add functionality
@@ -40,14 +38,11 @@ func Optional(middleware HandlerMiddleware, isActive bool) HandlerMiddleware {
 	}
 }
 
-// Caching adds a caching middleware handler which uses the ETag HTTP response and If-None-Match HTTP request headers
-func Caching(filesystem fs.FS) HandlerMiddleware {
+// Caching adds a caching middleware handler which uses the ETag HTTP response and If-None-Match HTTP request headers.
+// This requires that all following handler only serve static resources. Following handlers will only be called when a cache mismatch occurs.
+func Caching() HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
-		cacheHandler, err := NewCacheHandler(handler, filesystem)
-		if err != nil {
-			log.Fatal().Err(err).Msg("Error setting up cache handler")
-		}
-		return cacheHandler
+		return NewCacheHandler(handler)
 	}
 }
 

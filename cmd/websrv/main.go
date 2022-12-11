@@ -28,7 +28,7 @@ func main() {
 	errChan := make(chan error)
 	webserver := server.Build(*webServerPort, time.Duration(*readTimeout)*time.Second, time.Duration(*writeTimeout)*time.Second, time.Duration(*idleTimeout)*time.Second,
 		server.FileServerHandler(unzipfs, zipfs, *fallbackFilepath, config),
-		server.Caching(unzipfs),
+		server.Caching(),
 		server.Optional(server.CspReplace(config, unzipfs), config.AngularCspReplace != nil),
 		server.Optional(server.Gzip(config, *gzipCompressionLevel), *gzipActive),
 		server.Optional(server.SessionId(config), config.AngularCspReplace != nil),
