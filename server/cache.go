@@ -25,17 +25,23 @@ type bufferedResponseWriter struct {
 	Buffer     bytes.Buffer
 }
 
+// Header just forwards the header
 func (w *bufferedResponseWriter) Header() http.Header {
 	return w.Next.Header()
 }
 
+// WriteHeader wraps the original write header functionality but does not forward StatusCodeOK settings
+// as these would block setting the ETag HTTP-header later on
 func (w *bufferedResponseWriter) WriteHeader(statusCode int) {
 	w.StatusCode = statusCode
-	w.Next.WriteHeader(statusCode)
+	if statusCode != http.StatusOK {
+		w.Next.WriteHeader(statusCode)
+	}
 }
 
+// Write intercepts the write and buffers it, has to be copied manually to the original responseWriter
 func (w *bufferedResponseWriter) Write(data []byte) (int, error) {
-	return w.Next.Write(data)
+	return w.Buffer.Write(data)
 }
 
 func (handler *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +70,7 @@ func (handler *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Debug().Msgf("Computed missing eTag for %s: %s", r.URL.Path, eTag)
 		handler.Hashes.Set(r.URL.Path, eTag)
 		w.Header().Set("ETag", eTag)
+		w.WriteHeader(http.StatusOK)
 	}
 	io.Copy(w, &bufferedW.Buffer)
 }
