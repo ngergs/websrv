@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"io/fs"
 	"net/http"
 	"regexp"
@@ -99,6 +100,14 @@ func ValidateClean() HandlerMiddleware {
 func AccessLog() HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		return AccessLogHandler(handler)
+	}
+}
+
+// AccessMetrics collects metrics about bytes send and response status codes and writes
+// them to the provided prometheus registerer
+func AccessMetrics(registerer prometheus.Registerer, namespace string) HandlerMiddleware {
+	return func(handler http.Handler) http.Handler {
+		return AccessMetricsHandler(handler, registerer, namespace)
 	}
 }
 

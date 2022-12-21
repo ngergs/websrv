@@ -1,13 +1,44 @@
 package server
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
+
+var DomainLabel = "domain"
+var StatusLabel = "status"
+
+// AccessMetricsHandler collects the bytes send out as well as the status codes as prometheus metrics and writes them
+// to the  registry
+func AccessMetricsHandler(next http.Handler, registerer prometheus.Registerer, prometheusNamespace string) http.Handler {
+	var bytesSend = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: prometheusNamespace,
+		Subsystem: "access",
+		Name:      "egress_bytes",
+		Help:      "Number of bytes send out from this application.",
+	}, []string{DomainLabel})
+	var statusCode = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: prometheusNamespace,
+		Subsystem: "access",
+		Name:      "http_statuscode",
+		Help:      "HTTP Response status code.",
+	}, []string{DomainLabel, StatusLabel})
+	registerer.MustRegister(bytesSend, statusCode)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logEnter(r.Context(), "metrics-log")
+		metricResponseWriter := &metricResponseWriter{Next: w}
+		next.ServeHTTP(metricResponseWriter, r)
+
+		statusCode.With(map[string]string{DomainLabel: r.Host, StatusLabel: strconv.Itoa(metricResponseWriter.StatusCode)}).Inc()
+		bytesSend.With(map[string]string{DomainLabel: r.Host}).Add(float64(metricResponseWriter.BytesSend))
+	})
+}
 
 type metricResponseWriter struct {
 	Next       http.ResponseWriter
