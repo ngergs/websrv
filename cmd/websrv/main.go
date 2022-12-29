@@ -41,7 +41,7 @@ func main() {
 		server.Optional(server.SessionId(config), config.AngularCspReplace != nil),
 		server.Header(config),
 		server.ValidateClean(),
-		server.Optional(server.AccessMetrics(promRegisterer, *metricsNamespace, true), *metrics),
+		server.Optional(server.AccessMetrics(promRegisterer, *metricsNamespace, true), *metricsAccessLog),
 		server.Optional(server.AccessLog(), *accessLog),
 		server.RequestID(),
 		server.Timer())
