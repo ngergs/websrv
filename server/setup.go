@@ -104,10 +104,13 @@ func AccessLog() HandlerMiddleware {
 }
 
 // AccessMetrics collects metrics about bytes send and response status codes and writes
-// them to the provided prometheus registerer
-func AccessMetrics(registerer prometheus.Registerer, namespace string) HandlerMiddleware {
+// them to the provided prometheus registerer.
+// registerMetrics usually should be set to true.
+// Setting registerMetrics to false is only for the use case that the same prometheus.Registerer
+// should be used for multiple instances of this middleware. Then it should be true only for the first instanced middleware.
+func AccessMetrics(registerer prometheus.Registerer, namespace string, registerMetrics bool) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
-		return AccessMetricsHandler(handler, registerer, namespace)
+		return AccessMetricsHandler(handler, registerer, namespace, registerMetrics)
 	}
 }
 

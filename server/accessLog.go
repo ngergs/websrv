@@ -15,8 +15,10 @@ var DomainLabel = "domain"
 var StatusLabel = "status"
 
 // AccessMetricsHandler collects the bytes send out as well as the status codes as prometheus metrics and writes them
-// to the  registry
-func AccessMetricsHandler(next http.Handler, registerer prometheus.Registerer, prometheusNamespace string) http.Handler {
+// to the  registry. The registerer has to be prepared via the AccessMetricsRegisterMetrics function.
+// registerMetrics usually should be set to true. Setting registerMetrics to false is only for the use case that the same prometheus.Registerer
+// should be used for multiple instances of this middleware. Then it should be true only for the first instanced middleware.
+func AccessMetricsHandler(next http.Handler, registerer prometheus.Registerer, prometheusNamespace string, registerMetrics bool) http.Handler {
 	var bytesSend = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: prometheusNamespace,
 		Subsystem: "access",
@@ -29,7 +31,9 @@ func AccessMetricsHandler(next http.Handler, registerer prometheus.Registerer, p
 		Name:      "http_statuscode",
 		Help:      "HTTP Response status code.",
 	}, []string{DomainLabel, StatusLabel})
-	registerer.MustRegister(bytesSend, statusCode)
+	if registerMetrics {
+		registerer.MustRegister(bytesSend, statusCode)
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logEnter(r.Context(), "metrics-log")
 		metricResponseWriter := &metricResponseWriter{Next: w}
