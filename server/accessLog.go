@@ -51,7 +51,7 @@ func AccessMetricsRegister(registerer prometheus.Registerer, prometheusNamespace
 }
 
 // AccessMetricsHandler collects the bytes send out as well as the status codes as prometheus metrics and writes them
-// to the  registry. The registerer has to be prepared via the AccessMetricsRegisterMetrics function.
+// to the  registry. The registerer has to be prepared via the AccessMetricsRegister function.
 func AccessMetricsHandler(next http.Handler, registration *PrometheusRegistration) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logEnter(r.Context(), "metrics-log")
