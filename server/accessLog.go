@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"strconv"
@@ -14,11 +15,14 @@ import (
 var DomainLabel = "domain"
 var StatusLabel = "status"
 
-// AccessMetricsHandler collects the bytes send out as well as the status codes as prometheus metrics and writes them
-// to the  registry. The registerer has to be prepared via the AccessMetricsRegisterMetrics function.
-// registerMetrics usually should be set to true. Setting registerMetrics to false is only for the use case that the same prometheus.Registerer
-// should be used for multiple instances of this middleware. Then it should be true only for the first instanced middleware.
-func AccessMetricsHandler(next http.Handler, registerer prometheus.Registerer, prometheusNamespace string, registerMetrics bool) http.Handler {
+// PrometheusRegistration wraps a prometheus registerer and corresponding registered types.
+type PrometheusRegistration struct {
+	bytesSend  *prometheus.GaugeVec
+	statusCode *prometheus.CounterVec
+}
+
+// AccessMetricsRegister registrates the relevant prometheus types and returns a custom registration type
+func AccessMetricsRegister(registerer prometheus.Registerer, prometheusNamespace string) (*PrometheusRegistration, error) {
 	var bytesSend = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: prometheusNamespace,
 		Subsystem: "access",
@@ -31,16 +35,31 @@ func AccessMetricsHandler(next http.Handler, registerer prometheus.Registerer, p
 		Name:      "http_statuscode",
 		Help:      "HTTP Response status code.",
 	}, []string{DomainLabel, StatusLabel})
-	if registerMetrics {
-		registerer.MustRegister(bytesSend, statusCode)
+
+	err := registerer.Register(bytesSend)
+	if err != nil {
+		return nil, fmt.Errorf("failed to register egress_bytes metric: %v", err)
 	}
+	err = registerer.Register(statusCode)
+	if err != nil {
+		return nil, fmt.Errorf("failed to register http_statuscode metric: %v", err)
+	}
+	return &PrometheusRegistration{
+		bytesSend:  bytesSend,
+		statusCode: statusCode,
+	}, nil
+}
+
+// AccessMetricsHandler collects the bytes send out as well as the status codes as prometheus metrics and writes them
+// to the  registry. The registerer has to be prepared via the AccessMetricsRegisterMetrics function.
+func AccessMetricsHandler(next http.Handler, registration *PrometheusRegistration) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logEnter(r.Context(), "metrics-log")
 		metricResponseWriter := &metricResponseWriter{Next: w}
 		next.ServeHTTP(metricResponseWriter, r)
 
-		statusCode.With(map[string]string{DomainLabel: r.Host, StatusLabel: strconv.Itoa(metricResponseWriter.StatusCode)}).Inc()
-		bytesSend.With(map[string]string{DomainLabel: r.Host}).Add(float64(metricResponseWriter.BytesSend))
+		registration.statusCode.With(map[string]string{DomainLabel: r.Host, StatusLabel: strconv.Itoa(metricResponseWriter.StatusCode)}).Inc()
+		registration.bytesSend.With(map[string]string{DomainLabel: r.Host}).Add(float64(metricResponseWriter.BytesSend))
 	})
 }
 
