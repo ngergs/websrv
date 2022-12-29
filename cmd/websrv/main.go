@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"io/fs"
 	"net/http"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/ngergs/websrv/filesystem"
 	"github.com/ngergs/websrv/server"
@@ -26,6 +29,10 @@ func main() {
 	unzipfs, zipfs := initFs(config)
 
 	errChan := make(chan error)
+	var promRegisterer prometheus.Registerer
+	if *metrics {
+		promRegisterer = prometheus.DefaultRegisterer
+	}
 	webserver := server.Build(*webServerPort, time.Duration(*readTimeout)*time.Second, time.Duration(*writeTimeout)*time.Second, time.Duration(*idleTimeout)*time.Second,
 		server.FileServerHandler(unzipfs, zipfs, *fallbackFilepath, config),
 		server.Caching(),
@@ -34,6 +41,7 @@ func main() {
 		server.Optional(server.SessionId(config), config.AngularCspReplace != nil),
 		server.Header(config),
 		server.ValidateClean(),
+		server.Optional(server.AccessMetrics(promRegisterer, *metricsNamespace), *metrics),
 		server.Optional(server.AccessLog(), *accessLog),
 		server.RequestID(),
 		server.Timer())
@@ -41,6 +49,17 @@ func main() {
 	srvCtx := context.WithValue(sigtermCtx, server.ServerName, "file server")
 	server.AddGracefulShutdown(srvCtx, &wg, webserver, time.Duration(*shutdownDelay)*time.Second, time.Duration(*shutdownTimeout)*time.Second)
 	go func() { errChan <- webserver.ListenAndServe() }()
+
+	if *metrics {
+		metricsServer := server.Build(*metricsPort, time.Duration(*readTimeout)*time.Second, time.Duration(*writeTimeout)*time.Second, time.Duration(*idleTimeout)*time.Second,
+			promhttp.Handler(), server.Optional(server.AccessLog(), *metricsAccessLog))
+		metricsCtx := context.WithValue(sigtermCtx, server.ServerName, "prometheus metrics server")
+		server.AddGracefulShutdown(metricsCtx, &wg, metricsServer, time.Duration(*shutdownDelay)*time.Second, time.Duration(*shutdownTimeout)*time.Second)
+		go func() {
+			log.Info().Msgf("Listening for prometheus metric scrapes under container port tcp/%s", metricsServer.Addr[1:])
+			errChan <- metricsServer.ListenAndServe()
+		}()
+	}
 
 	go logErrors(errChan)
 
