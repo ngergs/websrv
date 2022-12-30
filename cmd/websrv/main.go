@@ -30,7 +30,7 @@ func main() {
 
 	errChan := make(chan error)
 	var promRegistration *server.PrometheusRegistration
-	if *metrics {
+	if *metricsAccessLog {
 		promRegistration, err = server.AccessMetricsRegister(prometheus.DefaultRegisterer, *metricsNamespace)
 		if err != nil {
 			log.Error().Err(err).Msg("Could not register custom prometheus metrics.")
