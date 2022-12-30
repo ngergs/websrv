@@ -30,7 +30,7 @@ func main() {
 
 	errChan := make(chan error)
 	var promRegistration *server.PrometheusRegistration
-	if *metricsAccessLog {
+	if *metrics {
 		promRegistration, err = server.AccessMetricsRegister(prometheus.DefaultRegisterer, *metricsNamespace)
 		if err != nil {
 			log.Error().Err(err).Msg("Could not register custom prometheus metrics.")
@@ -44,7 +44,7 @@ func main() {
 		server.Optional(server.SessionId(config), config.AngularCspReplace != nil),
 		server.Header(config),
 		server.ValidateClean(),
-		server.Optional(server.AccessMetrics(promRegistration), *metricsAccessLog),
+		server.Optional(server.AccessMetrics(promRegistration), *metrics),
 		server.Optional(server.AccessLog(), *accessLog),
 		server.RequestID(),
 		server.Timer())
