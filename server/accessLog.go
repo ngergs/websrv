@@ -17,13 +17,13 @@ var StatusLabel = "status"
 
 // PrometheusRegistration wraps a prometheus registerer and corresponding registered types.
 type PrometheusRegistration struct {
-	bytesSend  *prometheus.GaugeVec
+	bytesSend  *prometheus.CounterVec
 	statusCode *prometheus.CounterVec
 }
 
 // AccessMetricsRegister registrates the relevant prometheus types and returns a custom registration type
 func AccessMetricsRegister(registerer prometheus.Registerer, prometheusNamespace string) (*PrometheusRegistration, error) {
-	var bytesSend = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	var bytesSend = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: prometheusNamespace,
 		Subsystem: "access",
 		Name:      "egress_bytes",
