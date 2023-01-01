@@ -41,7 +41,7 @@ The path to this folder has to be provided as command line argument. There are a
 Usage: ./websrv {options} [target-path]
 Options:
   -access-log
-        Prints an acess log for the file server endpoint.
+        Prints an access log for the file server endpoint.
   -config-file string
         Optional file that contains more involved config settings, see server/config.go for the structure.
   -debug
@@ -51,9 +51,9 @@ Options:
   -gzip
         Whether to send gzip encoded response. See config-file for setting the detailed types. As default gzip is used when activated for test/css, text/html and application/javascript (default true)
   -gzip-level int
-        The compression level used for gzip compression. See the golang gzip documentation for details. Only applies to on-the-fly compression. The in-memory-fs (when used) uses for static files always gzip.BestCompression (default -1)
+        The compression level used for gzip compression. See the golang gzip documentation for details. Only applies to on-the-fly compression. The in-memory-fs (when used) uses for static files always gzip.BestCompression (default 1)
   -health
-        Whether to start the health check endpoint (/ under a separate port) (default true)
+        Whether to start the health check endpoint (under a separate port) (default true)
   -health-access-log
         Prints an access log for the health check endpoint to stdout.
   -health-port int
@@ -64,6 +64,14 @@ Options:
         Timeout for idle TCP connections with keep-alive in seconds. (default 30)
   -in-memory-fs
         Whether to use a in-memory-filesystem. I.e. prefetch the target directory into the heap.
+  -metrics
+        Whether to start the metrics endpoint (under a separate port)
+  -metrics-access-log
+        Prints an access log for the metrics endpoint to stdout.
+  -metrics-namespace string
+        Prometheus namespace for the collected metrics. (default "websrv")
+  -metrics-port int
+        TCP-Port under which the metrics endpoint runs. (default 9090)
   -port int
         Port under which the webserver runs. (default 8080)
   -pretty
