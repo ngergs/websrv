@@ -49,7 +49,7 @@ func TestGracefulShutdown(t *testing.T) {
 		ShutdownTime: time.Duration(100) * time.Millisecond,
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	server.AddGracefulShutdown(ctx, &wg, shutdowner, 0, time.Duration(1)*time.Second)
+	server.AddGracefulShutdown(ctx, &wg, shutdowner, time.Duration(1)*time.Second)
 	assert.False(t, shutdowner.isClosed())
 	cancel()
 	assert.False(t, shutdowner.isClosed())
@@ -65,7 +65,7 @@ func TestGracefulShutdownTimeout(t *testing.T) {
 		ShutdownTime: 10 * timeoutDuration,
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	server.AddGracefulShutdown(ctx, &wg, shutdowner, 0, timeoutDuration)
+	server.AddGracefulShutdown(ctx, &wg, shutdowner, timeoutDuration)
 	assert.Nil(t, shutdowner.getCtx())
 	cancel()
 	time.Sleep(time.Duration(100) * time.Millisecond) // wait some time to propagate the cancellation
@@ -76,7 +76,7 @@ func TestGracefulShutdownTimeout(t *testing.T) {
 }
 
 func TestSigTermCtx(t *testing.T) {
-	sigtermCtx := server.SigTermCtx(context.Background())
+	sigtermCtx := server.SigTermCtx(context.Background(), 0)
 	assert.False(t, isChannelClosed(sigtermCtx.Done()))
 	err := syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
 	if err != nil {

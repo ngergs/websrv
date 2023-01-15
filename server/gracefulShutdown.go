@@ -23,12 +23,11 @@ type Shutdowner interface {
 // if timeout is not null a context with a deadline is prepared prior to the Shutdown call.
 // It is the responsibility of the Shutdowner interface implementer to honor this context deadline.
 // The waitgroup is incremented by one immediately and one is released when the shutdown has finished.
-func AddGracefulShutdown(ctx context.Context, wg *sync.WaitGroup, shutdowner Shutdowner, shutdownDelay time.Duration, timeout time.Duration) {
+func AddGracefulShutdown(ctx context.Context, wg *sync.WaitGroup, shutdowner Shutdowner, timeout time.Duration) {
 	wg.Add(1)
 	go func() {
 		<-ctx.Done()
-		logShutdown(ctx, shutdownDelay, timeout)
-		time.Sleep(shutdownDelay)
+		logShutdown(ctx, timeout)
 		shutdownCtx, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
 		defer cancel()
 		err := shutdowner.Shutdown(shutdownCtx)
@@ -45,7 +44,7 @@ func AddGracefulShutdown(ctx context.Context, wg *sync.WaitGroup, shutdowner Shu
 func RunTillWaitGroupFinishes(ctx context.Context, wg *sync.WaitGroup, server *http.Server, errChan chan<- error, timeout time.Duration) {
 	go func() { errChan <- server.ListenAndServe() }()
 	wg.Wait()
-	logShutdown(ctx, 0, timeout)
+	logShutdown(ctx, timeout)
 	shutdownCtx, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
 	defer cancel()
 	err := server.Shutdown(shutdownCtx)
@@ -55,23 +54,37 @@ func RunTillWaitGroupFinishes(ctx context.Context, wg *sync.WaitGroup, server *h
 }
 
 // logShutdown logs the relevant info for the shutdown and extracts the optional server name from the context
-func logShutdown(ctx context.Context, shutdownDelay time.Duration, timeout time.Duration) {
+func logShutdown(ctx context.Context, timeout time.Duration) {
 	serverName := ctx.Value(ServerName)
 	if serverName != nil {
-		log.Info().Msgf("%s: Graceful shutdown with delay %.0fs and timeout %.0fs", serverName, shutdownDelay.Seconds(), timeout.Seconds())
+		log.Info().Msgf("%s: Graceful shutdown with timeout %.0fs", serverName, timeout.Seconds())
 	} else {
-		log.Info().Msgf("Graceful shutdown with delay %.0fs and timeout %.0fs", shutdownDelay.Seconds(), timeout.Seconds())
+		log.Info().Msgf("Graceful shutdown  and timeout %.0fs", timeout.Seconds())
 	}
 }
 
 // SigTermCtx intercepts the syscall.SIGTERM and returns the information in the form of a wrapped context whose cancel function is called when the SIGTERM signal is received.
-func SigTermCtx(ctx context.Context) context.Context {
-	termChan := make(chan os.Signal, 1)
+// cancelDelay adds an additional delay before actually cancelling the context.
+// If a second SIGTERM is received, the shutdown is immediate via os.Exit(1).
+func SigTermCtx(ctx context.Context, cancelDelay time.Duration) context.Context {
+	termChan := make(chan os.Signal, 2)
 	signal.Notify(termChan, os.Interrupt, syscall.SIGTERM)
 	ctx, cancel := context.WithCancel(ctx)
 	go func() {
 		sigterm := <-termChan
-		log.Info().Msgf("Received system call: %v", sigterm)
+		log.Info().Msgf("Received system call: %v, waiting %.0fs before shutting down gracefully", sigterm, cancelDelay.Seconds())
+		if cancelDelay.Seconds() != 0 {
+			ticker := time.NewTicker(cancelDelay)
+			defer ticker.Stop()
+			// wait till one of them is done
+			select {
+			case <-termChan:
+				log.Info().Msgf("Received second system call: %v, shutting down immediately", sigterm)
+				os.Exit(1)
+			case <-ticker.C:
+			}
+		}
+		log.Info().Msg("Shutting down gracefully")
 		cancel()
 	}()
 	return ctx

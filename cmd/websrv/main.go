@@ -20,7 +20,7 @@ import (
 func main() {
 	setup()
 	var wg sync.WaitGroup
-	sigtermCtx := server.SigTermCtx(context.Background())
+	sigtermCtx := server.SigTermCtx(context.Background(), time.Duration(*shutdownDelay)*time.Second)
 	config, err := readConfig()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error reading -config: See server.config.go for the expected structure.")
@@ -50,14 +50,14 @@ func main() {
 		server.Timer())
 	log.Info().Msgf("Starting webserver server on port %d", *webServerPort)
 	srvCtx := context.WithValue(sigtermCtx, server.ServerName, "file server")
-	server.AddGracefulShutdown(srvCtx, &wg, webserver, time.Duration(*shutdownDelay)*time.Second, time.Duration(*shutdownTimeout)*time.Second)
+	server.AddGracefulShutdown(srvCtx, &wg, webserver, time.Duration(*shutdownTimeout)*time.Second)
 	go func() { errChan <- webserver.ListenAndServe() }()
 
 	if *metrics {
 		metricsServer := server.Build(*metricsPort, time.Duration(*readTimeout)*time.Second, time.Duration(*writeTimeout)*time.Second, time.Duration(*idleTimeout)*time.Second,
 			promhttp.Handler(), server.Optional(server.AccessLog(), *metricsAccessLog))
 		metricsCtx := context.WithValue(sigtermCtx, server.ServerName, "prometheus metrics server")
-		server.AddGracefulShutdown(metricsCtx, &wg, metricsServer, time.Duration(*shutdownDelay)*time.Second, time.Duration(*shutdownTimeout)*time.Second)
+		server.AddGracefulShutdown(metricsCtx, &wg, metricsServer, time.Duration(*shutdownTimeout)*time.Second)
 		go func() {
 			log.Info().Msgf("Listening for prometheus metric scrapes under container port tcp/%s", metricsServer.Addr[1:])
 			errChan <- metricsServer.ListenAndServe()
