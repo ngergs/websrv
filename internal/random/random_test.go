@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetRandomId(t *testing.T) {
@@ -12,10 +12,10 @@ func TestGetRandomId(t *testing.T) {
 	gen := NewBufferedRandomIdGenerator(n, 16)
 	defer gen.Close()
 	randId := gen.GetRandomId()
-	assert.Equal(t, n, len(randId))
+	require.Equal(t, n, len(randId))
 	randId2 := gen.GetRandomId()
-	assert.Equal(t, n, len(randId2))
-	assert.NotEqual(t, randId, randId2)
+	require.Equal(t, n, len(randId2))
+	require.NotEqual(t, randId, randId2)
 }
 
 func BenchmarkRandomId(b *testing.B) {

@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/ngergs/websrv/internal/utils"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const testDir = "../test/benchmark"
@@ -20,12 +20,12 @@ const testFile = "dummy_random.js"
 // TestMemoryFsReadFile tests is ReadFile from the fs.ReadFileFS interface works
 func TestMemoryFsReadFile(t *testing.T) {
 	memoryFs, err := filesystem.NewMemoryFs(testDir)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	originalData, err := os.ReadFile(path.Join(testDir, testFile))
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	memoryData, err := memoryFs.ReadFile(testFile)
-	assert.Nil(t, err)
-	assert.Equal(t, originalData, memoryData)
+	require.Nil(t, err)
+	require.Equal(t, originalData, memoryData)
 }
 
 // TestMemoryFsOpenFile tests Open from the fs.FS interface
@@ -33,48 +33,48 @@ func TestMemoryFsOpenFile(t *testing.T) {
 	osFs := os.DirFS(testDir)
 	originalData, originalStat := getStatsContent(t, osFs, testFile)
 	memoryFs, err := filesystem.NewMemoryFs(testDir)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	memoryData, memoryStat := getStatsContent(t, memoryFs, testFile)
 
-	assert.Equal(t, originalStat, memoryStat)
-	assert.Equal(t, originalData, memoryData)
+	require.Equal(t, originalStat, memoryStat)
+	require.Equal(t, originalData, memoryData)
 }
 
 // TestMemoryFsZip tests the zip functionality of the memoryFs
 func TestMemoryFsZip(t *testing.T) {
 	memoryFs, err := filesystem.NewMemoryFs(testDir)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	memoryFsZipped, err := memoryFs.Zip([]string{".js"})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	originalData, err := os.ReadFile(path.Join(testDir, testFile))
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	originalDataZipped, err := utils.Zip(originalData, gzip.BestCompression)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	memoryDataZipped, err := memoryFsZipped.ReadFile(testFile)
-	assert.Nil(t, err)
-	assert.Equal(t, originalDataZipped, memoryDataZipped)
+	require.Nil(t, err)
+	require.Equal(t, originalDataZipped, memoryDataZipped)
 }
 
 // TestMemoryFsZipNonMatch tests that file sthat do not match the zip file extension are not present in the zipped memoryFs.
 func TestMemoryFsZipNonMatch(t *testing.T) {
 	memoryFs, err := filesystem.NewMemoryFs(testDir)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	memoryFsZipped, err := memoryFs.Zip([]string{})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	_, err = memoryFsZipped.ReadFile(testFile)
 	// file extension does not match. Hence, the given testFile is not present in the zipped memoryFs
-	assert.NotNil(t, err)
+	require.NotNil(t, err)
 }
 
 func getStatsContent(t *testing.T, fs fs.FS, path string) ([]byte, fs.FileInfo) {
 	file, err := fs.Open(path)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	defer utils.Close(context.Background(), file)
 	stat, err := file.Stat()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	data, err := io.ReadAll(file)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	return data, stat
 }

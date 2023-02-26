@@ -2,7 +2,7 @@ package server_test
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -34,6 +34,6 @@ func getDefaultHandlerMocks() (w *httptest.ResponseRecorder, r *http.Request, ne
 
 func getReceivedData(t *testing.T, r io.Reader) []byte {
 	data, err := io.ReadAll(r)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	return data
 }

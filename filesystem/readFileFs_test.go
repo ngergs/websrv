@@ -6,17 +6,17 @@ import (
 	"path"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestReadFileFs(t *testing.T) {
 	originalData, err := os.ReadFile(path.Join(testDir, testFile))
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	osFs := os.DirFS(testDir)
 	readFileFs := &filesystem.ReadFileFS{FS: osFs}
 	readFileFsData, err := readFileFs.ReadFile(testFile)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
-	assert.Equal(t, originalData, readFileFsData)
+	require.Equal(t, originalData, readFileFsData)
 }

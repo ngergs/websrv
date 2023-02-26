@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type dummyShutdowner struct {
@@ -50,11 +50,11 @@ func TestGracefulShutdown(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	server.AddGracefulShutdown(ctx, &wg, shutdowner, time.Duration(1)*time.Second)
-	assert.False(t, shutdowner.isClosed())
+	require.False(t, shutdowner.isClosed())
 	cancel()
-	assert.False(t, shutdowner.isClosed())
+	require.False(t, shutdowner.isClosed())
 	time.Sleep(2 * shutdowner.ShutdownTime)
-	assert.True(t, shutdowner.isClosed())
+	require.True(t, shutdowner.isClosed())
 }
 
 func TestGracefulShutdownTimeout(t *testing.T) {
@@ -66,23 +66,23 @@ func TestGracefulShutdownTimeout(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	server.AddGracefulShutdown(ctx, &wg, shutdowner, timeoutDuration)
-	assert.Nil(t, shutdowner.getCtx())
+	require.Nil(t, shutdowner.getCtx())
 	cancel()
 	time.Sleep(time.Duration(100) * time.Millisecond) // wait some time to propagate the cancellation
-	assert.NotNil(t, shutdowner.getCtx())
+	require.NotNil(t, shutdowner.getCtx())
 	deadline, ok := shutdowner.getCtx().Deadline()
-	assert.True(t, ok)
-	assert.True(t, deadline.Before(time.Now().Add(timeoutDuration)))
+	require.True(t, ok)
+	require.True(t, deadline.Before(time.Now().Add(timeoutDuration)))
 }
 
 func TestSigTermCtx(t *testing.T) {
 	sigtermCtx := server.SigTermCtx(context.Background(), 0)
-	assert.False(t, isChannelClosed(sigtermCtx.Done()))
+	require.False(t, isChannelClosed(sigtermCtx.Done()))
 	err := syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
 	if err != nil {
 		log.Err(err).Msg("Sigterm failed")
 	}
-	assert.True(t, isChannelClosed(sigtermCtx.Done()))
+	require.True(t, isChannelClosed(sigtermCtx.Done()))
 }
 
 func isChannelClosed(channel <-chan struct{}) bool {

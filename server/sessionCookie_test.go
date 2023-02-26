@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const cookieName = "testCookie"
@@ -23,25 +23,25 @@ func TestSessionCookieShouldBeAdded(t *testing.T) {
 
 	// check that cookie has been set and parse it
 	responseCookie, ok := w.Header()["Set-Cookie"]
-	assert.True(t, ok)
+	require.True(t, ok)
 	cookie, sameSite := parseSetCookie(t, responseCookie[0])
 
 	//static settings
-	assert.True(t, cookie.HttpOnly)
-	assert.True(t, cookie.Secure)
-	assert.Equal(t, "Strict", sameSite)
-	assert.Equal(t, "/", cookie.Path)
-	assert.Equal(t, "", cookie.Domain)
+	require.True(t, cookie.HttpOnly)
+	require.True(t, cookie.Secure)
+	require.Equal(t, "Strict", sameSite)
+	require.Equal(t, "/", cookie.Path)
+	require.Equal(t, "", cookie.Domain)
 	// dynamic settings
-	assert.Equal(t, cookieName, cookie.Name)
-	assert.Equal(t, int(cookieLifeTime.Seconds()), cookie.MaxAge)
+	require.Equal(t, cookieName, cookie.Name)
+	require.Equal(t, int(cookieLifeTime.Seconds()), cookie.MaxAge)
 	// allow some error here as this is set internally when the cookie is created
 	expectedExpiresTime := time.Now().Add(cookieLifeTime)
-	assert.True(t, cookie.Expires.After(expectedExpiresTime.Add(-time.Duration(1)*time.Second)))
-	assert.True(t, cookie.Expires.Before(expectedExpiresTime.Add(time.Duration(1)*time.Second)))
+	require.True(t, cookie.Expires.After(expectedExpiresTime.Add(-time.Duration(1)*time.Second)))
+	require.True(t, cookie.Expires.Before(expectedExpiresTime.Add(time.Duration(1)*time.Second)))
 
 	cookieValue := getCookieFromCtx(t, next.r.Context())
-	assert.NotEqual(t, "", cookieValue)
+	require.NotEqual(t, "", cookieValue)
 }
 
 func TestSessionCookieShouldNotAddedIfPresent(t *testing.T) {
@@ -54,15 +54,15 @@ func TestSessionCookieShouldNotAddedIfPresent(t *testing.T) {
 
 	//make sure that cookie has not been set in response
 	_, ok := w.Header()["Set-Cookie"]
-	assert.False(t, ok)
+	require.False(t, ok)
 
 	cookieValue := getCookieFromCtx(t, next.r.Context())
-	assert.Equal(t, requestCookieValue, cookieValue)
+	require.Equal(t, requestCookieValue, cookieValue)
 }
 
 func getCookieFromCtx(t *testing.T, ctx context.Context) string {
 	cookieVal := ctx.Value(server.SessionIdKey)
-	assert.NotNil(t, cookieVal)
+	require.NotNil(t, cookieVal)
 	return cookieVal.(string)
 }
 
@@ -70,7 +70,7 @@ func getCookieFromCtx(t *testing.T, ctx context.Context) string {
 func parseSetCookie(t *testing.T, setCookie string) (cookie *http.Cookie, SameSite string) {
 	cookieKeyValues := make(map[string]string)
 	entries := strings.Split(setCookie, "; ")
-	assert.Greater(t, len(entries), 0)
+	require.Greater(t, len(entries), 0)
 	name, value := splitSetCookieEntry(t, entries[0])
 
 	for i := 1; i < len(entries); i++ {
@@ -80,9 +80,9 @@ func parseSetCookie(t *testing.T, setCookie string) (cookie *http.Cookie, SameSi
 	_, httpOnly := cookieKeyValues["HttpOnly"]
 	_, secure := cookieKeyValues["Secure"]
 	maxAge, err := strconv.Atoi(cookieKeyValues["Max-Age"])
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	expires, err := time.Parse("Mon, 02 Jan 2006 15:04:05 GMT", cookieKeyValues["Expires"])
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	return &http.Cookie{
 		Name:     name,
 		Value:    value,
@@ -101,6 +101,6 @@ func splitSetCookieEntry(t *testing.T, entry string) (key string, value string) 
 		// for entries like HttpOnly or Secure
 		return entryKeyVal[0], "true"
 	}
-	assert.Equal(t, 2, len(entryKeyVal))
+	require.Equal(t, 2, len(entryKeyVal))
 	return entryKeyVal[0], entryKeyVal[1]
 }

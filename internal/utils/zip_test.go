@@ -5,21 +5,21 @@ import (
 	"testing"
 
 	"github.com/ngergs/websrv/internal/utils"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestZip(t *testing.T) {
 	testMsg := []byte("test123")
 	zipped, err := utils.Zip(testMsg, gzip.BestCompression)
-	assert.Nil(t, err)
-	assert.NotEqual(t, testMsg, zipped)
+	require.Nil(t, err)
+	require.NotEqual(t, testMsg, zipped)
 	unzipped, err := utils.Unzip(zipped)
-	assert.Nil(t, err)
-	assert.Equal(t, testMsg, unzipped)
+	require.Nil(t, err)
+	require.Equal(t, testMsg, unzipped)
 }
 
 func TestUnzipBadInput(t *testing.T) {
 	testMsg := []byte("test123")
 	_, err := utils.Unzip(testMsg)
-	assert.NotNil(t, err)
+	require.NotNil(t, err)
 }

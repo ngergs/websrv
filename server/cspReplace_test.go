@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/ngergs/websrv/filesystem"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const path = "dummy_random.js"
@@ -25,14 +25,14 @@ func TestCspFileReplace(t *testing.T) {
 	sessionId := "abc123cde"
 	r = r.WithContext(context.WithValue(context.Background(), server.SessionIdKey, sessionId))
 	handler.ServeHTTP(w, r)
-	assertReplacedWith(t, filesystem, sessionId, string(getReceivedData(t, w.Result().Body)))
+	requireReplacedWith(t, filesystem, sessionId, string(getReceivedData(t, w.Result().Body)))
 }
 
 // TestCspFileReplaceSessionMissing tests that the VariableName is replaced with "" if the sessionID is absent
 func TestCspFileReplaceSessionMissing(t *testing.T) {
 	handler, filesystem, w, r := getMockedCspHandler(t)
 	handler.ServeHTTP(w, r)
-	assertReplacedWith(t, filesystem, "", string(getReceivedData(t, w.Result().Body)))
+	requireReplacedWith(t, filesystem, "", string(getReceivedData(t, w.Result().Body)))
 }
 
 // TestCspFileReplacFilePatternMissmatch checks that the next handler is called when the file patterns do not match
@@ -42,7 +42,7 @@ func TestCspFileReplacFilePatternMissmatch(t *testing.T) {
 	sessionId := "abc123cde"
 	r = r.WithContext(context.WithValue(context.Background(), server.SessionIdKey, sessionId))
 	handler.ServeHTTP(w, r)
-	assert.Equal(t, nextHandlerResponse, string(getReceivedData(t, w.Result().Body)))
+	require.Equal(t, nextHandlerResponse, string(getReceivedData(t, w.Result().Body)))
 }
 
 func TestCspHeaderReplace(t *testing.T) {
@@ -51,7 +51,7 @@ func TestCspHeaderReplace(t *testing.T) {
 	sessionId := "321"
 	r = r.WithContext(context.WithValue(context.Background(), server.SessionIdKey, sessionId))
 	handler.ServeHTTP(w, r)
-	assert.Equal(t, "test"+sessionId+"456", w.Result().Header.Get(server.CspHeaderName))
+	require.Equal(t, "test"+sessionId+"456", w.Result().Header.Get(server.CspHeaderName))
 }
 
 // TestCspHeaderReplaceSessionIdMissing tests that the VariableName is replaced with "" if the sessionID is absent
@@ -59,19 +59,19 @@ func TestCspHeaderReplaceSessionIdMissing(t *testing.T) {
 	handler, _, w, r := getMockedCspHandler(t)
 	w.Header().Set(server.CspHeaderName, "test"+variableName+"456")
 	handler.ServeHTTP(w, r)
-	assert.Equal(t, "test456", w.Result().Header.Get(server.CspHeaderName))
+	require.Equal(t, "test456", w.Result().Header.Get(server.CspHeaderName))
 }
 
-func assertReplacedWith(t *testing.T, fs fs.ReadFileFS, replacedWithExpectation string, replaced string) {
+func requireReplacedWith(t *testing.T, fs fs.ReadFileFS, replacedWithExpectation string, replaced string) {
 	original, err := fs.ReadFile(path)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	originalReplaced := strings.ReplaceAll(string(original), variableName, replacedWithExpectation)
-	assert.Equal(t, originalReplaced, replaced)
+	require.Equal(t, originalReplaced, replaced)
 }
 
 func getMockedCspHandler(t *testing.T) (handler *server.CspReplaceHandler, fs fs.ReadFileFS, w *httptest.ResponseRecorder, r *http.Request) {
 	filesystem, err := filesystem.NewMemoryFs("../test/benchmark")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	w, r, next := getDefaultHandlerMocks()
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
