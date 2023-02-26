@@ -132,7 +132,7 @@ func H2C(h2cPort int) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		h2cHandler := h2c.NewHandler(handler, h2s)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Alt-Svc", "h2=\":"+strconv.Itoa(h2cPort))
+			w.Header().Set("Alt-Svc", "h2=\":"+strconv.Itoa(h2cPort)+"\"")
 			h2cHandler.ServeHTTP(w, r)
 		})
 	}
