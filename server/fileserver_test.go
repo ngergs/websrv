@@ -15,21 +15,33 @@ import (
 
 const testDir = "../test/benchmark"
 const testFile = "dummy_random.js"
+const empptyDir = "emptyDir"
 const fallbackFile = "index.html"
 
-// TestFileServerSimpleServe check sif a plain file without any extras is delivered
+// TestFileServerSimpleServe checks if a plain file without any extras is delivered
 func TestFileServerSimpleServe(t *testing.T) {
 	w, r := getHandlerMockWithPath(t, testFile)
 	handler, originalFileData, _ := getWebserverHandler(t, []string{})
 	handler.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 	assert.Equal(t, originalFileData, getReceivedData(t, w.Result().Body))
 }
 
-// TestWebServerSimpleServe check sif a plain file without any extras is delivered
+// TestDirFallback checks that requesting a directory instead of a file returns the fallbackfile
+func TestDirFallback(t *testing.T) {
+	w, r := getHandlerMockWithPath(t, empptyDir)
+	handler, _, fallbackData := getWebserverHandler(t, []string{})
+	handler.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+	assert.Equal(t, fallbackData, getReceivedData(t, w.Result().Body))
+}
+
+// TestWebServerSimpleServe checks that non existing path yields a fallback
 func TestFileServerFallback(t *testing.T) {
 	w, r := getHandlerMockWithPath(t, "non-existing")
 	handler, _, originalFallbackData := getWebserverHandler(t, []string{})
 	handler.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 	assert.Equal(t, originalFallbackData, getReceivedData(t, w.Result().Body))
 }
 
@@ -41,6 +53,7 @@ func TestFileServerZip(t *testing.T) {
 	originalFileDataZipped, err := utils.Zip(originalFileData, gzip.BestCompression)
 	assert.Nil(t, err)
 	handler.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 	assert.Equal(t, originalFileDataZipped, getReceivedData(t, w.Result().Body))
 	assert.Equal(t, "gzip", w.Result().Header.Get("Content-Encoding"))
 }
@@ -52,6 +65,7 @@ func TestFileServerZipFallback(t *testing.T) {
 	originalFileDataZipped, err := utils.Zip(originalFallbackData, gzip.BestCompression)
 	assert.Nil(t, err)
 	handler.ServeHTTP(w, r)
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 	assert.Equal(t, originalFileDataZipped, getReceivedData(t, w.Result().Body))
 	assert.Equal(t, "gzip", w.Result().Header.Get("Content-Encoding"))
 }

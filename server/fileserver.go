@@ -44,10 +44,22 @@ func fsFetch(name string, filesystem fs.FS, zipped bool, next fileFetch) fileFet
 		return nil
 	}
 	return func(ctx context.Context, path string, zipAccept bool) (fs.File, string, bool, error) {
+		logger := log.Ctx(ctx)
 		file, err := filesystem.Open(path)
-		log.Ctx(ctx).Debug().Msgf("fileFetch %s file miss for %s, trying next", name, path)
+		logger.Debug().Msgf("fileFetch %s file miss for %s, trying next", name, path)
 		if err != nil {
-			log.Debug().Err(err).Msg("fsFetch missmatch")
+			logger.Debug().Err(err).Msg("fsFetch missmatch")
+			if next != nil {
+				return next(ctx, path, zipAccept)
+			}
+			return file, path, zipped, err
+		}
+
+		stat, err := file.Stat()
+		if err != nil || stat.IsDir() {
+			if err != nil {
+				log.Error().Msgf("Could not get file stats: %v", err)
+			}
 			if next != nil {
 				return next(ctx, path, zipAccept)
 			}
