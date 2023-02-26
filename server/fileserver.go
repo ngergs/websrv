@@ -20,10 +20,15 @@ type fileserverHandler struct {
 // fileFetch is a named function type. It is used to build chains of filefetching logics. The main route is zip/raw -> fallback -> zip/raw. See FileServerHandler for the setup.
 type fileFetch func(ctx context.Context, requestPath string, zipAccept bool) (file fs.File, path string, zipped bool, err error)
 
-// fetchWrapperZipOrNot calls the first prived fileFetch argument when the content should be zipped and the second one for raw content dependent on the Accept-Encoding header and the file extension.
+// fetchWrapperZipOrNot calls the first provided fileFetch argument when the content should be zipped and the second one for raw content dependent on the Accept-Encoding header and the file extension.
 func fetchWrapperZipOrNot(gzipFileExtensions []string, nextZip fileFetch, nextUnzip fileFetch) fileFetch {
+	if nextZip == nil {
+		return func(ctx context.Context, filepath string, zipAccept bool) (fs.File, string, bool, error) {
+			return nextUnzip(ctx, filepath, zipAccept)
+		}
+	}
 	return func(ctx context.Context, filepath string, zipAccept bool) (fs.File, string, bool, error) {
-		if zipAccept && nextZip != nil && utils.Contains(gzipFileExtensions, path.Ext(filepath)) {
+		if zipAccept && utils.Contains(gzipFileExtensions, path.Ext(filepath)) {
 			return nextZip(ctx, filepath, zipAccept)
 		}
 		return nextUnzip(ctx, filepath, zipAccept)
@@ -127,7 +132,6 @@ func (handler *fileserverHandler) setContentHeader(w http.ResponseWriter, reques
 // writeResponse just streams the file content to the writer w and handles errors.
 func writeResponse(w http.ResponseWriter, r *http.Request, file io.Reader) {
 	if r.Method == http.MethodHead {
-		w.WriteHeader(http.StatusOK)
 		return
 	}
 	_, err := io.Copy(w, file)

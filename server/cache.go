@@ -70,7 +70,6 @@ func (handler *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Debug().Msgf("Computed missing eTag for %s: %s", r.URL.Path, eTag)
 		handler.Hashes.Set(r.URL.Path, eTag)
 		w.Header().Set("ETag", eTag)
-		w.WriteHeader(http.StatusOK)
 	}
 	io.Copy(w, &bufferedW.Buffer)
 }
