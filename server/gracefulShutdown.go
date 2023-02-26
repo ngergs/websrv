@@ -79,7 +79,7 @@ func SigTermCtx(ctx context.Context, cancelDelay time.Duration) context.Context 
 			// wait till one of them is done
 			select {
 			case <-termChan:
-				log.Info().Msgf("Received second system call: %v, shutting down immediately", sigterm)
+				log.Info().Msgf("Received second system call: %v, shutting down now", sigterm)
 				os.Exit(1)
 			case <-ticker.C:
 			}

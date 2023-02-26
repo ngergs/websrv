@@ -47,7 +47,8 @@ func main() {
 		server.Optional(server.AccessMetrics(promRegistration), *metrics),
 		server.Optional(server.AccessLog(), *accessLog),
 		server.RequestID(),
-		server.Timer())
+		server.Timer(),
+		server.Optional(server.H2C(*h2cPort), *h2c))
 	log.Info().Msgf("Starting webserver server on port %d", *webServerPort)
 	srvCtx := context.WithValue(sigtermCtx, server.ServerName, "file server")
 	server.AddGracefulShutdown(srvCtx, &wg, webserver, time.Duration(*shutdownTimeout)*time.Second)

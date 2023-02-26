@@ -1,6 +1,8 @@
 package server
 
 import (
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 	"io/fs"
 	"net/http"
 	"regexp"
@@ -121,5 +123,17 @@ func RequestID() HandlerMiddleware {
 func Timer() HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		return TimerStartToCtxHandler(handler)
+	}
+}
+
+// H@C adds a middleware that supports h2c (unencrypted http2)
+func H2C(h2cPort int) HandlerMiddleware {
+	h2s := &http2.Server{}
+	return func(handler http.Handler) http.Handler {
+		h2cHandler := h2c.NewHandler(handler, h2s)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Alt-Svc", "h2=\":"+strconv.Itoa(h2cPort))
+			h2cHandler.ServeHTTP(w, r)
+		})
 	}
 }
