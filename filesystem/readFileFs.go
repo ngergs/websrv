@@ -5,6 +5,9 @@ import (
 	"io/fs"
 )
 
+// make sure that we implement the fs.ReadFileFS interface
+var _ fs.ReadFileFS = &ReadFileFS{}
+
 // ReadFileFS wraps a fs.FS and adds the ReadFile method
 type ReadFileFS struct {
 	fs.FS

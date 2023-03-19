@@ -11,8 +11,6 @@ type HeaderHandler struct {
 }
 
 func (handler *HeaderHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	logEnter(r.Context(), "header")
-
 	// set static headers
 	if handler.Headers != nil {
 		for k, v := range handler.Headers {

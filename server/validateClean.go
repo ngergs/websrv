@@ -5,11 +5,10 @@ import (
 	"path"
 )
 
-// ValidateCleanHandler returns HTTP 405 if the request method is not GET or HEAD.
-// Also, relative paths are rejected with HTTP 400.
-func ValidateCleanHandler(next http.Handler) http.Handler {
+// ValidateHandler returns HTTP 405 if the request method is not GET or HEAD.
+// Also, pa relative paths are rejected with HTTP 400.
+func ValidateHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logEnter(r.Context(), "validate-clean")
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
 			http.Error(w, "This server only supports HTTP methods GET and HEAD", http.StatusMethodNotAllowed)
 			return
@@ -19,9 +18,7 @@ func ValidateCleanHandler(next http.Handler) http.Handler {
 			return
 		}
 
-		// remove leading / from path to make it relative
-		// important to do this after cleaning, else relative paths may remain
-		r.URL.Path = path.Clean(r.URL.Path)[1:]
+		r.URL.Path = path.Clean(r.URL.Path)
 		next.ServeHTTP(w, r)
 	})
 }

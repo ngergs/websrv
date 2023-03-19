@@ -2,51 +2,38 @@ package server_test
 
 import (
 	"context"
-	"github.com/ngergs/websrv/server"
+	"github.com/ngergs/websrv/v2/server"
 	"github.com/rs/zerolog/log"
-	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/ngergs/websrv/filesystem"
 	"github.com/stretchr/testify/require"
 )
 
 const path = "dummy_random.js"
 const variableName = "123"
-const nextHandlerResponse = "just a random string for the next handler response"
+const nextHandlerResponse = "test123456"
 
 func TestCspFileReplace(t *testing.T) {
-	handler, filesystem, w, r := getMockedCspHandler(t)
+	handler, w, r := getMockedCspFileHandler()
 	sessionId := "abc123cde"
 	r = r.WithContext(context.WithValue(context.Background(), server.SessionIdKey, sessionId))
 	handler.ServeHTTP(w, r)
-	requireReplacedWith(t, filesystem, sessionId, string(getReceivedData(t, w.Result().Body)))
+	requireReplacedWith(t, sessionId, string(getReceivedData(t, w.Result().Body)))
 }
 
 // TestCspFileReplaceSessionMissing tests that the VariableName is replaced with "" if the sessionID is absent
 func TestCspFileReplaceSessionMissing(t *testing.T) {
-	handler, filesystem, w, r := getMockedCspHandler(t)
+	handler, w, r := getMockedCspFileHandler()
 	handler.ServeHTTP(w, r)
-	requireReplacedWith(t, filesystem, "", string(getReceivedData(t, w.Result().Body)))
-}
-
-// TestCspFileReplacFilePatternMissmatch checks that the next handler is called when the file patterns do not match
-func TestCspFileReplacFilePatternMissmatch(t *testing.T) {
-	handler, _, w, r := getMockedCspHandler(t)
-	handler.FileNamePatter = regexp.MustCompile("^$")
-	sessionId := "abc123cde"
-	r = r.WithContext(context.WithValue(context.Background(), server.SessionIdKey, sessionId))
-	handler.ServeHTTP(w, r)
-	require.Equal(t, nextHandlerResponse, string(getReceivedData(t, w.Result().Body)))
+	requireReplacedWith(t, "", string(getReceivedData(t, w.Result().Body)))
 }
 
 func TestCspHeaderReplace(t *testing.T) {
-	handler, _, w, r := getMockedCspHandler(t)
+	handler, w, r := getMockedCspHeaderHandler()
 	w.Header().Set(server.CspHeaderName, "test"+variableName+"456")
 	sessionId := "321"
 	r = r.WithContext(context.WithValue(context.Background(), server.SessionIdKey, sessionId))
@@ -56,23 +43,18 @@ func TestCspHeaderReplace(t *testing.T) {
 
 // TestCspHeaderReplaceSessionIdMissing tests that the VariableName is replaced with "" if the sessionID is absent
 func TestCspHeaderReplaceSessionIdMissing(t *testing.T) {
-	handler, _, w, r := getMockedCspHandler(t)
+	handler, w, r := getMockedCspHeaderHandler()
 	w.Header().Set(server.CspHeaderName, "test"+variableName+"456")
 	handler.ServeHTTP(w, r)
 	require.Equal(t, "test456", w.Result().Header.Get(server.CspHeaderName))
 }
 
-func requireReplacedWith(t *testing.T, fs fs.ReadFileFS, replacedWithExpectation string, replaced string) {
-	original, err := fs.ReadFile(path)
-	require.Nil(t, err)
-	originalReplaced := strings.ReplaceAll(string(original), variableName, replacedWithExpectation)
+func requireReplacedWith(t *testing.T, replacedWithExpectation string, replaced string) {
+	originalReplaced := strings.ReplaceAll(nextHandlerResponse, variableName, replacedWithExpectation)
 	require.Equal(t, originalReplaced, replaced)
 }
 
-func getMockedCspHandler(t *testing.T) (handler *server.CspReplaceHandler, fs fs.ReadFileFS, w *httptest.ResponseRecorder, r *http.Request) {
-	filesystem, err := filesystem.NewMemoryFs("../test/benchmark")
-	require.Nil(t, err)
-
+func getMockedCspFileHandler() (handler *server.CspFileHandler, w *httptest.ResponseRecorder, r *http.Request) {
 	w, r, next := getDefaultHandlerMocks()
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte(nextHandlerResponse))
@@ -80,14 +62,26 @@ func getMockedCspHandler(t *testing.T) (handler *server.CspReplaceHandler, fs fs
 			log.Error().Msgf("Failed to send response: %v", err)
 		}
 	}
-	handler = &server.CspReplaceHandler{
-		Next:           next,
-		Filesystem:     filesystem,
-		FileNamePatter: regexp.MustCompile(".*"),
-		VariableName:   variableName,
-		MediaTypeMap:   map[string]string{".js": "application/javascript"},
+	handler = &server.CspFileHandler{
+		Next:         next,
+		VariableName: variableName,
+		MediaTypeMap: map[string]string{".js": "application/javascript"},
 	}
 	r.URL = &url.URL{Path: path}
 
-	return handler, filesystem, w, r
+	return handler, w, r
+}
+
+func getMockedCspHeaderHandler() (handler http.Handler, w *httptest.ResponseRecorder, r *http.Request) {
+	w, r, next := getDefaultHandlerMocks()
+	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(nextHandlerResponse))
+		if err != nil {
+			log.Error().Msgf("Failed to send response: %v", err)
+		}
+	}
+	handler = server.CspHeaderHandler(next, variableName)
+	r.URL = &url.URL{Path: path}
+
+	return handler, w, r
 }

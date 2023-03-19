@@ -1,6 +1,6 @@
 package server
 
-import "github.com/ngergs/websrv/internal/utils"
+import "github.com/ngergs/websrv/v2/internal/utils"
 
 // Config holds the advanced server config options
 type Config struct {
@@ -18,7 +18,7 @@ type AngularCspReplaceConfig struct {
 	// (secret) placeholder which will be replaced with the session id when serving
 	VariableName string `json:"variable-name"`
 	// Regex for which files the Variable-Name should be replaced
-	FileNamePattern string `json:"file-name-regex,omitempty"`
+	FilePathPattern string `json:"file-path-regex,omitempty"`
 	// Name of the session-id cookie
 	CookieName string `json:"cookie-name"`
 	// Max-Age setting for the session-id cookie, 30 seconds should be sufficient

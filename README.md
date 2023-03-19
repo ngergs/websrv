@@ -1,7 +1,7 @@
 # websrv
 
-This is a little webserver implementation using only dependencies from the go standard library (besides testing and logging).
-The webserver is supposed to serve a folder containing e.g. a static website. 
+This is a little webserver implementation bsed on [chi](https://github.com/go-chi/chi).
+The webserver is supposed to serve a folder containing e.g. a static website and is suited to serve a SPA.
 
 The server package contains a collection of http.Handler implementations which may be reused in other projects. 
 The filesystem package contains a readonly in-memory-filesystem implementation.
@@ -9,15 +9,13 @@ The filesystem package contains a readonly in-memory-filesystem implementation.
 ## Server package features
 Logs are (without -pretty option) are provided in a GCP compatible JSON format.
 
-The following limited handler features are provided in the server package:
-* FileServer: implements the main logic for providing the requested file or an optional fallback-file.
+The following middleware handler features are provided in the server package:
+* Fallback: Handler that falls back on a configured default path when retrieving a specified set of status codes from the next handler. 
+Very useful for serving a SPA.
 * Headers: Static Headers can be easily configured.
-* Gzip: Supported for on-demand and in-memory-filesystem.
 * Caching: Support via ETag and If-None-Match HTTP-Headers
-* Request-ID: All logs provide a unique request-id to correlate different logs to a given request.
-* Access-Log: Basic access-logging.
-* Timer: Detailed timing reports, set log level to debug to get the output.
-* CspReplace: See [my blog](https://ngergs.de/content/angular/style-csp-fix) about fixing Angular CSP regarding style-src.
+* Access-Log: Basic access-logging formatted in a [GCP-compatible](https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry) way.
+* CspReplace and SessionCookie: See [my blog](https://ngergs.de/content/angular/style-csp-fix) about fixing Angular CSP regarding style-src.
 
 ## Usage
 
@@ -104,7 +102,7 @@ type AngularCspReplace struct {
 	// (secret) placeholder which will be replaced with the session id when serving
 	VariableName    string `json:"variable-name"`
 	// Regex for which files the Variable-Name should be replaced
-	FileNamePattern string `json:"file-name-regex,omitempty"`
+	FilePathPattern string `json:"file-Path-regex,omitempty"`
 	// Name of the session-id cookie
 	CookieName      string `json:"cookie-name"`
 	// Max-Age setting for the session-id cookie, 30 seconds should be sufficient

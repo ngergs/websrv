@@ -2,12 +2,17 @@ package server
 
 import (
 	"context"
-	"github.com/ngergs/websrv/internal/random"
+	"github.com/ngergs/websrv/v2/internal/random"
 	"net/http"
 	"time"
 
 	"github.com/rs/zerolog/log"
 )
+
+// ContextKey is a struct used for storing relevant keys in the request context.
+type ContextKey struct {
+	val string
+}
 
 // SessionIdKey is the ContextKey under which the current sessionId can be found
 var SessionIdKey = &ContextKey{val: "sessionId"}
@@ -27,7 +32,6 @@ func readSessionIdCookie(r *http.Request, cookieName string) (sessionId string, 
 func SessionCookieHandler(next http.Handler, cookieName string, cookieTimeToLife time.Duration) http.Handler {
 	randGen := random.NewBufferedRandomIdGenerator(32, 16)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logEnter(r.Context(), cookieName)
 		sessionId, ok := readSessionIdCookie(r, cookieName)
 		if !ok {
 			// random collisions are not problematic for CSP nonces, so we can just take what we get

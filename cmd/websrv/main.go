@@ -3,17 +3,20 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"io/fs"
 	"net/http"
 	"os"
+	"regexp"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/ngergs/websrv/filesystem"
-	"github.com/ngergs/websrv/server"
+	"github.com/ngergs/websrv/v2/filesystem"
+	"github.com/ngergs/websrv/v2/server"
 	"github.com/rs/zerolog/log"
 )
 
@@ -36,19 +39,42 @@ func main() {
 			log.Error().Err(err).Msg("Could not register custom prometheus metrics.")
 		}
 	}
-	webserver := server.Build(*webServerPort, time.Duration(*readTimeout)*time.Second, time.Duration(*writeTimeout)*time.Second, time.Duration(*idleTimeout)*time.Second,
-		server.FileServerHandler(unzipfs, zipfs, *fallbackFilepath, config),
-		server.Caching(),
-		server.Optional(server.CspReplace(config, unzipfs), config.AngularCspReplace != nil),
-		server.Optional(server.Gzip(config, *gzipCompressionLevel), *gzipActive),
-		server.Optional(server.SessionId(config), config.AngularCspReplace != nil),
-		server.Header(config),
-		server.ValidateClean(),
-		server.Optional(server.AccessMetrics(promRegistration), *metrics),
+
+	r := chi.NewRouter()
+	r.Use(
+		server.Optional(server.H2C(*h2cPort), *h2c),
+		middleware.RequestID,
+		middleware.RealIP,
+		middleware.Timeout(time.Duration(*writeTimeout)*time.Second),
 		server.Optional(server.AccessLog(), *accessLog),
-		server.RequestID(),
-		server.Timer(),
-		server.Optional(server.H2C(*h2cPort), *h2c))
+		server.Optional(server.AccessMetrics(promRegistration), *metrics),
+		server.Validate(),
+		server.Header(config),
+		server.Optional(server.SessionId(config), config.AngularCspReplace != nil),
+		server.Optional(server.CspHeaderReplace(config), config.AngularCspReplace != nil),
+		server.Fallback("/", http.StatusNotFound),
+	)
+
+	unzipHandler := http.FileServer(http.FS(unzipfs))
+	staticZipHandler := server.Caching()(http.FileServer(http.FS(zipfs)))
+	dynamicZipHandler := server.Caching()(middleware.Compress(5, config.GzipMediaTypes...)(unzipHandler))
+	cspPathRegex := regexp.MustCompile(config.AngularCspReplace.FilePathPattern)
+	cspHandler := server.CspFileReplace(config)(unzipHandler)
+	r.Handle("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if cspPathRegex.MatchString(r.URL.Path) {
+			cspHandler.ServeHTTP(w, r)
+		} else {
+			if *memoryFs && *gzipActive {
+				w.Header().Set("Content-Encoding", "gzip")
+				staticZipHandler.ServeHTTP(w, r)
+			} else {
+				dynamicZipHandler.ServeHTTP(w, r)
+			}
+		}
+	}))
+
+	webserver := server.Build(*webServerPort, time.Duration(*readTimeout)*time.Second,
+		time.Duration(*writeTimeout)*time.Second, time.Duration(*idleTimeout)*time.Second, r)
 	log.Info().Msgf("Starting webserver server on port %d", *webServerPort)
 	srvCtx := context.WithValue(sigtermCtx, server.ServerName, "file server")
 	server.AddGracefulShutdown(srvCtx, &wg, webserver, time.Duration(*shutdownTimeout)*time.Second)
@@ -83,6 +109,7 @@ func main() {
 }
 
 // initFs loads the non-zipped and zipped fs according to the config
+// zipFs is nil if memoryFs or gzipActive are not set
 func initFs(config *server.Config) (unzipfs fs.ReadFileFS, zipfs fs.ReadFileFS) {
 	if *memoryFs {
 		log.Info().Msg("Using the in-memory-filesystem")
@@ -93,7 +120,7 @@ func initFs(config *server.Config) (unzipfs fs.ReadFileFS, zipfs fs.ReadFileFS) 
 		unzipfs = memoryFs
 		if *gzipActive {
 			log.Debug().Msg("Zipping in memory filesystem")
-			zipfs, err = memoryFs.Zip(config.GzipFileExtensions())
+			zipfs, err = memoryFs.Zip()
 			if err != nil {
 				log.Fatal().Err(err).Msg("Error preparing zipped read-only filesystem.")
 			}

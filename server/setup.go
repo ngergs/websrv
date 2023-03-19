@@ -3,9 +3,7 @@ package server
 import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-	"io/fs"
 	"net/http"
-	"regexp"
 	"strconv"
 	"time"
 )
@@ -16,7 +14,6 @@ type HandlerMiddleware func(handler http.Handler) http.Handler
 // Build a http server from the provided options.
 func Build(port int, readTimeout time.Duration, writeTimeout time.Duration, idleTimeout time.Duration,
 	handler http.Handler, handlerSetups ...HandlerMiddleware) *http.Server {
-	//	handler = server.New(filesystem, *fallbackFilepath, config)
 	for _, handlerSetup := range handlerSetups {
 		handler = handlerSetup(handler)
 	}
@@ -48,18 +45,24 @@ func Caching() HandlerMiddleware {
 	}
 }
 
-// CspReplace has the hard requirement that a session cookie is present in the context, see server.SessionCookie to add one.
-func CspReplace(config *Config, filesystem fs.ReadFileFS) HandlerMiddleware {
+// CspHeaderReplace replaces the nonce variable in the Content-Security-Header.
+func CspHeaderReplace(config *Config) HandlerMiddleware {
+	return func(handler http.Handler) http.Handler {
+		return CspHeaderHandler(handler, config.AngularCspReplace.VariableName)
+	}
+}
+
+// CspFileReplace replaces the nonce variable in all content responses and
+// has the hard requirement that a session cookie is present in the context, see server.SessionCookie to add one.
+func CspFileReplace(config *Config) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		if config.AngularCspReplace == nil {
 			return handler
 		}
-		return &CspReplaceHandler{
-			Next:           handler,
-			Filesystem:     filesystem,
-			FileNamePatter: regexp.MustCompile(config.AngularCspReplace.FileNamePattern),
-			VariableName:   config.AngularCspReplace.VariableName,
-			MediaTypeMap:   config.MediaTypeMap,
+		return &CspFileHandler{
+			Next:         handler,
+			VariableName: config.AngularCspReplace.VariableName,
+			MediaTypeMap: config.MediaTypeMap,
 		}
 	}
 }
@@ -81,19 +84,18 @@ func Header(config *Config) HandlerMiddleware {
 	}
 }
 
-// Gzip adds an on-demand gzipping middleware.
-// Gzip is only applied when the Accept-Encoding: gzip HTTP request header is present
-// and the Content-Type of the response matches the config options.
-func Gzip(config *Config, compressionLevel int) HandlerMiddleware {
+// Fallback adds a fallback route handler.
+// THis routes the request to a fallback route on of the given HTTP fallback status codes
+func Fallback(fallbackPath string, fallbackCodes ...int) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
-		return GzipHandler(handler, compressionLevel, config.GzipMediaTypes)
+		return FallbackHandler(handler, fallbackPath, fallbackCodes...)
 	}
 }
 
-// ValidateClean adds to the validate middleware and prevent path transversal attacks by cleaning the request path.
-func ValidateClean() HandlerMiddleware {
+// Validate adds to the validate middleware and prevent path transversal attacks by cleaning the request path.
+func Validate() HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
-		return ValidateCleanHandler(handler)
+		return ValidateHandler(handler)
 	}
 }
 
@@ -112,21 +114,7 @@ func AccessMetrics(registration *PrometheusRegistration) HandlerMiddleware {
 	}
 }
 
-// RequestID adds a middleware that adds a randomly generated request id to the request context.
-func RequestID() HandlerMiddleware {
-	return func(handler http.Handler) http.Handler {
-		return RequestIdToCtxHandler(handler)
-	}
-}
-
-// Timer adds a middleware that adds a started timer to the request context for time measuring purposes.
-func Timer() HandlerMiddleware {
-	return func(handler http.Handler) http.Handler {
-		return TimerStartToCtxHandler(handler)
-	}
-}
-
-// H@C adds a middleware that supports h2c (unencrypted http2)
+// H2C adds a middleware that supports h2c (unencrypted http2)
 func H2C(h2cPort int) HandlerMiddleware {
 	h2s := &http2.Server{}
 	return func(handler http.Handler) http.Handler {

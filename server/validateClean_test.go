@@ -1,7 +1,7 @@
 package server_test
 
 import (
-	"github.com/ngergs/websrv/server"
+	"github.com/ngergs/websrv/v2/server"
 	"net/http"
 	"net/url"
 	"testing"
@@ -12,7 +12,7 @@ import (
 func TestValidateWrongMethod(t *testing.T) {
 	w, r, next := getDefaultHandlerMocks()
 	r.Method = http.MethodPost
-	handler := server.ValidateCleanHandler(next)
+	handler := server.ValidateHandler(next)
 	handler.ServeHTTP(w, r)
 	require.Equal(t, http.StatusMethodNotAllowed, w.Result().StatusCode)
 }
@@ -23,7 +23,7 @@ func TestNonAbsolutePathRejection(t *testing.T) {
 	require.Nil(t, err)
 	r.Method = http.MethodGet
 	r.URL = url
-	handler := server.ValidateCleanHandler(next)
+	handler := server.ValidateHandler(next)
 	handler.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Result().StatusCode)
 }
@@ -35,7 +35,7 @@ func TestCleanPathTransversalAttack(t *testing.T) {
 	require.Nil(t, err)
 	r.Method = http.MethodGet
 	r.URL = url
-	handler := server.ValidateCleanHandler(next)
+	handler := server.ValidateHandler(next)
 	handler.ServeHTTP(w, r)
-	require.Equal(t, "a/c", next.r.URL.Path)
+	require.Equal(t, "/a/c", r.URL.Path)
 }

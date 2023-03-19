@@ -2,14 +2,14 @@ package server
 
 import (
 	"fmt"
+	"github.com/felixge/httpsnoop"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 var DomainLabel = "domain"
@@ -54,66 +54,32 @@ func AccessMetricsRegister(registerer prometheus.Registerer, prometheusNamespace
 // to the  registry. The registerer has to be prepared via the AccessMetricsRegister function.
 func AccessMetricsHandler(next http.Handler, registration *PrometheusRegistration) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logEnter(r.Context(), "metrics-log")
-		metricResponseWriter := &metricResponseWriter{Next: w}
-		next.ServeHTTP(metricResponseWriter, r)
+		m := httpsnoop.CaptureMetrics(next, w, r)
 
-		registration.statusCode.With(map[string]string{DomainLabel: r.Host, StatusLabel: strconv.Itoa(metricResponseWriter.StatusCode)}).Inc()
-		registration.bytesSend.With(map[string]string{DomainLabel: r.Host}).Add(float64(metricResponseWriter.BytesSend))
+		registration.statusCode.With(map[string]string{DomainLabel: r.Host, StatusLabel: strconv.Itoa(m.Code)}).Inc()
+		registration.bytesSend.With(map[string]string{DomainLabel: r.Host}).Add(float64(m.Written))
 	})
-}
-
-type metricResponseWriter struct {
-	Next       http.ResponseWriter
-	StatusCode int
-	BytesSend  int
-}
-
-func (w *metricResponseWriter) Header() http.Header {
-	return w.Next.Header()
-}
-
-func (w *metricResponseWriter) Write(data []byte) (int, error) {
-	if w.StatusCode == 0 {
-		w.StatusCode = http.StatusOK
-	}
-	w.BytesSend += len(data)
-	return w.Next.Write(data)
-}
-
-func (w *metricResponseWriter) WriteHeader(statusCode int) {
-	w.StatusCode = statusCode
-	w.Next.WriteHeader(statusCode)
 }
 
 // AccessLogHandler returns a http.Handler that adds access-logging on the info level.
 func AccessLogHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		startRaw := r.Context().Value(TimerKey)
-		var start time.Time
-		if startRaw != nil {
-			start = startRaw.(time.Time)
-		} else {
-			start = time.Now()
-		}
-		logEnter(r.Context(), "access-log")
-		metricResponseWriter := &metricResponseWriter{Next: w}
-		next.ServeHTTP(metricResponseWriter, r)
+		m := httpsnoop.CaptureMetrics(next, w, r)
+
 		logEvent := log.Info()
-		requestId := r.Context().Value(RequestIdKey)
+		requestId := r.Context().Value(middleware.RequestIDKey)
 		if requestId != nil {
 			logEvent = logEvent.Str("requestId", requestId.(string))
 		}
-
 		logEvent.Dict("httpRequest", zerolog.Dict().
 			Str("requestMethod", r.Method).
 			Str("requestUrl", getFullUrl(r)).
-			Int("status", metricResponseWriter.StatusCode).
-			Int("responseSize", metricResponseWriter.BytesSend).
+			Int("status", m.Code).
+			Int64("responseSize", m.Written).
 			Str("userAgent", r.UserAgent()).
 			Str("remoteIp", r.RemoteAddr).
 			Str("referer", r.Referer()).
-			Str("latency", time.Since(start).String())).
+			Str("latency", m.Duration.String())).
 			Msg("")
 	})
 }

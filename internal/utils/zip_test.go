@@ -4,7 +4,7 @@ import (
 	"compress/gzip"
 	"testing"
 
-	"github.com/ngergs/websrv/internal/utils"
+	"github.com/ngergs/websrv/v2/internal/utils"
 	"github.com/stretchr/testify/require"
 )
 

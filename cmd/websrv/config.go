@@ -10,7 +10,7 @@ import (
 
 	stdlog "log"
 
-	"github.com/ngergs/websrv/server"
+	"github.com/ngergs/websrv/v2/server"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -42,7 +42,7 @@ var shutdownDelay = flag.Int("shutdown-delay", 5, "Delay before shutting down th
 var writeTimeout = flag.Int("write-timeout", 10, "Timeout to write the complete response in seconds.")
 var targetDir string
 
-var defaultGzipMediaTypes = []string{"application/javascript", "text/css", "text/html; charset=UTF-8"}
+var defaultGzipMediaTypes = []string{"text/css", "text/html; charset=utf-8", "text/javascript; charset=utf-8"}
 var defaultMediaTypeMap = map[string]string{
 	".js":    "application/javascript",
 	".css":   "text/css",

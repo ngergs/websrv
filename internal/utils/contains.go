@@ -2,8 +2,8 @@ package utils
 
 import "strings"
 
-// Contains checks if the list string slice contains the val string.
-func Contains(list []string, val string) bool {
+// Contains checks if the list slice contains the val.
+func Contains[T comparable](list []T, val T) bool {
 	for _, el := range list {
 		if el == val {
 			return true

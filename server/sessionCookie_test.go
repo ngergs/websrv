@@ -2,7 +2,7 @@ package server_test
 
 import (
 	"context"
-	"github.com/ngergs/websrv/server"
+	"github.com/ngergs/websrv/v2/server"
 	"net/http"
 	"strconv"
 	"strings"

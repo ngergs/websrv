@@ -3,14 +3,14 @@ package filesystem_test
 import (
 	"compress/gzip"
 	"context"
-	"github.com/ngergs/websrv/filesystem"
+	"github.com/ngergs/websrv/v2/filesystem"
 	"io"
 	"io/fs"
 	"os"
 	"path"
 	"testing"
 
-	"github.com/ngergs/websrv/internal/utils"
+	"github.com/ngergs/websrv/v2/internal/utils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,7 +44,7 @@ func TestMemoryFsOpenFile(t *testing.T) {
 func TestMemoryFsZip(t *testing.T) {
 	memoryFs, err := filesystem.NewMemoryFs(testDir)
 	require.Nil(t, err)
-	memoryFsZipped, err := memoryFs.Zip([]string{".js"})
+	memoryFsZipped, err := memoryFs.Zip()
 	require.Nil(t, err)
 
 	originalData, err := os.ReadFile(path.Join(testDir, testFile))
@@ -55,17 +55,6 @@ func TestMemoryFsZip(t *testing.T) {
 	memoryDataZipped, err := memoryFsZipped.ReadFile(testFile)
 	require.Nil(t, err)
 	require.Equal(t, originalDataZipped, memoryDataZipped)
-}
-
-// TestMemoryFsZipNonMatch tests that file sthat do not match the zip file extension are not present in the zipped memoryFs.
-func TestMemoryFsZipNonMatch(t *testing.T) {
-	memoryFs, err := filesystem.NewMemoryFs(testDir)
-	require.Nil(t, err)
-	memoryFsZipped, err := memoryFs.Zip([]string{})
-	require.Nil(t, err)
-	_, err = memoryFsZipped.ReadFile(testFile)
-	// file extension does not match. Hence, the given testFile is not present in the zipped memoryFs
-	require.NotNil(t, err)
 }
 
 func getStatsContent(t *testing.T, fs fs.FS, path string) ([]byte, fs.FileInfo) {

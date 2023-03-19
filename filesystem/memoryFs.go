@@ -10,9 +10,12 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/ngergs/websrv/internal/utils"
+	"github.com/ngergs/websrv/v2/internal/utils"
 	"github.com/rs/zerolog/log"
 )
+
+// make sure that we implement the fs.ReadFileFS interface
+var _ fs.ReadFileFS = &MemoryFS{}
 
 // MemoryFS only holds actual files, not the directory entries
 type MemoryFS struct {
@@ -84,19 +87,19 @@ func getReadFileFunc(filesystem *MemoryFS, targetDirLength int) func(path string
 }
 
 // Open opens the given file from the in memory filesystem.
-func (fs *MemoryFS) Open(name string) (fs.File, error) {
-	file, ok := fs.files[name]
+func (f *MemoryFS) Open(name string) (fs.File, error) {
+	file, ok := f.files[name]
 	if !ok {
-		return nil, fmt.Errorf("file %s not found", name)
+		return nil, fs.ErrNotExist
 	}
 	return &openMemoryFile{file: file}, nil
 }
 
 // ReadFile is a more efficient shortcut to read a complete file content from the in memory filesystem.
-func (fs *MemoryFS) ReadFile(name string) ([]byte, error) {
-	file, ok := fs.files[name]
+func (f *MemoryFS) ReadFile(name string) ([]byte, error) {
+	file, ok := f.files[name]
 	if !ok {
-		return nil, fmt.Errorf("file %s not found in filesystem", name)
+		return nil, fs.ErrNotExist
 	}
 	return file.data, nil
 }
@@ -112,18 +115,16 @@ func (mod *modifiedSizeInfo) Size() int64 {
 
 // Zip returns a deep copy of the filesystem where all files that match the given zip file extension are zipped.
 // Files that do not match are absent in the zipped version of the in memoryfilesystem.
-func (fs *MemoryFS) Zip(zipFileExtensions []string) (*MemoryFS, error) {
+func (f *MemoryFS) Zip() (*MemoryFS, error) {
 	zippedFiles := make(map[string]*memoryFile)
-	for filepath, file := range fs.files {
-		if utils.Contains(zipFileExtensions, path.Ext(filepath)) {
-			log.Debug().Msgf("Zipping %s", filepath)
-			zipped, err := utils.Zip(file.data, gzip.BestCompression)
-			if err != nil {
-				return nil, err
-			}
-			info := &modifiedSizeInfo{size: int64(len(zipped)), FileInfo: file.info}
-			zippedFiles[filepath] = &memoryFile{data: zipped, info: info}
+	for filepath, file := range f.files {
+		log.Debug().Msgf("Zipping %s", filepath)
+		zipped, err := utils.Zip(file.data, gzip.BestCompression)
+		if err != nil {
+			return nil, err
 		}
+		info := &modifiedSizeInfo{size: int64(len(zipped)), FileInfo: file.info}
+		zippedFiles[filepath] = &memoryFile{data: zipped, info: info}
 	}
 	return &MemoryFS{files: zippedFiles}, nil
 }

@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
-	"github.com/ngergs/websrv/internal/syncwrap"
+	"github.com/felixge/httpsnoop"
+	"github.com/ngergs/websrv/v2/internal/syncwrap"
+	"github.com/ngergs/websrv/v2/internal/utils"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
@@ -18,35 +20,7 @@ type cacheHandler struct {
 	Hashes *syncwrap.Map[string, string]
 }
 
-// bufferedResponseWriter buffers the output response (to calculate the hash) but passes status codes and headers just through
-type bufferedResponseWriter struct {
-	Next       http.ResponseWriter
-	StatusCode int
-	Buffer     bytes.Buffer
-}
-
-// Header just forwards the header
-func (w *bufferedResponseWriter) Header() http.Header {
-	return w.Next.Header()
-}
-
-// WriteHeader wraps the original write header functionality but does not forward StatusCodeOK settings
-// as these would block setting the ETag HTTP-header later on
-func (w *bufferedResponseWriter) WriteHeader(statusCode int) {
-	w.StatusCode = statusCode
-	if statusCode != http.StatusOK {
-		w.Next.WriteHeader(statusCode)
-	}
-}
-
-// Write intercepts the write and buffers it, has to be copied manually to the original responseWriter
-func (w *bufferedResponseWriter) Write(data []byte) (int, error) {
-	return w.Buffer.Write(data)
-}
-
 func (handler *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	logEnter(r.Context(), "caching")
-
 	eTag, ok := handler.Hashes.Get(r.URL.Path)
 	if ok {
 		if r.Header.Get("If-None-Match") == eTag {
@@ -62,16 +36,55 @@ func (handler *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// We do not have the hash yet, get it and add ETag
-	bufferedW := &bufferedResponseWriter{Next: w}
-	handler.Next.ServeHTTP(bufferedW, r)
-	if bufferedW.StatusCode == 0 || bufferedW.StatusCode == http.StatusOK {
-		hash := sha256.Sum256(bufferedW.Buffer.Bytes())
-		eTag = base64.StdEncoding.EncodeToString(hash[:])
-		log.Debug().Msgf("Computed missing eTag for %s: %s", r.URL.Path, eTag)
-		handler.Hashes.Set(r.URL.Path, eTag)
-		w.Header().Set("ETag", eTag)
+	status := http.StatusOK
+	pr, pw := io.Pipe()
+	defer utils.Close(r.Context(), pr)
+	wrappedW := httpsnoop.Wrap(w, httpsnoop.Hooks{
+		WriteHeader: func(headerFunc httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
+			return func(code int) {
+				status = code
+				headerFunc(code)
+			}
+		},
+		Write: func(writeFunc httpsnoop.WriteFunc) httpsnoop.WriteFunc {
+			return func(b []byte) (int, error) {
+				if status == http.StatusOK {
+					return pw.Write(b)
+				}
+				return writeFunc(b)
+			}
+		},
+		ReadFrom: func(fromFunc httpsnoop.ReadFromFunc) httpsnoop.ReadFromFunc {
+			return func(src io.Reader) (int64, error) {
+				if status == http.StatusOK {
+					return io.Copy(pw, src)
+				}
+				return fromFunc(src)
+			}
+		},
+	})
+	go func() {
+		handler.Next.ServeHTTP(wrappedW, r)
+		utils.Close(r.Context(), pw)
+	}()
+	data, err := io.ReadAll(pr)
+	if status != http.StatusOK {
+		return
 	}
-	io.Copy(w, &bufferedW.Buffer)
+	if err != nil {
+		log.Err(err).Msgf("error storing response in middleware to determine hash %s", r.URL.Path)
+		http.Error(w, "Error serving file.", http.StatusInternalServerError)
+	}
+	hash := sha256.Sum256(data)
+	eTag = base64.StdEncoding.EncodeToString(hash[:])
+	log.Debug().Msgf("Computed missing eTag for %s: %s", r.URL.Path, eTag)
+	handler.Hashes.Set(r.URL.Path, eTag)
+	w.Header().Set("ETag", eTag)
+
+	_, err = io.Copy(w, bytes.NewReader(data))
+	if err != nil {
+		log.Err(err).Msgf("error coping response in middleware after determining hash %s", r.URL.Path)
+	}
 }
 
 // NewCacheHandler computes and stores the hashes for all files
