@@ -58,10 +58,14 @@ func main() {
 	unzipHandler := http.FileServer(http.FS(unzipfs))
 	staticZipHandler := server.Caching()(http.FileServer(http.FS(zipfs)))
 	dynamicZipHandler := server.Caching()(middleware.Compress(5, config.GzipMediaTypes...)(unzipHandler))
-	cspPathRegex := regexp.MustCompile(config.AngularCspReplace.FilePathPattern)
-	cspHandler := server.CspFileReplace(config)(unzipHandler)
+	var cspPathRegex *regexp.Regexp
+	var cspHandler http.Handler
+	if config.AngularCspReplace != nil {
+		cspPathRegex = regexp.MustCompile(config.AngularCspReplace.FilePathPattern)
+		cspHandler = server.CspFileReplace(config)(unzipHandler)
+	}
 	r.Handle("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if cspPathRegex.MatchString(r.URL.Path) {
+		if cspPathRegex != nil && cspPathRegex.MatchString(r.URL.Path) {
 			cspHandler.ServeHTTP(w, r)
 		} else {
 			if *memoryFs && *gzipActive {
