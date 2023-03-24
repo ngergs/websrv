@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/ngergs/websrv/v2/internal/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"io/fs"
 	"net/http"
@@ -29,7 +30,7 @@ func main() {
 		log.Fatal().Err(err).Msg("Error reading -config: See server.config.go for the expected structure.")
 	}
 
-	unzipfs, zipfs := initFs(config)
+	unzipfs, zipfs := initFs()
 
 	errChan := make(chan error)
 	var promRegistration *server.PrometheusRegistration
@@ -52,7 +53,7 @@ func main() {
 		server.Header(config),
 		server.Optional(server.SessionId(config), config.AngularCspReplace != nil),
 		server.Optional(server.CspHeaderReplace(config), config.AngularCspReplace != nil),
-		server.Fallback("/", http.StatusNotFound),
+		server.Optional(server.Fallback(*fallbackPath, http.StatusNotFound), *fallbackPath != ""),
 	)
 
 	unzipHandler := http.FileServer(http.FS(unzipfs))
@@ -67,14 +68,18 @@ func main() {
 	r.Handle("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if cspPathRegex != nil && cspPathRegex.MatchString(r.URL.Path) {
 			cspHandler.ServeHTTP(w, r)
-		} else {
-			if *memoryFs && *gzipActive {
-				w.Header().Set("Content-Encoding", "gzip")
-				staticZipHandler.ServeHTTP(w, r)
-			} else {
-				dynamicZipHandler.ServeHTTP(w, r)
-			}
+			return
 		}
+		if !*gzipActive || !utils.Contains(config.GzipMediaTypes, w.Header().Get("Content-Type")) {
+			unzipHandler.ServeHTTP(w, r)
+			return
+		}
+		if *memoryFs {
+			w.Header().Set("Content-Encoding", "gzip")
+			staticZipHandler.ServeHTTP(w, r)
+			return
+		}
+		dynamicZipHandler.ServeHTTP(w, r)
 	}))
 
 	webserver := server.Build(*webServerPort, time.Duration(*readTimeout)*time.Second,
@@ -114,7 +119,7 @@ func main() {
 
 // initFs loads the non-zipped and zipped fs according to the config
 // zipFs is nil if memoryFs or gzipActive are not set
-func initFs(config *server.Config) (unzipfs fs.ReadFileFS, zipfs fs.ReadFileFS) {
+func initFs() (unzipfs fs.ReadFileFS, zipfs fs.ReadFileFS) {
 	if *memoryFs {
 		log.Info().Msg("Using the in-memory-filesystem")
 		memoryFs, err := filesystem.NewMemoryFs(targetDir)
