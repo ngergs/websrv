@@ -44,8 +44,8 @@ Options:
         Optional file that contains more involved config settings, see server/config.go for the structure.
   -debug
         Log debug level
-  -fallback-file string
-        Filepath relative to targetDir which serves as fallback. Set to empty to disable. (default "index.html")
+  -fallback-path string
+        Filepath relative to targetDir which serves as fallback. Set to "/" to serve a SPA.
   -gzip
         Whether to send gzip encoded response. See config-file for setting the detailed types. As default gzip is used when activated for test/css, text/html and application/javascript (default true)
   -gzip-level int
