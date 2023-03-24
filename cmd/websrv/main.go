@@ -10,7 +10,9 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"path"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -63,22 +65,30 @@ func main() {
 	var cspHandler http.Handler
 	if config.AngularCspReplace != nil {
 		cspPathRegex = regexp.MustCompile(config.AngularCspReplace.FilePathPattern)
-		cspHandler = server.CspFileReplace(config)(unzipHandler)
+		cspHandler = middleware.Compress(5, config.GzipMediaTypes...)(server.CspFileReplace(config)(unzipHandler))
 	}
 	r.Handle("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if cspPathRegex != nil && cspPathRegex.MatchString(r.URL.Path) {
 			cspHandler.ServeHTTP(w, r)
 			return
 		}
-		if !*gzipActive || !utils.Contains(config.GzipMediaTypes, w.Header().Get("Content-Type")) {
-			unzipHandler.ServeHTTP(w, r)
-			return
+		if *memoryFs && *gzipActive {
+			if r.URL.Path == *fallbackPath {
+				w.Header().Set("Content-Encoding", "gzip")
+				staticZipHandler.ServeHTTP(w, r)
+				return
+			}
+			mediaType, ok := config.MediaTypeMap[path.Ext(r.URL.Path)]
+			if i := strings.Index(mediaType, ";"); i >= 0 {
+				mediaType = mediaType[0:i]
+			}
+			if r.URL.Path == *fallbackPath || (ok && utils.Contains(config.GzipMediaTypes, mediaType)) {
+				w.Header().Set("Content-Encoding", "gzip")
+				staticZipHandler.ServeHTTP(w, r)
+				return
+			}
 		}
-		if *memoryFs {
-			w.Header().Set("Content-Encoding", "gzip")
-			staticZipHandler.ServeHTTP(w, r)
-			return
-		}
+		// gzip not active also will cause the gzipMediaTypes list to be empty so safe to call the generalized handler here
 		dynamicZipHandler.ServeHTTP(w, r)
 	}))
 
