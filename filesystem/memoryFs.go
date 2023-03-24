@@ -16,6 +16,8 @@ import (
 
 // make sure that we implement the fs.ReadFileFS interface
 var _ fs.ReadFileFS = &MemoryFS{}
+var _ io.Seeker = &openMemoryFile{}
+var _ fs.File = &openMemoryFile{}
 
 // MemoryFS only holds actual files, not the directory entries
 type MemoryFS struct {
@@ -142,6 +144,23 @@ func (open *openMemoryFile) Read(dst []byte) (int, error) {
 	n := copy(dst, open.file.data[open.readOffset:])
 	open.readOffset += n
 	return n, nil
+}
+
+// Seek moves to the given offset
+func (open *openMemoryFile) Seek(offset int64, whence int) (int64, error) {
+	switch whence {
+	case io.SeekStart:
+		open.readOffset = int(offset)
+		return offset, nil
+	case io.SeekCurrent:
+		open.readOffset += int(offset)
+		return int64(open.readOffset), nil
+	case io.SeekEnd:
+		open.readOffset = len(open.file.data) + int(offset)
+		return int64(open.readOffset), nil
+	default:
+		return 0, fmt.Errorf("unknown whence value %d", whence)
+	}
 }
 
 // ReadDir returns the first n entries from the current directory.
