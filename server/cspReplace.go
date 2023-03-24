@@ -42,17 +42,21 @@ func (handler *CspFileHandler) loadTemplate(w http.ResponseWriter, r *http.Reque
 	status := http.StatusOK
 	pr, pw := io.Pipe()
 	defer utils.Close(r.Context(), pr)
+	dummyHeader := make(http.Header)
 	wrappedW := httpsnoop.Wrap(w, httpsnoop.Hooks{
-		Header: func(headerFunc httpsnoop.HeaderFunc) httpsnoop.HeaderFunc {
+		Header: func(_ httpsnoop.HeaderFunc) httpsnoop.HeaderFunc {
 			return func() http.Header {
 				// dummy to avoid setting Content-Length here
-				return http.Header{}
+				return dummyHeader
 			}
 		},
 		WriteHeader: func(headerFunc httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
 			return func(code int) {
 				status = code
-				headerFunc(code)
+				// forwarding would block setting headers later on
+				if status != http.StatusOK {
+					headerFunc(code)
+				}
 			}
 		},
 		Write: func(writeFunc httpsnoop.WriteFunc) httpsnoop.WriteFunc {
