@@ -24,20 +24,21 @@ import (
 )
 
 func main() {
-	setup()
-	var wg sync.WaitGroup
-	sigtermCtx := server.SigTermCtx(context.Background(), time.Duration(*shutdownDelay)*time.Second)
-	config, err := readConfig()
+	conf, err := readConfig()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error reading -config: See server.config.go for the expected structure.")
+		log.Fatal().Err(err).Msg("Error reading -conf: See server.conf.go for the expected structure.")
 	}
-
-	unzipfs, zipfs := initFs()
+	if err = setup(conf); err != nil {
+		log.Fatal().Err(err).Msg("Error during initialization")
+	}
+	var wg sync.WaitGroup
+	sigtermCtx := server.SigTermCtx(context.Background(), time.Duration(conf.ShutdownDelay)*time.Second)
+	unzipfs, zipfs := initFs(conf)
 
 	errChan := make(chan error)
 	var promRegistration *server.PrometheusRegistration
-	if *metrics {
-		promRegistration, err = server.AccessMetricsRegister(prometheus.DefaultRegisterer, *metricsNamespace)
+	if conf.Metrics.Enabled {
+		promRegistration, err = server.AccessMetricsRegister(prometheus.DefaultRegisterer, conf.Metrics.Namespace)
 		if err != nil {
 			log.Error().Err(err).Msg("Could not register custom prometheus metrics.")
 		}
@@ -45,44 +46,46 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(
-		server.Optional(server.H2C(*h2cPort), *h2c),
+		server.Optional(server.H2C(conf.Port.H2c), conf.H2C),
 		middleware.RequestID,
 		middleware.RealIP,
-		middleware.Timeout(time.Duration(*writeTimeout)*time.Second),
-		server.Optional(server.AccessLog(), *accessLog),
-		server.Optional(server.AccessMetrics(promRegistration), *metrics),
+		middleware.Timeout(time.Duration(conf.Timeout.Write)*time.Second),
+		server.Optional(server.AccessLog(), conf.AccessLog.General),
+		server.Optional(server.AccessMetrics(promRegistration), conf.Metrics.Enabled),
 		server.Validate(),
-		server.Header(config),
-		server.Optional(server.SessionId(config), config.AngularCspReplace != nil),
-		server.Optional(server.CspHeaderReplace(config), config.AngularCspReplace != nil),
-		server.Optional(server.Fallback(*fallbackPath, http.StatusNotFound), *fallbackPath != ""),
+		server.Header(conf.Headers),
+		server.Optional(server.SessionId(conf.AngularCspReplace.CookieName, time.Duration(conf.AngularCspReplace.CookieMaxAge)*time.Second),
+			conf.AngularCspReplace.Enabled),
+		server.Optional(server.CspHeaderReplace(conf.AngularCspReplace.VariableName), conf.AngularCspReplace.Enabled),
+		server.Optional(server.Fallback(conf.FallbackPath, http.StatusNotFound), conf.FallbackPath != ""),
 	)
 
 	unzipHandler := http.FileServer(http.FS(unzipfs))
 	staticZipHandler := server.Caching()(http.FileServer(http.FS(zipfs)))
-	dynamicZipHandler := server.Caching()(middleware.Compress(5, config.GzipMediaTypes...)(unzipHandler))
+	dynamicZipHandler := server.Caching()(middleware.Compress(5, conf.Gzip.MediaTypes...)(unzipHandler))
 	var cspPathRegex *regexp.Regexp
 	var cspHandler http.Handler
-	if config.AngularCspReplace != nil {
-		cspPathRegex = regexp.MustCompile(config.AngularCspReplace.FilePathPattern)
-		cspHandler = middleware.Compress(5, config.GzipMediaTypes...)(server.CspFileReplace(config)(unzipHandler))
+	if conf.AngularCspReplace.Enabled {
+		cspPathRegex = regexp.MustCompile(conf.AngularCspReplace.FilePathRegex)
+		cspHandler = middleware.Compress(5, conf.Gzip.MediaTypes...)(
+			server.CspFileReplace(conf.AngularCspReplace.VariableName, conf.MediaTypeMap)(unzipHandler))
 	}
 	r.Handle("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if cspPathRegex != nil && cspPathRegex.MatchString(r.URL.Path) {
 			cspHandler.ServeHTTP(w, r)
 			return
 		}
-		if *memoryFs && *gzipActive {
-			if r.URL.Path == *fallbackPath {
+		if conf.MemoryFs && conf.Gzip.Enabled {
+			if r.URL.Path == conf.FallbackPath {
 				w.Header().Set("Content-Encoding", "gzip")
 				staticZipHandler.ServeHTTP(w, r)
 				return
 			}
-			mediaType, ok := config.MediaTypeMap[path.Ext(r.URL.Path)]
+			mediaType, ok := conf.MediaTypeMap[path.Ext(r.URL.Path)]
 			if i := strings.Index(mediaType, ";"); i >= 0 {
 				mediaType = mediaType[0:i]
 			}
-			if r.URL.Path == *fallbackPath || (ok && utils.Contains(config.GzipMediaTypes, mediaType)) {
+			if r.URL.Path == conf.FallbackPath || (ok && utils.Contains(conf.Gzip.MediaTypes, mediaType)) {
 				w.Header().Set("Content-Encoding", "gzip")
 				staticZipHandler.ServeHTTP(w, r)
 				return
@@ -92,18 +95,19 @@ func main() {
 		dynamicZipHandler.ServeHTTP(w, r)
 	}))
 
-	webserver := server.Build(*webServerPort, time.Duration(*readTimeout)*time.Second,
-		time.Duration(*writeTimeout)*time.Second, time.Duration(*idleTimeout)*time.Second, r)
-	log.Info().Msgf("Starting webserver server on port %d", *webServerPort)
+	webserver := server.Build(conf.Port.Webserver, time.Duration(conf.Timeout.Read)*time.Second,
+		time.Duration(conf.Timeout.Write)*time.Second, time.Duration(conf.Timeout.Idle)*time.Second, r)
+	log.Info().Msgf("Starting webserver server on port %d", conf.Port.Webserver)
 	srvCtx := context.WithValue(sigtermCtx, server.ServerName, "file server")
-	server.AddGracefulShutdown(srvCtx, &wg, webserver, time.Duration(*shutdownTimeout)*time.Second)
+	server.AddGracefulShutdown(srvCtx, &wg, webserver, time.Duration(conf.Timeout.Shutdown)*time.Second)
 	go func() { errChan <- webserver.ListenAndServe() }()
 
-	if *metrics {
-		metricsServer := server.Build(*metricsPort, time.Duration(*readTimeout)*time.Second, time.Duration(*writeTimeout)*time.Second, time.Duration(*idleTimeout)*time.Second,
-			promhttp.Handler(), server.Optional(server.AccessLog(), *metricsAccessLog))
+	if conf.Metrics.Enabled {
+		metricsServer := server.Build(conf.Port.Metrics, time.Duration(conf.Timeout.Read)*time.Second,
+			time.Duration(conf.Timeout.Write)*time.Second, time.Duration(conf.Timeout.Idle)*time.Second,
+			promhttp.Handler(), server.Optional(server.AccessLog(), conf.AccessLog.Metrics))
 		metricsCtx := context.WithValue(sigtermCtx, server.ServerName, "prometheus metrics server")
-		server.AddGracefulShutdown(metricsCtx, &wg, metricsServer, time.Duration(*shutdownTimeout)*time.Second)
+		server.AddGracefulShutdown(metricsCtx, &wg, metricsServer, time.Duration(conf.Timeout.Shutdown)*time.Second)
 		go func() {
 			log.Info().Msgf("Listening for prometheus metric scrapes under container port tcp/%s", metricsServer.Addr[1:])
 			errChan <- metricsServer.ListenAndServe()
@@ -113,12 +117,13 @@ func main() {
 	go logErrors(errChan)
 
 	// stop health server after everything else has stopped
-	if *health {
-		healthServer := server.Build(*healthPort, time.Duration(*readTimeout)*time.Second, time.Duration(*writeTimeout)*time.Second, time.Duration(*idleTimeout)*time.Second,
+	if conf.Health {
+		healthServer := server.Build(conf.Port.Health, time.Duration(conf.Timeout.Read)*time.Second,
+			time.Duration(conf.Timeout.Write)*time.Second, time.Duration(conf.Timeout.Idle)*time.Second,
 			server.HealthCheckHandler(),
-			server.Optional(server.AccessLog(), *healthAccessLog),
+			server.Optional(server.AccessLog(), conf.AccessLog.Health),
 		)
-		log.Info().Msgf("Starting healthcheck server on port %d", *healthPort)
+		log.Info().Msgf("Starting healthcheck server on port %d", conf.Port.Health)
 		healthCtx := context.WithValue(context.Background(), server.ServerName, "health server")
 		// 1 second is sufficient for health checks to shut down
 		server.RunTillWaitGroupFinishes(healthCtx, &wg, healthServer, errChan, time.Duration(1)*time.Second)
@@ -129,15 +134,15 @@ func main() {
 
 // initFs loads the non-zipped and zipped fs according to the config
 // zipFs is nil if memoryFs or gzipActive are not set
-func initFs() (unzipfs fs.ReadFileFS, zipfs fs.ReadFileFS) {
-	if *memoryFs {
+func initFs(conf *config) (unzipfs fs.ReadFileFS, zipfs fs.ReadFileFS) {
+	if conf.MemoryFs {
 		log.Info().Msg("Using the in-memory-filesystem")
 		memoryFs, err := filesystem.NewMemoryFs(targetDir)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Error preparing read-only filesystem.")
 		}
 		unzipfs = memoryFs
-		if *gzipActive {
+		if conf.Gzip.Enabled {
 			log.Debug().Msg("Zipping in memory filesystem")
 			zipfs, err = memoryFs.Zip()
 			if err != nil {

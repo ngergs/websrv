@@ -1,0 +1,40 @@
+access-log:
+   general: true
+fallback-path: /
+memory-fs: true
+h2c: true
+gzip:
+   enabled: true
+
+headers:
+  X-XSS-Protection: 1; mode=block
+  X-Frame-Options: deny
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), cross-origin-isolated=(self), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(self), execution-while-out-of-viewport=(self), fullscreen=(self), geolocation=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  Cache-Control: no-cache; must-revalidate
+  Pragma: no-cache
+  Expect-CT: enforce, max-age=2592000
+  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; form-action 'none';  font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self' 'nonce-random_csp_nonce' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='; worker-src 'self'
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
+media-type-map:
+  .js:   text/javascript; charset=utf-8
+  .css:  text/css
+  .html: text/html; charset=utf-8
+  .jpg:  image/jpeg
+  .avif: image/avif
+  .jxl:  image/jxl
+  .ttf : font/ttf
+  .woff2: font/woff2
+
+
+angular-csp-replace:
+   enabled: true
+   file-path-regex: ^/main.*\.js$
+   variable-name: random_csp_nonce
+   cookie-name: Nonce-Id
+   cookie-max-age: 600

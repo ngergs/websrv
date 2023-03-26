@@ -37,8 +37,8 @@ func BenchmarkServer(b *testing.B) {
 	r.Use(
 		middleware.RequestID,
 		middleware.RealIP,
-		middleware.Timeout(time.Duration(*writeTimeout)*time.Second),
-		server.Optional(server.AccessLog(), *accessLog),
+		middleware.Timeout(time.Duration(conf.Timeout.Write)*time.Second),
+		server.Optional(server.AccessLog(), conf.AccessLog.General),
 		server.Validate(),
 		server.Header(config),
 		server.SessionId(config),
@@ -54,7 +54,7 @@ func BenchmarkServer(b *testing.B) {
 		if cspPathRegex.MatchString(r.URL.Path) {
 			cspHandler.ServeHTTP(w, r)
 		} else {
-			if *memoryFs && *gzipActive {
+			if conf.Metrics.Enabled && conf.Gzip.Enabled {
 				w.Header().Set("Content-Encoding", "gzip")
 				staticZipHandler.ServeHTTP(w, r)
 			} else {
@@ -62,7 +62,7 @@ func BenchmarkServer(b *testing.B) {
 			}
 		}
 	}))
-	webserver := server.Build(*webServerPort, time.Duration(1)*time.Second, time.Duration(1)*time.Second, time.Duration(1)*time.Second, r)
+	webserver := server.Build(conf.Port.Webserver, time.Duration(1)*time.Second, time.Duration(1)*time.Second, time.Duration(1)*time.Second, r)
 	defer func() {
 		err := webserver.Shutdown(context.Background())
 		if err != nil {
@@ -70,7 +70,7 @@ func BenchmarkServer(b *testing.B) {
 		}
 	}()
 	go func() {
-		log.Info().Msgf("Starting webserver server on port %d", *webServerPort)
+		log.Info().Msgf("Starting webserver server on port %d", conf.Port.Webserver)
 		errChan <- webserver.ListenAndServe()
 	}()
 	// give server some time to wake up

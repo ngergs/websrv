@@ -46,40 +46,37 @@ func Caching() HandlerMiddleware {
 }
 
 // CspHeaderReplace replaces the nonce variable in the Content-Security-Header.
-func CspHeaderReplace(config *Config) HandlerMiddleware {
+func CspHeaderReplace(variableName string) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
-		return CspHeaderHandler(handler, config.AngularCspReplace.VariableName)
+		return CspHeaderHandler(handler, variableName)
 	}
 }
 
 // CspFileReplace replaces the nonce variable in all content responses and
 // has the hard requirement that a session cookie is present in the context, see server.SessionCookie to add one.
-func CspFileReplace(config *Config) HandlerMiddleware {
+func CspFileReplace(variableName string, mediaTypeMap map[string]string) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
-		if config.AngularCspReplace == nil {
-			return handler
-		}
 		return &CspFileHandler{
 			Next:         handler,
-			VariableName: config.AngularCspReplace.VariableName,
-			MediaTypeMap: config.MediaTypeMap,
+			VariableName: variableName,
+			MediaTypeMap: mediaTypeMap,
 		}
 	}
 }
 
 // SessionId adds a session cookie adding middleware
-func SessionId(config *Config) HandlerMiddleware {
+func SessionId(cookieName string, cookieMaxAge time.Duration) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
-		return SessionCookieHandler(handler, config.AngularCspReplace.CookieName, time.Duration(config.AngularCspReplace.CookieMaxAge)*time.Second)
+		return SessionCookieHandler(handler, cookieName, cookieMaxAge)
 	}
 }
 
 // Header adds a static HTTP header adding middleware
-func Header(config *Config) HandlerMiddleware {
+func Header(headers map[string]string) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
 		return &HeaderHandler{
 			Next:    handler,
-			Headers: config.Headers,
+			Headers: headers,
 		}
 	}
 }
