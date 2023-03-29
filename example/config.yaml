@@ -31,7 +31,6 @@ media-type-map:
   .ttf : font/ttf
   .woff2: font/woff2
 
-
 angular-csp-replace:
    enabled: true
    file-path-regex: ^/main.*\.js$

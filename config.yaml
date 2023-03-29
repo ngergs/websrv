@@ -1,0 +1,98 @@
+#config values and defaults
+
+# determines whether to print an access log
+access-log:
+  # enables the general access log
+  general: false
+  # enables the health endpoint access log
+  health: false
+  # enables the metrics endpoint access log
+  metrics: false
+
+# configures log properties
+log:
+  # the log level. Valid values are debug, info, warn, error
+  level: info
+  # enables pretty printed log (non-json)
+  pretty: false
+
+# a map of static HTTP response headers, example value
+headers: {}
+
+# a map of file extensions like ".jk" to corresponding media types.
+mediatype-map:
+  .js: "application/javascript",
+  .css: "text/css",
+  .html: "text/html; charset=UTF-8",
+  .jpg: "image/jpeg",
+  .avif: "image/avif",
+  .jxl: "image/jxl",
+  .ttf: "font/ttf",
+  .woff2: "font/woff2",
+  .txt: "text/plain",
+
+# the path that should be used as an alternative on HTTP 404 responses. Set to empty to disable.
+fallback-path: ""
+
+# the configuration for prometheus metrices
+metrics:
+  # activates the prometheus metrics endpoint
+  enabled: false
+  # the prometheus namespace
+  namespace: websrv
+
+# enables the in-memory filesystem
+memory-fs: false
+
+# enables the h2c (unencrypted HTTP2) endpoint
+h2c: false
+
+# enables the health endpoint
+health: false
+
+# the configuration for various TCP ports
+port:
+  # TCP port for the main web server
+  webserver: 8080
+  # TCP port for the health endpoint
+  health: 8081
+  # TCP port for the prometheus metrocs
+  metrics: 9090
+  # TCP port for h2c (unecncrypted http2)
+  h2c: 443
+
+# the configuration for gzip compression handling
+gzip:
+  # activates the gzip response compression
+  enabled: false
+  # the level of compression, values are between 1 and 9
+  compression: 5
+  # a list of media type (according to the response HTTP Content-Type header) that should be compressed
+  mediatypes: ["text/css", "text/html", "text/javascript", "font/tff"]
+
+# the configuration for various timeouts
+timeout:
+  # idle timeout in seconds
+  idle: 30
+  # read timeout in seconds
+  read: 10
+  # write timeout in seconds
+  write: 10
+  # shutdown timeout in seconds
+  shutdown: 5
+
+# the number of seconds to wait before executing a graceful shutdown
+shutdown-delay: 5
+
+# the configuration for angular csp fix
+angular-csp-replace:
+  # activates the angular csp fix
+  enabled:
+  # regular expression for the files whether the VariableName should be replace, like "^/main.*\.js$"
+  file-path-regex:
+  # the string that should be replaced with the Session-Id value
+  variable-name:
+  # name of the cookie that will hold the Session-ID
+  cookie-name:
+  # the max age of the Session-ID cookie
+  cookie-max-age:

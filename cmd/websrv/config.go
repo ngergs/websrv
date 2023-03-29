@@ -1,87 +1,110 @@
 package main
 
-import (
-	"flag"
-	"fmt"
-	"github.com/knadh/koanf/parsers/yaml"
-	"github.com/knadh/koanf/providers/env"
-	"github.com/knadh/koanf/providers/file"
-	"github.com/knadh/koanf/providers/structs"
-	"github.com/knadh/koanf/v2"
-	"github.com/rs/zerolog"
-	"os"
-	"strings"
-
-	stdlog "log"
-
-	"github.com/rs/zerolog/log"
-)
-
+// config is the general configuration struct
 type config struct {
-	// Whether to print an access log
-	AccessLog         accessLogConfig         `koanf:"access-log"`
-	Log               logConfig               `koanf:"log"`
-	Headers           map[string]string       `koanf:"headers"`
-	MediaTypeMap      map[string]string       `koanf:"mediatype-map"`
-	FallbackPath      string                  `koanf:"fallback-path"`
-	Metrics           metricsConfig           `koanf:"metrics"`
-	MemoryFs          bool                    `koanf:"memory-fs"`
-	H2C               bool                    `koanf:"h2c"`
-	Health            bool                    `koanf:"health"`
-	Port              portConfig              `koanf:"port"`
-	Gzip              gzipConfig              `koanf:"gzip"`
-	Timeout           timeoutConfig           `koanf:"timeout"`
-	ShutdownDelay     int                     `koanf:"shutdown-delay"`
+	// AccessLog determines whether to print an access log
+	AccessLog accessLogConfig `koanf:"access-log"`
+	// Log configures log properties
+	Log logConfig `koanf:"log"`
+	// Headers is a map of static HTTP response headers
+	Headers map[string]string `koanf:"headers"`
+	// MediaTypeMap is a map of file extensions like ".jk" to corresponding media types.
+	MediaTypeMap map[string]string `koanf:"mediatype-map"`
+	// FallbackPath is the path that should be used as an alternative on HTTP 404 responses. Set to empty to disable.
+	FallbackPath string `koanf:"fallback-path"`
+	// Metrics holds the configuration for prometheus metrices
+	Metrics metricsConfig `koanf:"metrics"`
+	// MemoryFs enables the in-memory filesystem
+	MemoryFs bool `koanf:"memory-fs"`
+	// H2C enables the h2c (unencrypted HTTP2) endpoint
+	H2C bool `koanf:"h2c"`
+	// Health enables the health endpoint
+	Health bool `koanf:"health"`
+	// Port holds the configuration for various TCP ports
+	Port portConfig `koanf:"port"`
+	// Gzip holds the configuration for gzip compression handling
+	Gzip gzipConfig `koanf:"gzip"`
+	// Timeout holds the configuration for various timeouts
+	Timeout timeoutConfig `koanf:"timeout"`
+	// ShutdownDelay is the number of seconds to wait before executing a graceful shutdown
+	ShutdownDelay int `koanf:"shutdown-delay"`
+	// AngularCspReplace holds the configuration for angular csp fix
 	AngularCspReplace angularCspReplaceConfig `koanf:"angular-csp-replace"`
 }
 
+// accessLogConfig configures which accesses logs to enable
 type accessLogConfig struct {
+	// General enables the general access log
 	General bool `koanf:"general"`
-	Health  bool `koanf:"health"`
+	// Health enables the health endpoint access log
+	Health bool `koanf:"health"`
+	// Metrics enables the metrics endpoint access log
 	Metrics bool `koanf:"metrics"`
 }
 
+// logConfig holds configuration regarding logging
 type logConfig struct {
-	Level  string `koanf:"level""`
-	Pretty bool   `koanf:"pretty"`
+	// Level sets the log level. Valid values are debug, info, warn, error
+	Level string `koanf:"level""`
+	// Pretty enables pretty printed log (non-json)
+	Pretty bool `koanf:"pretty"`
 }
 
+// metricsConfig holds the prometheus metrics configuration
 type metricsConfig struct {
-	Enabled   bool   `koanf:"enabled"`
-	AccessLog bool   `koanf:"accesslog"`
+	// Enabled activates the prometheus metrics endpoint
+	Enabled bool `koanf:"enabled"`
+	// Namespace is the prometheus namespace
 	Namespace string `koanf:"namespace"`
 }
 
+// portConfig holds configurations for various TCP ports
 type portConfig struct {
+	// Webserver is the TCP port for the main web server
 	Webserver int `koanf:"webserver"`
-	Health    int `koanf:"health"`
-	Metrics   int `koanf:"metrics"`
-	H2c       int `koanf:"h2c"`
+	// Health is the TCP port for the health endpoint
+	Health int `koanf:"health"`
+	// Metrics is the TCP port for the prometheus metrocs
+	Metrics int `koanf:"metrics"`
+	// H2c is the TCP port for h2c (unecncrypted http2)
+	H2c int `koanf:"h2c"`
 }
 
+// gzipConfig holds configuration for gzip repsonse compression
 type gzipConfig struct {
-	Enabled          bool     `koanf:"enabled"`
-	CompressionLevel int      `koanf:"compression"`
-	MediaTypes       []string `koanf:"mediatypes"`
+	// Enabled activates the gzip response compression
+	Enabled bool `koanf:"enabled"`
+	// CompressionLevel is the amount of compression, values are between 1 and 9
+	CompressionLevel int `koanf:"compression"`
+	// MediaTypes is a slice of media type (according to the response HTTP Content-Type header) that should be compressed
+	MediaTypes []string `koanf:"mediatypes"`
 }
 
+// timeoutConfig holds various timeouts
 type timeoutConfig struct {
-	Idle     int `koanf:"idle"`
-	Read     int `koanf:"read"`
-	Write    int `koanf:"write"`
+	// Idle is the idle timeout in seconds
+	Idle int `koanf:"idle"`
+	// Read is the request read timeout in seconds
+	Read int `koanf:"read"`
+	// Write is the request response timeout in seconds
+	Write int `koanf:"write"`
+	// Shutdown is the graceful shutdown timeout in seconds
 	Shutdown int `koanf:"shutdown"`
 }
 
+// angularCspReplaceConfig holds the configuration for the angular csp replace fix
 type angularCspReplaceConfig struct {
-	Enabled       bool   `koanf:"enabled"`
+	// Enabled activates the angular csp fix
+	Enabled bool `koanf:"enabled"`
+	// FilePathRegex is a regular expression for the files whether the VariableName should be replace, like "^/main.*\.js$"
 	FilePathRegex string `koanf:"file-path-regex"`
-	VariableName  string `koanf:"variable-name"`
-	CookieName    string `koanf:"cookie-name"`
-	CookieMaxAge  int    `koanf:"cookie-max-age"`
+	// VariableName is the string that should be replaced with the Session-Id value
+	VariableName string `koanf:"variable-name"`
+	// CookieName is the name of the cookie that will hold the Session-ID
+	CookieName string `koanf:"cookie-name"`
+	// CookieMaxAge is the max age of the Session-ID cookie
+	CookieMaxAge int `koanf:"cookie-max-age"`
 }
-
-var version = "snapshot"
-var targetDir string
 
 var defaultConfig = config{
 	Log: logConfig{Level: "info"},
@@ -109,74 +132,4 @@ var defaultConfig = config{
 	Metrics:       metricsConfig{Namespace: "websrv"},
 	Timeout:       timeoutConfig{Idle: 30, Read: 10, Write: 10, Shutdown: 5},
 	ShutdownDelay: 5,
-}
-
-// readConfig reads the configuration. Order is (least one takes precedence) defaults > config file > env vars > cli args.
-func readConfig() (*config, error) {
-	k := koanf.New(".")
-	var conf config
-
-	// Load defaults
-	if err := k.Load(structs.Provider(defaultConfig, "koanf"), nil); err != nil {
-		return nil, fmt.Errorf("error loading  default values (internal error): %w", err)
-	}
-
-	// Load config from file
-	confFile := flag.String("conf", "", "config file to load")
-	flag.Parse()
-	if *confFile != "" {
-		if err := k.Load(file.Provider(*confFile), yaml.Parser()); err != nil {
-			return nil, fmt.Errorf("error loading config file: %w", err)
-		}
-	}
-
-	// Load config from env
-	envPrefix := "WEBSRV_"
-	err := k.Load(env.Provider(envPrefix, ".", func(s string) string {
-		return strings.Replace(strings.ToLower(
-			strings.TrimPrefix(s, envPrefix)), "_", ".", -1)
-	}), nil)
-	if err != nil {
-		return nil, fmt.Errorf("error loading config from env vars:%w", err)
-	}
-
-	if err := k.Unmarshal("", &conf); err != nil {
-		return nil, fmt.Errorf("error unmarshalling collected config: %w", err)
-	}
-	return &conf, nil
-}
-
-// readConfig reads the configuration. Order is (least one takes precedence) defaults > config file > env vars > cli args.
-func setup(conf *config) error {
-	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s {options} [target-path]\nOptions:\n", os.Args[0])
-		flag.PrintDefaults()
-	}
-
-	switch conf.Log.Level {
-	case "error":
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-	case "warn":
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	case "info":
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	case "debug":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	default:
-		return fmt.Errorf("invalid loglevel, only error, warn, info and debug are valid. Set value: %s", conf.Log.Level)
-	}
-	if conf.Log.Pretty {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	}
-	args := flag.Args()
-	if len(args) != 1 {
-		flag.Usage()
-		return fmt.Errorf("unexpected number of arguments: %d\n", len(args))
-	}
-	targetDir = args[0]
-
-	stdlog.SetFlags(0)
-	stdlog.SetOutput(log.Logger)
-	log.Info().Msgf("This is websrv version %s", version)
-	return nil
 }
