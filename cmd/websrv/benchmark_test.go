@@ -21,8 +21,10 @@ func BenchmarkServer(b *testing.B) {
 	config.AngularCspReplace = angularCspReplaceConfig{
 		FilePathRegex: ".*",
 		VariableName:  "testt",
-		CookieName:    "Nonce-Id",
-		CookieMaxAge:  10,
+		SessionCookie: cookieConfig{
+			Name:   "Nonce-ID",
+			MaxAge: 10,
+		},
 	}
 	fs, err := filesystem.NewMemoryFs("../../test/benchmark")
 	if err != nil {
@@ -38,10 +40,10 @@ func BenchmarkServer(b *testing.B) {
 		middleware.RequestID,
 		middleware.RealIP,
 		middleware.Timeout(time.Duration(config.Timeout.Write)*time.Second),
-		server.Optional(server.AccessLog(), config.AccessLog.General),
+		server.Optional(server.AccessLog(), config.Log.AccessLog.General),
 		server.Validate(),
 		server.Header(config.Headers),
-		server.SessionId(config.AngularCspReplace.CookieName, time.Duration(config.AngularCspReplace.CookieMaxAge)*time.Second),
+		server.SessionId(config.AngularCspReplace.SessionCookie.Name, time.Duration(config.AngularCspReplace.SessionCookie.MaxAge)*time.Second),
 		server.CspHeaderReplace(config.AngularCspReplace.VariableName),
 		server.Fallback("/", http.StatusNotFound),
 	)

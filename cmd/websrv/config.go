@@ -2,20 +2,18 @@ package main
 
 // config is the general configuration struct
 type config struct {
-	// AccessLog determines whether to print an access log
-	AccessLog accessLogConfig `koanf:"access-log"`
 	// Log configures log properties
 	Log logConfig `koanf:"log"`
 	// Headers is a map of static HTTP response headers
 	Headers map[string]string `koanf:"headers"`
 	// MediaTypeMap is a map of file extensions like ".jk" to corresponding media types.
-	MediaTypeMap map[string]string `koanf:"mediatype-map"`
+	MediaTypeMap map[string]string `koanf:"mediatypes"`
 	// FallbackPath is the path that should be used as an alternative on HTTP 404 responses. Set to empty to disable.
-	FallbackPath string `koanf:"fallback-path"`
+	FallbackPath string `koanf:"fallback"`
 	// Metrics holds the configuration for prometheus metrices
 	Metrics metricsConfig `koanf:"metrics"`
 	// MemoryFs enables the in-memory filesystem
-	MemoryFs bool `koanf:"memory-fs"`
+	MemoryFs bool `koanf:"memoryfs"`
 	// H2C enables the h2c (unencrypted HTTP2) endpoint
 	H2C bool `koanf:"h2c"`
 	// Health enables the health endpoint
@@ -27,9 +25,19 @@ type config struct {
 	// Timeout holds the configuration for various timeouts
 	Timeout timeoutConfig `koanf:"timeout"`
 	// ShutdownDelay is the number of seconds to wait before executing a graceful shutdown
-	ShutdownDelay int `koanf:"shutdown-delay"`
+	ShutdownDelay int `koanf:"shutdowndelay"`
 	// AngularCspReplace holds the configuration for angular csp fix
-	AngularCspReplace angularCspReplaceConfig `koanf:"angular-csp-replace"`
+	AngularCspReplace angularCspReplaceConfig `koanf:"angularcsp"`
+}
+
+// logConfig holds configuration regarding logging
+type logConfig struct {
+	// Level sets the log level. Valid values are debug, info, warn, error
+	Level string `koanf:"level"`
+	// Pretty enables pretty printed log (non-json)
+	Pretty bool `koanf:"pretty"`
+	// AccessLog determines whether to print an access log
+	AccessLog accessLogConfig `koanf:"access"`
 }
 
 // accessLogConfig configures which accesses logs to enable
@@ -40,14 +48,6 @@ type accessLogConfig struct {
 	Health bool `koanf:"health"`
 	// Metrics enables the metrics endpoint access log
 	Metrics bool `koanf:"metrics"`
-}
-
-// logConfig holds configuration regarding logging
-type logConfig struct {
-	// Level sets the log level. Valid values are debug, info, warn, error
-	Level string `koanf:"level""`
-	// Pretty enables pretty printed log (non-json)
-	Pretty bool `koanf:"pretty"`
 }
 
 // metricsConfig holds the prometheus metrics configuration
@@ -97,13 +97,19 @@ type angularCspReplaceConfig struct {
 	// Enabled activates the angular csp fix
 	Enabled bool `koanf:"enabled"`
 	// FilePathRegex is a regular expression for the files whether the VariableName should be replace, like "^/main.*\.js$"
-	FilePathRegex string `koanf:"file-path-regex"`
+	FilePathRegex string `koanf:"filepath"`
 	// VariableName is the string that should be replaced with the Session-Id value
-	VariableName string `koanf:"variable-name"`
-	// CookieName is the name of the cookie that will hold the Session-ID
-	CookieName string `koanf:"cookie-name"`
-	// CookieMaxAge is the max age of the Session-ID cookie
-	CookieMaxAge int `koanf:"cookie-max-age"`
+	VariableName string `koanf:"variable"`
+	// Cookie holds the config for the session cookie
+	SessionCookie cookieConfig `koanf:"sessioncookie"`
+}
+
+// angularCspReplaceConfig holds the configuration for the angular csp replace fix
+type cookieConfig struct {
+	// Name is the name of the cookie that will hold the Session-ID
+	Name string `koanf:"name"`
+	// MaxAge is the max age of the Session-ID cookie
+	MaxAge int `koanf:"maxage"`
 }
 
 var defaultConfig = config{

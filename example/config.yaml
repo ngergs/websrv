@@ -1,7 +1,8 @@
-access-log:
-   general: true
-fallback-path: /
-memory-fs: true
+log:
+  access:
+    general: true
+fallback: /
+memoryfs: true
 h2c: true
 gzip:
    enabled: true
@@ -21,7 +22,7 @@ headers:
   Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; form-action 'none';  font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self' 'nonce-random_csp_nonce' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='; worker-src 'self'
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
 
-media-type-map:
+mediatypes:
   .js:   text/javascript; charset=utf-8
   .css:  text/css
   .html: text/html; charset=utf-8
@@ -31,9 +32,10 @@ media-type-map:
   .ttf : font/ttf
   .woff2: font/woff2
 
-angular-csp-replace:
+angularcsp:
    enabled: true
-   file-path-regex: ^/main.*\.js$
-   variable-name: random_csp_nonce
-   cookie-name: Nonce-Id
-   cookie-max-age: 600
+   filepath: ^/main.*\.js$
+   variable: random_csp_nonce
+   sessioncookie:
+     name: Nonce-Id
+     maxage: 600

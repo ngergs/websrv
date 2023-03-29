@@ -1,26 +1,25 @@
 #config values and defaults
 
-# determines whether to print an access log
-access-log:
-  # enables the general access log
-  general: false
-  # enables the health endpoint access log
-  health: false
-  # enables the metrics endpoint access log
-  metrics: false
-
 # configures log properties
 log:
   # the log level. Valid values are debug, info, warn, error
   level: info
   # enables pretty printed log (non-json)
   pretty: false
+  # whether to print an access log
+  access:
+    # enables the general access log
+    general: false
+    # enables the health endpoint access log
+    health: false
+    # enables the metrics endpoint access log
+    metrics: false
 
 # a map of static HTTP response headers, example value
 headers: {}
 
 # a map of file extensions like ".jk" to corresponding media types.
-mediatype-map:
+mediatypes:
   .js: "application/javascript",
   .css: "text/css",
   .html: "text/html; charset=UTF-8",
@@ -32,7 +31,7 @@ mediatype-map:
   .txt: "text/plain",
 
 # the path that should be used as an alternative on HTTP 404 responses. Set to empty to disable.
-fallback-path: ""
+fallback: ""
 
 # the configuration for prometheus metrices
 metrics:
@@ -42,7 +41,7 @@ metrics:
   namespace: websrv
 
 # enables the in-memory filesystem
-memory-fs: false
+memoryfs: false
 
 # enables the h2c (unencrypted HTTP2) endpoint
 h2c: false
@@ -82,17 +81,19 @@ timeout:
   shutdown: 5
 
 # the number of seconds to wait before executing a graceful shutdown
-shutdown-delay: 5
+shutdowndelay: 5
 
 # the configuration for angular csp fix
-angular-csp-replace:
+angularcsp:
   # activates the angular csp fix
   enabled:
   # regular expression for the files whether the VariableName should be replace, like "^/main.*\.js$"
-  file-path-regex:
+  filepath:
   # the string that should be replaced with the Session-Id value
-  variable-name:
-  # name of the cookie that will hold the Session-ID
-  cookie-name:
-  # the max age of the Session-ID cookie
-  cookie-max-age:
+  variable:
+  # sessioncookie config
+  sessioncookie:
+    # name of the cookie that will hold the Session-ID
+    name:
+    # the max age of the Session-ID cookie
+    maxage:

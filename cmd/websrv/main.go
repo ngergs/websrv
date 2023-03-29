@@ -50,11 +50,11 @@ func main() {
 		middleware.RequestID,
 		middleware.RealIP,
 		middleware.Timeout(time.Duration(conf.Timeout.Write)*time.Second),
-		server.Optional(server.AccessLog(), conf.AccessLog.General),
+		server.Optional(server.AccessLog(), conf.Log.AccessLog.General),
 		server.Optional(server.AccessMetrics(promRegistration), conf.Metrics.Enabled),
 		server.Validate(),
 		server.Header(conf.Headers),
-		server.Optional(server.SessionId(conf.AngularCspReplace.CookieName, time.Duration(conf.AngularCspReplace.CookieMaxAge)*time.Second),
+		server.Optional(server.SessionId(conf.AngularCspReplace.SessionCookie.Name, time.Duration(conf.AngularCspReplace.SessionCookie.MaxAge)*time.Second),
 			conf.AngularCspReplace.Enabled),
 		server.Optional(server.CspHeaderReplace(conf.AngularCspReplace.VariableName), conf.AngularCspReplace.Enabled),
 		server.Optional(server.Fallback(conf.FallbackPath, http.StatusNotFound), conf.FallbackPath != ""),
@@ -105,7 +105,7 @@ func main() {
 	if conf.Metrics.Enabled {
 		metricsServer := server.Build(conf.Port.Metrics, time.Duration(conf.Timeout.Read)*time.Second,
 			time.Duration(conf.Timeout.Write)*time.Second, time.Duration(conf.Timeout.Idle)*time.Second,
-			promhttp.Handler(), server.Optional(server.AccessLog(), conf.AccessLog.Metrics))
+			promhttp.Handler(), server.Optional(server.AccessLog(), conf.Log.AccessLog.Metrics))
 		metricsCtx := context.WithValue(sigtermCtx, server.ServerName, "prometheus metrics server")
 		server.AddGracefulShutdown(metricsCtx, &wg, metricsServer, time.Duration(conf.Timeout.Shutdown)*time.Second)
 		go func() {
@@ -121,7 +121,7 @@ func main() {
 		healthServer := server.Build(conf.Port.Health, time.Duration(conf.Timeout.Read)*time.Second,
 			time.Duration(conf.Timeout.Write)*time.Second, time.Duration(conf.Timeout.Idle)*time.Second,
 			server.HealthCheckHandler(),
-			server.Optional(server.AccessLog(), conf.AccessLog.Health),
+			server.Optional(server.AccessLog(), conf.Log.AccessLog.Health),
 		)
 		log.Info().Msgf("Starting healthcheck server on port %d", conf.Port.Health)
 		healthCtx := context.WithValue(context.Background(), server.ServerName, "health server")
