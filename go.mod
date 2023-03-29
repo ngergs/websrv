@@ -1,4 +1,4 @@
-module github.com/ngergs/websrv/v2
+module github.com/ngergs/websrv/v3
 
 go 1.20
 

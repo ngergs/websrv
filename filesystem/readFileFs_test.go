@@ -1,7 +1,7 @@
 package filesystem_test
 
 import (
-	"github.com/ngergs/websrv/v2/filesystem"
+	"github.com/ngergs/websrv/v3/filesystem"
 	"os"
 	"path"
 	"testing"

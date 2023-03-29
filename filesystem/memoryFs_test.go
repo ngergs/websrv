@@ -3,14 +3,14 @@ package filesystem_test
 import (
 	"compress/gzip"
 	"context"
-	"github.com/ngergs/websrv/v2/filesystem"
+	"github.com/ngergs/websrv/v3/filesystem"
 	"io"
 	"io/fs"
 	"os"
 	"path"
 	"testing"
 
-	"github.com/ngergs/websrv/v2/internal/utils"
+	"github.com/ngergs/websrv/v3/internal/utils"
 	"github.com/stretchr/testify/require"
 )
 

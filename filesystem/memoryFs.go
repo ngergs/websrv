@@ -10,7 +10,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/ngergs/websrv/v2/internal/utils"
+	"github.com/ngergs/websrv/v3/internal/utils"
 	"github.com/rs/zerolog/log"
 )
 

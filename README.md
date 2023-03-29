@@ -1,6 +1,6 @@
 # websrv
 
-This is a little webserver implementation bsed on [chi](https://github.com/go-chi/chi).
+This is a little webserver implementation based on [chi](https://github.com/go-chi/chi).
 The webserver is supposed to serve a folder containing e.g. a static website and is suited to serve a SPA.
 
 The server package contains a collection of http.Handler implementations which may be reused in other projects. 

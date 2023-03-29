@@ -1,7 +1,7 @@
 package server_test
 
 import (
-	"github.com/ngergs/websrv/v2/server"
+	"github.com/ngergs/websrv/v3/server"
 	"net/http"
 	"net/url"
 	"testing"

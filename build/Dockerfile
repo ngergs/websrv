@@ -1,4 +1,4 @@
-FROM gcr.io/distroless/static
+FROM gcr.io/distroless/static:nonroot
 COPY websrv-linux-amd64 /app/websrv
 COPY legal /app/legal
 USER nobody

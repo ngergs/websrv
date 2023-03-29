@@ -9,20 +9,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ngergs/websrv/v2/filesystem"
-	"github.com/ngergs/websrv/v2/server"
+	"github.com/ngergs/websrv/v3/filesystem"
+	"github.com/ngergs/websrv/v3/server"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 func BenchmarkServer(b *testing.B) {
 	zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	config := GetDefaultConfig()
-	config.AngularCspReplace = &server.AngularCspReplaceConfig{
-		FilePathPattern: ".*",
-		VariableName:    "testt",
-		CookieName:      "Nonce-Id",
-		CookieMaxAge:    10,
+	config := defaultConfig
+	config.AngularCspReplace = angularCspReplaceConfig{
+		FilePathRegex: ".*",
+		VariableName:  "testt",
+		CookieName:    "Nonce-Id",
+		CookieMaxAge:  10,
 	}
 	fs, err := filesystem.NewMemoryFs("../../test/benchmark")
 	if err != nil {
@@ -37,24 +37,24 @@ func BenchmarkServer(b *testing.B) {
 	r.Use(
 		middleware.RequestID,
 		middleware.RealIP,
-		middleware.Timeout(time.Duration(conf.Timeout.Write)*time.Second),
-		server.Optional(server.AccessLog(), conf.AccessLog.General),
+		middleware.Timeout(time.Duration(config.Timeout.Write)*time.Second),
+		server.Optional(server.AccessLog(), config.AccessLog.General),
 		server.Validate(),
-		server.Header(config),
-		server.SessionId(config),
-		server.CspHeaderReplace(config),
+		server.Header(config.Headers),
+		server.SessionId(config.AngularCspReplace.CookieName, time.Duration(config.AngularCspReplace.CookieMaxAge)*time.Second),
+		server.CspHeaderReplace(config.AngularCspReplace.VariableName),
 		server.Fallback("/", http.StatusNotFound),
 	)
 	unzipHandler := http.FileServer(http.FS(fs))
 	staticZipHandler := server.Caching()(http.FileServer(http.FS(zipfs)))
-	dynamicZipHandler := server.Caching()(middleware.Compress(5, config.GzipMediaTypes...)(unzipHandler))
-	cspPathRegex := regexp.MustCompile(config.AngularCspReplace.FilePathPattern)
-	cspHandler := server.CspFileReplace(config)(unzipHandler)
+	dynamicZipHandler := server.Caching()(middleware.Compress(5, config.Gzip.MediaTypes...)(unzipHandler))
+	cspPathRegex := regexp.MustCompile(config.AngularCspReplace.FilePathRegex)
+	cspHandler := server.CspFileReplace(config.AngularCspReplace.VariableName, config.MediaTypeMap)(unzipHandler)
 	r.Handle("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if cspPathRegex.MatchString(r.URL.Path) {
 			cspHandler.ServeHTTP(w, r)
 		} else {
-			if conf.Metrics.Enabled && conf.Gzip.Enabled {
+			if config.Metrics.Enabled && config.Gzip.Enabled {
 				w.Header().Set("Content-Encoding", "gzip")
 				staticZipHandler.ServeHTTP(w, r)
 			} else {
@@ -62,7 +62,7 @@ func BenchmarkServer(b *testing.B) {
 			}
 		}
 	}))
-	webserver := server.Build(conf.Port.Webserver, time.Duration(1)*time.Second, time.Duration(1)*time.Second, time.Duration(1)*time.Second, r)
+	webserver := server.Build(config.Port.Webserver, time.Duration(1)*time.Second, time.Duration(1)*time.Second, time.Duration(1)*time.Second, r)
 	defer func() {
 		err := webserver.Shutdown(context.Background())
 		if err != nil {
@@ -70,7 +70,7 @@ func BenchmarkServer(b *testing.B) {
 		}
 	}()
 	go func() {
-		log.Info().Msgf("Starting webserver server on port %d", conf.Port.Webserver)
+		log.Info().Msgf("Starting webserver server on port %d", config.Port.Webserver)
 		errChan <- webserver.ListenAndServe()
 	}()
 	// give server some time to wake up

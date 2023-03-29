@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/ngergs/websrv/v2/internal/utils"
+	"github.com/ngergs/websrv/v3/internal/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"io/fs"
 	"net/http"
@@ -18,8 +18,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/ngergs/websrv/v2/filesystem"
-	"github.com/ngergs/websrv/v2/server"
+	"github.com/ngergs/websrv/v3/filesystem"
+	"github.com/ngergs/websrv/v3/server"
 	"github.com/rs/zerolog/log"
 )
 
