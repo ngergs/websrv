@@ -79,7 +79,7 @@ func AccessLogHandler(next http.Handler) http.Handler {
 			Str("userAgent", r.UserAgent()).
 			Str("remoteIp", r.RemoteAddr).
 			Str("referer", r.Referer()).
-			Str("latency", m.Duration.String())).
+			Str("latency", fmt.Sprintf("%.09fs", m.Duration.Seconds()))).
 			Msg("")
 	})
 }
