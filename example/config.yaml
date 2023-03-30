@@ -29,7 +29,7 @@ mediatypes:
   .jpg:  image/jpeg
   .avif: image/avif
   .jxl:  image/jxl
-  .ttf : font/ttf
+  .ttf: font/ttf
   .woff2: font/woff2
 
 angularcsp:

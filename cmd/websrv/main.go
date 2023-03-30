@@ -26,7 +26,7 @@ import (
 func main() {
 	conf, err := readConfig()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error reading -conf: See server.conf.go for the expected structure.")
+		log.Fatal().Err(err).Msg("Error reading configuration: See https://github.com/ngergs/websrv/config.yaml for the expected structure.")
 	}
 	if err = setup(conf); err != nil {
 		log.Fatal().Err(err).Msg("Error during initialization")

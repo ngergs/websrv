@@ -8,6 +8,7 @@ import (
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
+	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog"
 	"os"
 	"strings"
@@ -49,7 +50,18 @@ func readConfig() (*config, error) {
 		return nil, fmt.Errorf("error loading config from env vars:%w", err)
 	}
 
-	if err := k.Unmarshal("", &conf); err != nil {
+	// fail on config settings that do not match any internal setting, see https://github.com/knadh/koanf/issues/189
+	err = k.UnmarshalWithConf("", &conf, koanf.UnmarshalConf{DecoderConfig: &mapstructure.DecoderConfig{
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			mapstructure.StringToTimeDurationHookFunc(),
+			mapstructure.StringToSliceHookFunc(","),
+			mapstructure.TextUnmarshallerHookFunc()),
+		Metadata:         nil,
+		Result:           &conf,
+		ErrorUnused:      true,
+		WeaklyTypedInput: true,
+	}})
+	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling collected config: %w", err)
 	}
 	return &conf, nil
