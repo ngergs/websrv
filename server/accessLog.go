@@ -75,7 +75,7 @@ func AccessLogHandler(next http.Handler) http.Handler {
 			Str("requestMethod", r.Method).
 			Str("requestUrl", getFullUrl(r)).
 			Int("status", m.Code).
-			Int64("responseSize", m.Written).
+			Str("responseSize", strconv.FormatInt(m.Written, 10)).
 			Str("userAgent", r.UserAgent()).
 			Str("remoteIp", r.RemoteAddr).
 			Str("referer", r.Referer()).
