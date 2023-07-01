@@ -21,6 +21,8 @@ import (
 	"github.com/ngergs/websrv/v3/filesystem"
 	"github.com/ngergs/websrv/v3/server"
 	"github.com/rs/zerolog/log"
+
+        _ "go.uber.org/automaxprocs"
 )
 
 func main() {
