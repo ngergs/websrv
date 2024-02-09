@@ -20,16 +20,23 @@ func TestNoFallback(t *testing.T) {
 	w, r, next := getDefaultHandlerMocks()
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == fallbackPath {
-			w.Write([]byte(fallbackResponse))
+			_, err := w.Write([]byte(fallbackResponse))
+			require.NoError(t, err)
 			return
 		}
-		w.Write([]byte(dummyResponse))
+		_, err := w.Write([]byte(dummyResponse))
+		require.NoError(t, err)
 	}
 	handler := server.FallbackHandler(next, fallbackPath, fallbackStatus)
 	r.URL = &url.URL{Path: "/"}
 	handler.ServeHTTP(w, r)
-	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
-	response, err := io.ReadAll(w.Result().Body)
+	result := w.Result()
+	defer func() {
+		err := result.Body.Close()
+		require.NoError(t, err)
+	}()
+	assert.Equal(t, http.StatusOK, result.StatusCode)
+	response, err := io.ReadAll(result.Body)
 	require.NoError(t, err)
 	assert.Equal(t, dummyResponse, string(response))
 }
@@ -39,17 +46,24 @@ func TestFallback(t *testing.T) {
 	w, r, next := getDefaultHandlerMocks()
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == fallbackPath {
-			w.Write([]byte(fallbackResponse))
+			_, err := w.Write([]byte(fallbackResponse))
+			require.NoError(t, err)
 			return
 		}
 		w.WriteHeader(fallbackStatus)
-		w.Write([]byte(dummyResponse))
+		_, err := w.Write([]byte(dummyResponse))
+		require.NoError(t, err)
 	}
 	handler := server.FallbackHandler(next, fallbackPath, fallbackStatus)
 	r.URL = &url.URL{Path: "/"}
 	handler.ServeHTTP(w, r)
-	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
-	response, err := io.ReadAll(w.Result().Body)
+	result := w.Result()
+	defer func() {
+		err := result.Body.Close()
+		require.NoError(t, err)
+	}()
+	assert.Equal(t, http.StatusOK, result.StatusCode)
+	response, err := io.ReadAll(result.Body)
 	require.NoError(t, err)
 	assert.Equal(t, fallbackResponse, string(response))
 }

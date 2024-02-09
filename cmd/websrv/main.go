@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"context"
 	"errors"
 	"github.com/go-chi/chi/v5"
@@ -22,7 +23,7 @@ import (
 	"github.com/ngergs/websrv/v3/server"
 	"github.com/rs/zerolog/log"
 
-        _ "go.uber.org/automaxprocs"
+	_ "go.uber.org/automaxprocs"
 )
 
 func main() {
@@ -64,12 +65,12 @@ func main() {
 
 	unzipHandler := http.FileServer(http.FS(unzipfs))
 	staticZipHandler := server.Caching()(http.FileServer(http.FS(zipfs)))
-	dynamicZipHandler := server.Caching()(middleware.Compress(5, conf.Gzip.MediaTypes...)(unzipHandler))
+	dynamicZipHandler := server.Caching()(middleware.Compress(gzip.DefaultCompression, conf.Gzip.MediaTypes...)(unzipHandler))
 	var cspPathRegex *regexp.Regexp
 	var cspHandler http.Handler
 	if conf.AngularCspReplace.Enabled {
 		cspPathRegex = regexp.MustCompile(conf.AngularCspReplace.FilePathRegex)
-		cspHandler = middleware.Compress(5, conf.Gzip.MediaTypes...)(
+		cspHandler = middleware.Compress(gzip.DefaultCompression, conf.Gzip.MediaTypes...)(
 			server.CspFileReplace(conf.AngularCspReplace.VariableName, conf.MediaTypeMap)(unzipHandler))
 	}
 	r.Handle("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

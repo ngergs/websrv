@@ -38,11 +38,11 @@ func AccessMetricsRegister(registerer prometheus.Registerer, prometheusNamespace
 
 	err := registerer.Register(bytesSend)
 	if err != nil {
-		return nil, fmt.Errorf("failed to register egress_bytes metric: %v", err)
+		return nil, fmt.Errorf("failed to register egress_bytes metric: %w", err)
 	}
 	err = registerer.Register(statusCode)
 	if err != nil {
-		return nil, fmt.Errorf("failed to register http_statuscode metric: %v", err)
+		return nil, fmt.Errorf("failed to register http_statuscode metric: %w", err)
 	}
 	return &PrometheusRegistration{
 		bytesSend:  bytesSend,
@@ -62,6 +62,8 @@ func AccessMetricsHandler(next http.Handler, registration *PrometheusRegistratio
 }
 
 // AccessLogHandler returns a http.Handler that adds access-logging on the info level.
+//
+//nolint:zerologlint // linter does not understand that we dispatch logEvent later on
 func AccessLogHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		m := httpsnoop.CaptureMetrics(next, w, r)
@@ -69,7 +71,11 @@ func AccessLogHandler(next http.Handler) http.Handler {
 		logEvent := log.Info()
 		requestId := r.Context().Value(middleware.RequestIDKey)
 		if requestId != nil {
-			logEvent = logEvent.Str("requestId", requestId.(string))
+			if requestIdStr, ok := requestId.(string); ok {
+				logEvent = logEvent.Str("requestId", requestIdStr)
+			} else {
+				log.Warn().Msgf("Request id is not, but not a string value: %v", requestId)
+			}
 		}
 		logEvent.Dict("httpRequest", zerolog.Dict().
 			Str("requestMethod", r.Method).

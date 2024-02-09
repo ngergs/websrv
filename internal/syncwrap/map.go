@@ -21,6 +21,8 @@ func (m *Map[K, V]) Set(key K, value V) {
 }
 
 // Get retries a value from the synchronized map and returns success status and the value (or the zero-value of the given type if ok=false)
+//
+//nolint:ireturn
 func (m *Map[K, V]) Get(key K) (value V, ok bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -36,6 +38,8 @@ type SyncMap[K comparable, V any] struct {
 
 // Load returns the value from the sync.Map.
 // If ok=false the zero-value of the value-type is returned as value.
+//
+//nolint:forcetypeassert,ireturn // the wrapping ensures that this is safe
 func (m *SyncMap[K, V]) Load(key K) (value V, ok bool) {
 	var mapval any
 	mapval, ok = m.kv.Load(key)
@@ -48,6 +52,8 @@ func (m *SyncMap[K, V]) Load(key K) (value V, ok bool) {
 // LoadOrStore saves the value to the sync.Map if it is not already present.
 // Returns the value currently present in the sync.Map.
 // The return value loaded is true if the value has been loaded from the map and not been stored.
+//
+//nolint:forcetypeassert,ireturn // the wrapping ensures that this is safe
 func (m *SyncMap[K, V]) LoadOrStore(key K, value V) (result V, loaded bool) {
 	var mapval any
 	mapval, loaded = m.kv.LoadOrStore(key, value)

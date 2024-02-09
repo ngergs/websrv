@@ -16,6 +16,7 @@ import (
 )
 
 func BenchmarkServer(b *testing.B) {
+	ctx := context.Background()
 	zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	config := defaultConfig
 	config.AngularCspReplace = angularCspReplaceConfig{
@@ -66,7 +67,7 @@ func BenchmarkServer(b *testing.B) {
 	}))
 	webserver := server.Build(config.Port.Webserver, time.Duration(1)*time.Second, time.Duration(1)*time.Second, time.Duration(1)*time.Second, r)
 	defer func() {
-		err := webserver.Shutdown(context.Background())
+		err := webserver.Shutdown(ctx)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to shutdown server")
 		}
@@ -79,21 +80,27 @@ func BenchmarkServer(b *testing.B) {
 	time.Sleep(time.Duration(100) * time.Millisecond)
 	client := &http.Client{}
 	defer client.CloseIdleConnections()
-	req, _ := http.NewRequest("GET", "http://"+webserver.Addr+"/dummy_random.js", nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+webserver.Addr+"/dummy_random.js", nil)
 	req.Header.Set("Accept-Encoding", "gzip")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		select {
 		case err = <-errChan:
-			log.Fatal().Err(err).Msg("Webserver error")
+			log.Error().Err(err).Msg("Webserver error")
+			b.Fail()
+			return
 		default:
 			resp, err := client.Do(req)
 			if err != nil {
-				log.Fatal().Err(err).Msg("Get request failed")
+				log.Error().Err(err).Msg("Get request failed")
+				b.Fail()
+				return
 			}
 			err = resp.Body.Close()
 			if err != nil {
-				log.Fatal().Err(err).Msg("Failed to close request body")
+				log.Error().Err(err).Msg("Failed to close request body")
+				b.Fail()
+				return
 			}
 		}
 	}

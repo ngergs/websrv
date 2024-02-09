@@ -13,6 +13,11 @@ import (
 	"strings"
 )
 
+var (
+	ErrHttpStatusNotOk = errors.New("non HTTP 200 status code from underlying handler")
+	ErrCachingTemplate = errors.New("error caching initial file for csp replacement")
+)
+
 // CspHeaderName is the Content-Security-Policy HTTP-Header name
 const CspHeaderName = "Content-Security-Policy"
 
@@ -31,7 +36,7 @@ func CspHeaderHandler(next http.Handler, variableName string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sessionId := getSessionId(r)
 		cspHeader := w.Header().Get(CspHeaderName)
-		cspHeader = strings.Replace(cspHeader, variableName, sessionId, -1)
+		cspHeader = strings.ReplaceAll(cspHeader, variableName, sessionId)
 		w.Header().Set(CspHeaderName, cspHeader)
 		next.ServeHTTP(w, r)
 	})
@@ -82,10 +87,10 @@ func (handler *CspFileHandler) loadTemplate(w http.ResponseWriter, r *http.Reque
 	}()
 	data, err := io.ReadAll(pr)
 	if status != http.StatusOK {
-		return nil, errors.New("non 200 status code from underlying handler")
+		return nil, fmt.Errorf("%w: %d", ErrHttpStatusNotOk, status)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("error temporarily storing initial file for csp replacement")
+		return nil, fmt.Errorf("%w: %w", ErrCachingTemplate, err)
 	}
 
 	fileExtension := strings.Split(r.URL.Path, ".")
@@ -125,9 +130,14 @@ func getSessionId(r *http.Request) string {
 	sessionId := r.Context().Value(SessionIdKey)
 	if sessionId == nil {
 		log.Warn().Msg("SessionId not present in context")
-		sessionId = "" // stil replace to not leak the value that will be replaced
+		sessionId = "" // still replace to not leak the value that will be replaced
 	}
-	return sessionId.(string)
+	if sessionIdStr, ok := sessionId.(string); ok {
+		return sessionIdStr
+	} else {
+		log.Warn().Msgf("sessionId is stored, but not a string: %v, will return empty string", sessionId)
+		return ""
+	}
 }
 
 // ReplacerCollection is a series of replacer implementations which are used to effectively replace a given string by pre-splitting the target template.

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/go-viper/mapstructure/v2"
@@ -18,8 +19,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var version = "snapshot"
-var targetDir string
+var (
+	ErrInvalidLogLevel        = errors.New("invalid loglevel, only error, warn, info and debug are valid")
+	ErrInvalidNumberArguments = errors.New("invalid number of argument, has to be 1")
+
+	version   = "snapshot"
+	targetDir string
+)
 
 // readConfig reads the configuration. Order is (least one takes precedence) defaults > config file > env vars.
 func readConfig() (*config, error) {
@@ -43,8 +49,8 @@ func readConfig() (*config, error) {
 	// Load config from env
 	envPrefix := "WEBSRV_"
 	err := k.Load(env.Provider(envPrefix, ".", func(s string) string {
-		return strings.Replace(strings.ToLower(
-			strings.TrimPrefix(s, envPrefix)), "_", ".", -1)
+		return strings.ReplaceAll(strings.ToLower(
+			strings.TrimPrefix(s, envPrefix)), "_", ".")
 	}), nil)
 	if err != nil {
 		return nil, fmt.Errorf("error loading config from env vars:%w", err)
@@ -84,7 +90,7 @@ func setup(conf *config) error {
 	case "debug":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	default:
-		return fmt.Errorf("invalid loglevel, only error, warn, info and debug are valid. Set value: %s", conf.Log.Level)
+		return fmt.Errorf("%w: %s", ErrInvalidLogLevel, conf.Log.Level)
 	}
 	if conf.Log.Pretty {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
@@ -92,7 +98,7 @@ func setup(conf *config) error {
 	args := flag.Args()
 	if len(args) != 1 {
 		flag.Usage()
-		return fmt.Errorf("unexpected number of arguments: %d\n", len(args))
+		return fmt.Errorf("%w: %d\n", ErrInvalidNumberArguments, len(args))
 	}
 	targetDir = args[0]
 

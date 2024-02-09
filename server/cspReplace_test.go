@@ -22,14 +22,24 @@ func TestCspFileReplace(t *testing.T) {
 	sessionId := "abc123cde"
 	r = r.WithContext(context.WithValue(context.Background(), server.SessionIdKey, sessionId))
 	handler.ServeHTTP(w, r)
-	requireReplacedWith(t, sessionId, string(getReceivedData(t, w.Result().Body)))
+	result := w.Result()
+	defer func() {
+		err := result.Body.Close()
+		require.NoError(t, err)
+	}()
+	requireReplacedWith(t, sessionId, string(getReceivedData(t, result.Body)))
 }
 
 // TestCspFileReplaceSessionMissing tests that the VariableName is replaced with "" if the sessionID is absent
 func TestCspFileReplaceSessionMissing(t *testing.T) {
 	handler, w, r := getMockedCspFileHandler()
 	handler.ServeHTTP(w, r)
-	requireReplacedWith(t, "", string(getReceivedData(t, w.Result().Body)))
+	result := w.Result()
+	defer func() {
+		err := result.Body.Close()
+		require.NoError(t, err)
+	}()
+	requireReplacedWith(t, "", string(getReceivedData(t, result.Body)))
 }
 
 func TestCspHeaderReplace(t *testing.T) {
@@ -38,7 +48,12 @@ func TestCspHeaderReplace(t *testing.T) {
 	sessionId := "321"
 	r = r.WithContext(context.WithValue(context.Background(), server.SessionIdKey, sessionId))
 	handler.ServeHTTP(w, r)
-	require.Equal(t, "test"+sessionId+"456", w.Result().Header.Get(server.CspHeaderName))
+	result := w.Result()
+	defer func() {
+		err := result.Body.Close()
+		require.NoError(t, err)
+	}()
+	require.Equal(t, "test"+sessionId+"456", result.Header.Get(server.CspHeaderName))
 }
 
 // TestCspHeaderReplaceSessionIdMissing tests that the VariableName is replaced with "" if the sessionID is absent
@@ -46,7 +61,12 @@ func TestCspHeaderReplaceSessionIdMissing(t *testing.T) {
 	handler, w, r := getMockedCspHeaderHandler()
 	w.Header().Set(server.CspHeaderName, "test"+variableName+"456")
 	handler.ServeHTTP(w, r)
-	require.Equal(t, "test456", w.Result().Header.Get(server.CspHeaderName))
+	result := w.Result()
+	defer func() {
+		err := result.Body.Close()
+		require.NoError(t, err)
+	}()
+	require.Equal(t, "test456", result.Header.Get(server.CspHeaderName))
 }
 
 func requireReplacedWith(t *testing.T, replacedWithExpectation string, replaced string) {

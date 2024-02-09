@@ -11,12 +11,12 @@ import (
 
 func TestReadFileFs(t *testing.T) {
 	originalData, err := os.ReadFile(path.Join(testDir, testFile))
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	osFs := os.DirFS(testDir)
 	readFileFs := &filesystem.ReadFileFS{FS: osFs}
 	readFileFsData, err := readFileFs.ReadFile(testFile)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, originalData, readFileFsData)
 }

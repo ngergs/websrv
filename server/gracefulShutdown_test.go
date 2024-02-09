@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//nolint:containedctx // just for testing
 type dummyShutdowner struct {
 	mutex        sync.RWMutex
 	ctx          context.Context

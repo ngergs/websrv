@@ -10,7 +10,7 @@ type config struct {
 	MediaTypeMap map[string]string `koanf:"mediatypes"`
 	// FallbackPath is the path that should be used as an alternative on HTTP 404 responses. Set to empty to disable.
 	FallbackPath string `koanf:"fallback"`
-	// Metrics holds the configuration for prometheus metrices
+	// Metrics holds the configuration for prometheus metrics
 	Metrics metricsConfig `koanf:"metrics"`
 	// MemoryFs enables the in-memory filesystem
 	MemoryFs bool `koanf:"memoryfs"`
@@ -70,7 +70,7 @@ type portConfig struct {
 	H2c int `koanf:"h2c"`
 }
 
-// gzipConfig holds configuration for gzip repsonse compression
+// gzipConfig holds configuration for gzip response compression
 type gzipConfig struct {
 	// Enabled activates the gzip response compression
 	Enabled bool `koanf:"enabled"`
@@ -112,6 +112,7 @@ type cookieConfig struct {
 	MaxAge int `koanf:"maxage"`
 }
 
+//nolint:gomnd
 var defaultConfig = config{
 	Log: logConfig{Level: "info"},
 	Port: portConfig{

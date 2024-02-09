@@ -16,13 +16,15 @@ var ServerName = &ContextKey{val: "serverName"}
 
 // Shutdowner are functions that support a Shutdown operation. It is the responsibility of the interface implementer to honor the context deadline.
 type Shutdowner interface {
-	Shutdown(context.Context) error
+	Shutdown(ctx context.Context) error
 }
 
 // AddGracefulShutdown intercepts the cancel function of the received ctx and calls the shutdowner.Shutdown interface instead.
 // if timeout is not null a context with a deadline is prepared prior to the Shutdown call.
 // It is the responsibility of the Shutdowner interface implementer to honor this context deadline.
 // The waitgroup is incremented by one immediately and one is released when the shutdown has finished.
+//
+//nolint:contextcheck // we can't reuse the already closed context for the shutdown deadline
 func AddGracefulShutdown(ctx context.Context, wg *sync.WaitGroup, shutdowner Shutdowner, timeout time.Duration) {
 	wg.Add(1)
 	go func() {
@@ -45,7 +47,7 @@ func RunTillWaitGroupFinishes(ctx context.Context, wg *sync.WaitGroup, server *h
 	go func() { errChan <- server.ListenAndServe() }()
 	wg.Wait()
 	logShutdown(ctx, timeout)
-	shutdownCtx, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
+	shutdownCtx, cancel := context.WithDeadline(ctx, time.Now().Add(timeout))
 	defer cancel()
 	err := server.Shutdown(shutdownCtx)
 	if err != nil {
@@ -66,6 +68,8 @@ func logShutdown(ctx context.Context, timeout time.Duration) {
 // SigTermCtx intercepts the syscall.SIGTERM and returns the information in the form of a wrapped context whose cancel function is called when the SIGTERM signal is received.
 // cancelDelay adds an additional delay before actually cancelling the context.
 // If a second SIGTERM is received, the shutdown is immediate via os.Exit(1).
+
+//nolint:gomnd // 2 is the signals we need to cache to allow double sending the signal for immediate exit
 func SigTermCtx(ctx context.Context, cancelDelay time.Duration) context.Context {
 	termChan := make(chan os.Signal, 2)
 	signal.Notify(termChan, os.Interrupt, syscall.SIGTERM)

@@ -91,16 +91,12 @@ func Fallback(fallbackPath string, fallbackCodes ...int) HandlerMiddleware {
 
 // Validate adds to the validate middleware and prevent path transversal attacks by cleaning the request path.
 func Validate() HandlerMiddleware {
-	return func(handler http.Handler) http.Handler {
-		return ValidateHandler(handler)
-	}
+	return ValidateHandler
 }
 
 // AccessLog adds an access logging middleware.
 func AccessLog() HandlerMiddleware {
-	return func(handler http.Handler) http.Handler {
-		return AccessLogHandler(handler)
-	}
+	return AccessLogHandler
 }
 
 // AccessMetrics collects metrics about bytes send and response status codes and writes

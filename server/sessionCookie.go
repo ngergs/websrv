@@ -9,6 +9,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// how many random characters the session cookie contains
+const sessionCookieLength = 32
+
 // ContextKey is a struct used for storing relevant keys in the request context.
 type ContextKey struct {
 	val string
@@ -22,6 +25,9 @@ func readSessionIdCookie(r *http.Request, cookieName string) (sessionId string, 
 		if cookie.Name == cookieName {
 			return cookie.Value, true
 		}
+		if cookie.Name == cookieName {
+			return cookie.Value, true
+		}
 	}
 	log.Ctx(r.Context()).Debug().Msgf("Cookie %s not present in request", cookieName)
 	return "", false
@@ -29,8 +35,10 @@ func readSessionIdCookie(r *http.Request, cookieName string) (sessionId string, 
 
 // SessionCookieHandler reads the cookieName cookie from the request and adds if to the context unter the SessionIdKey if present.
 // If absent it generates a new sessionId and adds it to the context and the HTTP Set-Cookie Response header.
+//
+//nolint:gomnd // diving by 2 here is not a magic number
 func SessionCookieHandler(next http.Handler, cookieName string, cookieTimeToLife time.Duration) http.Handler {
-	randGen := random.NewBufferedRandomIdGenerator(32, 16)
+	randGen := random.NewBufferedRandomIdGenerator(sessionCookieLength, sessionCookieLength/2)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sessionId, ok := readSessionIdCookie(r, cookieName)
 		if !ok {

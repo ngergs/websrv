@@ -14,5 +14,10 @@ func TestHeaderHandler(t *testing.T) {
 	w, r, next := getDefaultHandlerMocks()
 	handler := server.HeaderHandler{Next: next, Headers: map[string]string{key: val}}
 	handler.ServeHTTP(w, r)
-	require.Equal(t, val, w.Result().Header.Get(key))
+	result := w.Result()
+	defer func() {
+		err := result.Body.Close()
+		require.NoError(t, err)
+	}()
+	require.Equal(t, val, result.Header.Get(key))
 }

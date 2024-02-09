@@ -26,7 +26,7 @@ func TestSessionCookieShouldBeAdded(t *testing.T) {
 	require.True(t, ok)
 	cookie, sameSite := parseSetCookie(t, responseCookie[0])
 
-	//static settings
+	// static settings
 	require.True(t, cookie.HttpOnly)
 	require.True(t, cookie.Secure)
 	require.Equal(t, "Strict", sameSite)
@@ -52,7 +52,7 @@ func TestSessionCookieShouldNotAddedIfPresent(t *testing.T) {
 	r.Header.Set("Cookie", cookieName+"="+requestCookieValue)
 	handler.ServeHTTP(w, r)
 
-	//make sure that cookie has not been set in response
+	// make sure that cookie has not been set in response
 	_, ok := w.Header()["Set-Cookie"]
 	require.False(t, ok)
 
@@ -63,14 +63,16 @@ func TestSessionCookieShouldNotAddedIfPresent(t *testing.T) {
 func getCookieFromCtx(t *testing.T, ctx context.Context) string {
 	cookieVal := ctx.Value(server.SessionIdKey)
 	require.NotNil(t, cookieVal)
-	return cookieVal.(string)
+	cookieValStr, ok := cookieVal.(string)
+	require.True(t, ok)
+	return cookieValStr
 }
 
 // parseSetCookie extracts a Cookie from the Set-Cookie header. The SameSite part is returned as a separate string, as the std lib http.readSetCookies method is private.
-func parseSetCookie(t *testing.T, setCookie string) (cookie *http.Cookie, SameSite string) {
+func parseSetCookie(t *testing.T, setCookie string) (cookie *http.Cookie, sameSite string) {
 	cookieKeyValues := make(map[string]string)
 	entries := strings.Split(setCookie, "; ")
-	require.Greater(t, len(entries), 0)
+	require.NotEmpty(t, entries)
 	name, value := splitSetCookieEntry(t, entries[0])
 
 	for i := 1; i < len(entries); i++ {
@@ -80,9 +82,9 @@ func parseSetCookie(t *testing.T, setCookie string) (cookie *http.Cookie, SameSi
 	_, httpOnly := cookieKeyValues["HttpOnly"]
 	_, secure := cookieKeyValues["Secure"]
 	maxAge, err := strconv.Atoi(cookieKeyValues["Max-Age"])
-	require.Nil(t, err)
+	require.NoError(t, err)
 	expires, err := time.Parse("Mon, 02 Jan 2006 15:04:05 GMT", cookieKeyValues["Expires"])
-	require.Nil(t, err)
+	require.NoError(t, err)
 	return &http.Cookie{
 		Name:     name,
 		Value:    value,
@@ -92,7 +94,6 @@ func parseSetCookie(t *testing.T, setCookie string) (cookie *http.Cookie, SameSi
 		Secure:   secure,
 		HttpOnly: httpOnly,
 	}, cookieKeyValues["SameSite"]
-
 }
 
 func splitSetCookieEntry(t *testing.T, entry string) (key string, value string) {
@@ -101,6 +102,6 @@ func splitSetCookieEntry(t *testing.T, entry string) (key string, value string) 
 		// for entries like HttpOnly or Secure
 		return entryKeyVal[0], "true"
 	}
-	require.Equal(t, 2, len(entryKeyVal))
+	require.Len(t, entryKeyVal, 2)
 	return entryKeyVal[0], entryKeyVal[1]
 }

@@ -39,7 +39,7 @@ func NewBufferedRandomIdGenerator(idLength int, bufferSize int) *bufferedRandomI
 // prefetchRandomIds is called internally to prefetch random ids.
 // as we want to avoid mutexes only one version will be called per bufferedRandomIdGenerator.
 func (gen *bufferedRandomIdGenerator) prefetchRandomIds() {
-	for true {
+	for {
 		select {
 		case <-gen.closed:
 			close(gen.ch)

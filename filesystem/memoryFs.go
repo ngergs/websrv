@@ -3,6 +3,7 @@ package filesystem
 import (
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -14,10 +15,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// make sure that we implement the fs.ReadFileFS interface
-var _ fs.ReadFileFS = &MemoryFS{}
-var _ io.Seeker = &openMemoryFile{}
-var _ fs.File = &openMemoryFile{}
+var (
+	ErrUnimplementedWhenceMode = errors.New("filesystem seek error: unsupported whence value")
+
+	// make sure that we implement the fs.ReadFileFS interface
+	_ fs.ReadFileFS = &MemoryFS{}
+	_ io.Seeker     = &openMemoryFile{}
+	_ fs.File       = &openMemoryFile{}
+)
 
 // MemoryFS only holds actual files, not the directory entries
 type MemoryFS struct {
@@ -159,7 +164,7 @@ func (open *openMemoryFile) Seek(offset int64, whence int) (int64, error) {
 		open.readOffset = len(open.file.data) + int(offset)
 		return int64(open.readOffset), nil
 	default:
-		return 0, fmt.Errorf("unknown whence value %d", whence)
+		return 0, fmt.Errorf("%w: %d", ErrUnimplementedWhenceMode, whence)
 	}
 }
 

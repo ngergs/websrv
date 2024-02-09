@@ -14,12 +14,17 @@ func TestEtagSetting(t *testing.T) {
 	w, r, next := getDefaultHandlerMocks()
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte{}) // dummy write to trigger ETAg setting
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 	cacheHandler := server.NewCacheHandler(next)
 	r.URL = &url.URL{Path: path}
 	cacheHandler.ServeHTTP(w, r)
-	require.Equal(t, http.StatusOK, w.Result().StatusCode)
+	result := w.Result()
+	defer func() {
+		err := result.Body.Close()
+		require.NoError(t, err)
+	}()
+	require.Equal(t, http.StatusOK, result.StatusCode)
 	hash, ok := cacheHandler.Hashes.Get(path)
 	require.True(t, ok)
 	require.Equal(t, hash, w.Header().Get("ETag"))
@@ -30,7 +35,7 @@ func TestNoEtagOnError(t *testing.T) {
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusAccepted)
 		_, err := w.Write([]byte{}) // dummy write to trigger ETAg setting
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 	cacheHandler := server.NewCacheHandler(next)
 	r.URL = &url.URL{Path: path}
@@ -49,5 +54,10 @@ func TestNotModifiedResponse(t *testing.T) {
 	r.Header.Set("If-None-Match", hash)
 	w, _, _ = getDefaultHandlerMocks()
 	cacheHandler.ServeHTTP(w, r)
-	require.Equal(t, http.StatusNotModified, w.Result().StatusCode)
+	result := w.Result()
+	defer func() {
+		err := result.Body.Close()
+		require.NoError(t, err)
+	}()
+	require.Equal(t, http.StatusNotModified, result.StatusCode)
 }

@@ -10,11 +10,14 @@ import (
 func TestGetRandomId(t *testing.T) {
 	n := 32
 	gen := NewBufferedRandomIdGenerator(n, 16)
-	defer gen.Close()
+	defer func() {
+		err := gen.Close()
+		require.NoError(t, err)
+	}()
 	randId := gen.GetRandomId()
-	require.Equal(t, n, len(randId))
+	require.Len(t, randId, n)
 	randId2 := gen.GetRandomId()
-	require.Equal(t, n, len(randId2))
+	require.Len(t, randId2, n)
 	require.NotEqual(t, randId, randId2)
 }
 

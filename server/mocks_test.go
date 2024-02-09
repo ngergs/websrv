@@ -34,6 +34,6 @@ func getDefaultHandlerMocks() (w *httptest.ResponseRecorder, r *http.Request, ne
 
 func getReceivedData(t *testing.T, r io.Reader) []byte {
 	data, err := io.ReadAll(r)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	return data
 }
