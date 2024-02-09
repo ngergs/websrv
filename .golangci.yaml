@@ -1,0 +1,38 @@
+linters:
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - containedctx
+    - contextcheck
+    - dupl
+    - durationcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - forcetypeassert
+    - gocritic
+    - goerr113
+    - gofmt
+    - gomnd
+    - inamedparam
+    - interfacebloat
+    - ireturn
+    - makezero
+    - mirror
+    - misspell
+    - nilerr
+    - noctx
+    - nosprintfhostport
+    - perfsprint
+    - prealloc
+    - promlinter
+    - protogetter
+    - testifylint
+    - unconvert
+    - usestdlibvars
+    - wastedassign
+    - zerologlint
+
