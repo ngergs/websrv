@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -17,9 +18,11 @@ import (
 
 var (
 	ErrUnimplementedWhenceMode = errors.New("filesystem seek error: unsupported whence value")
+	ErrSeekedOutOfBounds       = errors.New("seeked out of bounds: file length and searched offset do not align")
 
 	// make sure that we implement the fs.ReadFileFS interface
 	_ fs.ReadFileFS = &MemoryFS{}
+	_ io.ReaderAt   = &openMemoryFile{}
 	_ io.Seeker     = &openMemoryFile{}
 	_ fs.File       = &openMemoryFile{}
 )
@@ -153,19 +156,33 @@ func (open *openMemoryFile) Read(dst []byte) (int, error) {
 
 // Seek moves to the given offset
 func (open *openMemoryFile) Seek(offset int64, whence int) (int64, error) {
+	var newOffSet int
+	if offset > math.MaxInt {
+		return 0, io.EOF // we do not support such large fil;es
+	}
 	switch whence {
 	case io.SeekStart:
-		open.readOffset = int(offset)
-		return offset, nil
+		newOffSet = int(offset)
 	case io.SeekCurrent:
-		open.readOffset += int(offset)
-		return int64(open.readOffset), nil
+		newOffSet = open.readOffset + int(offset)
 	case io.SeekEnd:
-		open.readOffset = len(open.file.data) + int(offset)
-		return int64(open.readOffset), nil
+		newOffSet = len(open.file.data) + int(offset)
 	default:
 		return 0, fmt.Errorf("%w: %d", ErrUnimplementedWhenceMode, whence)
 	}
+	if newOffSet < 0 || newOffSet >= len(open.file.data) {
+		return 0, fmt.Errorf("%w: %d - %d", ErrSeekedOutOfBounds, len(open.file.data), newOffSet)
+	}
+	open.readOffset = newOffSet
+	return int64(newOffSet), nil
+}
+
+// ReadAt implements the io.ReaderAt interface. Offset are evaluated per call and do not effect or are effected by the file offset.
+func (open *openMemoryFile) ReadAt(dst []byte, offset int64) (n int, err error) {
+	if offset > math.MaxInt || int(offset) > len(open.file.data) {
+		return 0, io.EOF
+	}
+	return copy(dst, open.file.data[offset:]), nil
 }
 
 // ReadDir returns the first n entries from the current directory.
