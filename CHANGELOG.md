@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.2](https://github.com/ngergs/websrv/compare/v3.1.1...v3.1.2) (2024-04-03)
+
+
+### Bug Fixes
+
+* go-releaser inputs ([1371cf1](https://github.com/ngergs/websrv/commit/1371cf1a217f774e07e9602b02a2d078b4ca9ab9))
+
 ## [3.1.1](https://github.com/ngergs/websrv/compare/v3.1.0...v3.1.1) (2024-04-03)
 
 
