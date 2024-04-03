@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.4](https://github.com/ngergs/websrv/compare/v3.1.3...v3.1.4) (2024-04-03)
+
+
+### Bug Fixes
+
+* dockerfile (correct filename for goreleaser artifact) ([0f723f5](https://github.com/ngergs/websrv/commit/0f723f5e514fd2d141f27da811c2aa2f47d2452d))
+
 ## [3.1.3](https://github.com/ngergs/websrv/compare/v3.1.2...v3.1.3) (2024-04-03)
 
 
