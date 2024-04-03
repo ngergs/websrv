@@ -17,7 +17,7 @@ builds:
 
 dockers:
   - image_templates:
-      - "ngergs/websrv:lawebsrv"
+      - "ngergs/websrv:latest"
       - "ngergs/websrv:v{{ .Major }}"
       - "ngergs/websrv:v{{ .Major }}.{{ .Minor }}"
       - "ngergs/websrv:v{{ .Tag }}"
