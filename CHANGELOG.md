@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.6](https://github.com/ngergs/websrv/compare/v3.1.5...v3.1.6) (2024-04-03)
+
+
+### Bug Fixes
+
+* goreleaser docker tag typo ([55fd2db](https://github.com/ngergs/websrv/commit/55fd2db1f56f950d7cda985cfaf12067f342b299))
+
 ## [3.1.5](https://github.com/ngergs/websrv/compare/v3.1.4...v3.1.5) (2024-04-03)
 
 
