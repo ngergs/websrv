@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.1.5](https://github.com/ngergs/websrv/compare/v3.1.4...v3.1.5) (2024-04-03)
+
+
+### Bug Fixes
+
+* dependency updates ([4041e17](https://github.com/ngergs/websrv/commit/4041e1798bce79b11c2297971dea6e95abce16b1))
+* go version 1.22.2 ([648ee9f](https://github.com/ngergs/websrv/commit/648ee9f1e084bcef782f4700a7f0533d1b3d01fb))
+
 ## [3.1.4](https://github.com/ngergs/websrv/compare/v3.1.3...v3.1.4) (2024-04-03)
 
 
