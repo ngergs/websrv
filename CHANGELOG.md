@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.7](https://github.com/ngergs/websrv/compare/v3.1.6...v3.1.7) (2024-04-03)
+
+
+### Bug Fixes
+
+* goreleaser full version tag typo ([56eda6a](https://github.com/ngergs/websrv/commit/56eda6aeecdcfd4139bc94c1ea28784d4ba3ad3e))
+
 ## [3.1.6](https://github.com/ngergs/websrv/compare/v3.1.5...v3.1.6) (2024-04-03)
 
 
