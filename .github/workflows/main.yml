@@ -38,6 +38,6 @@ jobs:
         uses: ngergs/composite-actions/go-release@main
         with:
           go-version: ${{ env.go-version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           dockerhub-username: ${{ secrets.DOCKERHUB_USERNAME }}
           dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
