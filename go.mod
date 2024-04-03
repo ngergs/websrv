@@ -2,8 +2,6 @@ module github.com/ngergs/websrv/v3
 
 go 1.22
 
-replace github.com/ngergs/websrv => ./
-
 require (
 	github.com/felixge/httpsnoop v1.0.4
 	github.com/go-chi/chi/v5 v5.0.12
