@@ -1,5 +1,5 @@
 FROM gcr.io/distroless/static:nonroot
-COPY websrv-linux-amd64 /app/websrv
+COPY websrv /app/websrv
 COPY legal /app/legal
 USER nobody
 EXPOSE 8080 8081
