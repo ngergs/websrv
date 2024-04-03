@@ -43,6 +43,8 @@ func CspHeaderHandler(next http.Handler, variableName string) http.Handler {
 }
 
 // loadTemplate loads a new template from the next handler
+//
+//nolint:contextcheck // context is obtained from request
 func (handler *CspFileHandler) loadTemplate(w http.ResponseWriter, r *http.Request) (*ReplacerCollection, error) {
 	status := http.StatusOK
 	pr, pw := io.Pipe()

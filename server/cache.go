@@ -20,6 +20,7 @@ type cacheHandler struct {
 	Hashes *syncwrap.Map[string, string]
 }
 
+//nolint:contextcheck // context is obtained from request
 func (handler *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	eTag, ok := handler.Hashes.Get(r.URL.Path)
 	if ok {
