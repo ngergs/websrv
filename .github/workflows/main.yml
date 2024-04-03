@@ -6,67 +6,38 @@ env:
 on:
   push:
     branches: [ main ]
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
-  test-and-pre-release:
+  test-and-check-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Run tests
         uses: ngergs/composite-actions/go-test@main
         with:
           go-version: ${{ env.go-version }}
-      - name: Determine release
-        uses:  ngergs/composite-actions/prepare-semantic-release@main
+      - name: Check for release
         id: semrel
+        uses: google-github-actions/release-please-action@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          changelog-emojis: true
+          token: ${{ secrets.GITHUB_TOKEN }}
     outputs:
-      version: ${{ steps.semrel.outputs.version }}
-      release-notes-cache-key: ${{ steps.semrel.outputs.release-notes-cache-key }}
+      is-release: ${{ steps.semrel.outputs.releases_created }}
+      version: ${{ steps.semrel.outputs.tag_name }}
   release:
-    needs: test-and-pre-release
-    if: needs.test-and-pre-release.outputs.version != ''
+    needs: test-and-check-release
+    if: needs.test-and-check-release.outputs.is-release == 'true'
     permissions:
       contents: write
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-os:
-          - 'darwin'
-          - 'linux'
-          - 'windows'
-        go-arch:
-          - 'amd64'
     steps:
-      - name: Release go binary
-        uses: ngergs/composite-actions/release-go-binary@main
+      - name: Release
+        uses: ngergs/composite-actions/go-release@main
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          binary-name: websrv
           go-version: ${{ env.go-version }}
-          go-os: ${{ matrix.go-os }}
-          go-arch: ${{ matrix.go-arch }}
-          release-version: ${{ needs.test-and-pre-release.outputs.version }}
-          release-notes-cache-key: ${{ needs.test-and-pre-release.outputs.release-notes-cache-key }}
-          go-build-path: "./cmd/websrv/"
-      - name: Prepare licenses
-        if: ${{ matrix.go-os == 'linux' && matrix.go-arch == 'amd64' }}
-        shell: bash
-        run: |
-          go install github.com/google/go-licenses@latest && \
-          $(go env GOPATH)/bin/go-licenses save ./... --save_path=legal
-      - name: Release docker
-        if: ${{ matrix.go-os == 'linux' && matrix.go-arch == 'amd64' }}
-        uses: ngergs/composite-actions/release-docker@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-checkout: false
-          docker-image-name: websrv
-          dockerhub-username:  ${{ secrets.DOCKERHUB_USERNAME }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          dockerhub-username: ${{ secrets.DOCKERHUB_USERNAME }}
           dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
-          release-version: ${{ needs.test-and-pre-release.outputs.version }}
-          release-notes-cache-key: ${{ needs.test-and-pre-release.outputs.release-notes-cache-key }}
-          dockerfile: build/Dockerfile

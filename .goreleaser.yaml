@@ -1,0 +1,24 @@
+gomod:
+  proxy: true
+
+archives:
+  - files:
+      - LICENSE
+      - README.md
+      - legal/**/*
+
+builds:
+  - main: ./cmd/websrv/
+    binary: websrv
+    env:
+      - CGO_ENABLED=0
+
+dockers:
+  - image_templates:
+      - "ngergs/websrv:lawebsrv"
+      - "ngergs/websrv:v{{ .Major }}"
+      - "ngergs/websrv:v{{ .Major }}.{{ .Minor }}"
+      - "ngergs/websrv:v{{ .Tag }}"
+    dockerfile: build/Dockerfile
+    extra_files:
+      - legal
