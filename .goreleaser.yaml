@@ -20,7 +20,7 @@ dockers:
       - "ngergs/websrv:latest"
       - "ngergs/websrv:v{{ .Major }}"
       - "ngergs/websrv:v{{ .Major }}.{{ .Minor }}"
-      - "ngergs/websrv:v{{ .Tag }}"
+      - "ngergs/websrv:{{ .Tag }}"
     dockerfile: build/Dockerfile
     extra_files:
       - legal
