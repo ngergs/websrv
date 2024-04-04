@@ -4,8 +4,10 @@ import (
 	"compress/gzip"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/landlock-lsm/go-landlock/landlock"
 	"github.com/ngergs/websrv/v3/internal/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"io/fs"
@@ -33,6 +35,9 @@ func main() {
 	}
 	if err = setup(conf); err != nil {
 		log.Fatal().Err(err).Msg("Error during initialization")
+	}
+	if err := setupLandlock(conf); err != nil {
+		log.Fatal().Err(err).Msg("")
 	}
 	var wg sync.WaitGroup
 	sigtermCtx := server.SigTermCtx(context.Background(), time.Duration(conf.ShutdownDelay)*time.Second)
@@ -169,4 +174,30 @@ func logErrors(errChan <-chan error) {
 			log.Fatal().Err(err).Msg("Error from server: %v")
 		}
 	}
+}
+
+// setupLandlock activates the linux landlock sandbox features on an best effort basis
+func setupLandlock(conf *config) error {
+	llConf := landlock.V4.BestEffort()
+	if err := llConf.RestrictPaths(landlock.RODirs(targetDir)); err != nil {
+		return fmt.Errorf("error during landlock filesystem setup: %w", err)
+	}
+	ports := []uint16{conf.Port.Webserver}
+	if conf.Health {
+		ports = append(ports, conf.Port.Health)
+	}
+	if conf.H2C {
+		ports = append(ports, conf.Port.H2c)
+	}
+	if conf.Metrics.Enabled {
+		ports = append(ports, conf.Port.Metrics)
+	}
+	portRules := make([]landlock.Rule, len(ports))
+	for i, port := range ports {
+		portRules[i] = landlock.BindTCP(port)
+	}
+	if err := llConf.RestrictNet(portRules...); err != nil {
+		return fmt.Errorf("error during landlock network setup: %w", err)
+	}
+	return nil
 }
