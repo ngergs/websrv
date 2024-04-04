@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.2.0](https://github.com/ngergs/websrv/compare/v3.1.7...v3.2.0) (2024-04-04)
+
+
+### Features
+
+* add landlock (linux userspace sandbox feature) ([40fa2d7](https://github.com/ngergs/websrv/commit/40fa2d7d2bbb4b7d5533eeb46224fc0242476fda))
+
+
+### Bug Fixes
+
+* dependency updates ([216a9bf](https://github.com/ngergs/websrv/commit/216a9bf96cbc7e610569695fb0ee67de1322062f))
+* use uint16 for ports (instead of int) ([092aba5](https://github.com/ngergs/websrv/commit/092aba57fb706dd7adefd43260dc07cd4347fc6c))
+
 ## [3.1.7](https://github.com/ngergs/websrv/compare/v3.1.6...v3.1.7) (2024-04-03)
 
 
