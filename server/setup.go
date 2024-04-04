@@ -12,13 +12,13 @@ import (
 type HandlerMiddleware func(handler http.Handler) http.Handler
 
 // Build a http server from the provided options.
-func Build(port int, readTimeout time.Duration, writeTimeout time.Duration, idleTimeout time.Duration,
+func Build(port uint16, readTimeout time.Duration, writeTimeout time.Duration, idleTimeout time.Duration,
 	handler http.Handler, handlerSetups ...HandlerMiddleware) *http.Server {
 	for _, handlerSetup := range handlerSetups {
 		handler = handlerSetup(handler)
 	}
 	server := &http.Server{
-		Addr:         ":" + strconv.Itoa(port),
+		Addr:         ":" + strconv.FormatUint(uint64(port), 10),
 		Handler:      handler,
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
@@ -108,12 +108,12 @@ func AccessMetrics(registration *PrometheusRegistration) HandlerMiddleware {
 }
 
 // H2C adds a middleware that supports h2c (unencrypted http2)
-func H2C(h2cPort int) HandlerMiddleware {
+func H2C(h2cPort uint16) HandlerMiddleware {
 	h2s := &http2.Server{}
 	return func(handler http.Handler) http.Handler {
 		h2cHandler := h2c.NewHandler(handler, h2s)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Alt-Svc", "h2=\":"+strconv.Itoa(h2cPort)+"\"")
+			w.Header().Set("Alt-Svc", "h2=\":"+strconv.FormatUint(uint64(h2cPort), 10)+"\"")
 			h2cHandler.ServeHTTP(w, r)
 		})
 	}

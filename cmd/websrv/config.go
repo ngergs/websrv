@@ -61,13 +61,13 @@ type metricsConfig struct {
 // portConfig holds configurations for various TCP ports
 type portConfig struct {
 	// Webserver is the TCP port for the main web server
-	Webserver int `koanf:"webserver"`
+	Webserver uint16 `koanf:"webserver"`
 	// Health is the TCP port for the health endpoint
-	Health int `koanf:"health"`
+	Health uint16 `koanf:"health"`
 	// Metrics is the TCP port for the prometheus metrocs
-	Metrics int `koanf:"metrics"`
+	Metrics uint16 `koanf:"metrics"`
 	// H2c is the TCP port for h2c (unecncrypted http2)
-	H2c int `koanf:"h2c"`
+	H2c uint16 `koanf:"h2c"`
 }
 
 // gzipConfig holds configuration for gzip response compression
