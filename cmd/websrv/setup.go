@@ -23,8 +23,7 @@ var (
 	ErrInvalidLogLevel        = errors.New("invalid loglevel, only error, warn, info and debug are valid")
 	ErrInvalidNumberArguments = errors.New("invalid number of argument, has to be 1")
 
-	version   = "snapshot"
-	targetDir string
+	version = "snapshot"
 )
 
 // readConfig reads the configuration. Order is (least one takes precedence) defaults > config file > env vars.
@@ -73,10 +72,10 @@ func readConfig() (*config, error) {
 	return &conf, nil
 }
 
-// readConfig reads the configuration. Order is (least one takes precedence) defaults > config file > env vars.
-func setup(conf *config) error {
+// setup uses the configuration to set log levels, it also reads input args and returns the targetDir
+func setup(conf *config) (string, error) {
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s {options} [target-path]\nOptions:\n", os.Args[0])
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s {options} [target-path]\nOptions:\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 
@@ -90,20 +89,20 @@ func setup(conf *config) error {
 	case "debug":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	default:
-		return fmt.Errorf("%w: %s", ErrInvalidLogLevel, conf.Log.Level)
+		return "", fmt.Errorf("%w: %s", ErrInvalidLogLevel, conf.Log.Level)
 	}
 	if conf.Log.Pretty {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
-	args := flag.Args()
-	if len(args) != 1 {
-		flag.Usage()
-		return fmt.Errorf("%w: %d\n", ErrInvalidNumberArguments, len(args))
-	}
-	targetDir = args[0]
-
 	stdlog.SetFlags(0)
 	stdlog.SetOutput(log.Logger)
 	log.Info().Msgf("This is websrv version %s", version)
-	return nil
+
+	args := flag.Args()
+	if len(args) != 1 {
+		flag.Usage()
+		return "", fmt.Errorf("%w: %d\n", ErrInvalidNumberArguments, len(args))
+	}
+
+	return os.Args[0], nil
 }

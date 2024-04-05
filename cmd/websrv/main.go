@@ -33,15 +33,16 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error reading configuration: See https://github.com/ngergs/websrv/config.yaml for the expected structure.")
 	}
-	if err = setup(conf); err != nil {
+	targetDir, err := setup(conf)
+	if err != nil {
 		log.Fatal().Err(err).Msg("Error during initialization")
 	}
-	if err := setupLandlock(conf); err != nil {
+	if err := setupLandlock(targetDir, conf); err != nil {
 		log.Fatal().Err(err).Msg("")
 	}
 	var wg sync.WaitGroup
 	sigtermCtx := server.SigTermCtx(context.Background(), time.Duration(conf.ShutdownDelay)*time.Second)
-	unzipfs, zipfs := initFs(conf)
+	unzipfs, zipfs := initFs(targetDir, conf)
 
 	errChan := make(chan error)
 	var promRegistration *server.PrometheusRegistration
@@ -142,7 +143,7 @@ func main() {
 
 // initFs loads the non-zipped and zipped fs according to the config
 // zipFs is nil if memoryFs or gzipActive are not set
-func initFs(conf *config) (unzipfs fs.ReadFileFS, zipfs fs.ReadFileFS) {
+func initFs(targetDir string, conf *config) (unzipfs fs.ReadFileFS, zipfs fs.ReadFileFS) {
 	if conf.MemoryFs {
 		log.Info().Msg("Using the in-memory-filesystem")
 		memoryFs, err := filesystem.NewMemoryFs(targetDir)
@@ -177,7 +178,7 @@ func logErrors(errChan <-chan error) {
 }
 
 // setupLandlock activates the linux landlock sandbox features on an best effort basis
-func setupLandlock(conf *config) error {
+func setupLandlock(targetDir string, conf *config) error {
 	llConf := landlock.V4.BestEffort()
 	if err := llConf.RestrictPaths(landlock.RODirs(targetDir)); err != nil {
 		return fmt.Errorf("error during landlock filesystem setup: %w", err)
