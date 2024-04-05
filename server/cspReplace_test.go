@@ -82,11 +82,7 @@ func getMockedCspFileHandler() (handler *server.CspFileHandler, w *httptest.Resp
 			log.Error().Msgf("Failed to send response: %v", err)
 		}
 	}
-	handler = &server.CspFileHandler{
-		Next:         next,
-		VariableName: variableName,
-		MediaTypeMap: map[string]string{".js": "application/javascript"},
-	}
+	handler = server.NewCspFileHandler(next, variableName, map[string]string{".js": "application/javascript"})
 	r.URL = &url.URL{Path: path}
 
 	return handler, w, r

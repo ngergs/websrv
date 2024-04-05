@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/felixge/httpsnoop"
-	"github.com/ngergs/websrv/v3/internal/syncwrap"
 	"github.com/ngergs/websrv/v3/internal/utils"
+	"github.com/puzpuzpuz/xsync"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
@@ -24,11 +24,21 @@ const CspHeaderName = "Content-Security-Policy"
 // CspFileHandler implements the http.Handler interface and fixes the Angular style-src CSP issue. The variableName is replaced
 // in all response contents.
 type CspFileHandler struct {
-	// use case of sync.Map: "(1) when the entry for a given key is only ever written once but read many times, as in caches that only grow"
-	replacer     syncwrap.SyncMap[string, *ReplacerCollection]
+	replacer     *xsync.MapOf[string, *ReplacerCollection]
 	Next         http.Handler
 	VariableName string
 	MediaTypeMap map[string]string
+}
+
+// NewCspFileHandler returns a CspFileHandler, it implements the http.Handler interface and fixes the Angular style-src CSP issue.
+// The variableName is replaced in all response contents.
+func NewCspFileHandler(next http.Handler, variableName string, mediaTypeMap map[string]string) *CspFileHandler {
+	return &CspFileHandler{
+		replacer:     xsync.NewMapOf[*ReplacerCollection](),
+		Next:         next,
+		VariableName: variableName,
+		MediaTypeMap: mediaTypeMap,
+	}
 }
 
 // CspHeaderHandler replaces the nonce placerholder in the Content-Security-header

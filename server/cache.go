@@ -5,8 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"github.com/felixge/httpsnoop"
-	"github.com/ngergs/websrv/v3/internal/syncwrap"
 	"github.com/ngergs/websrv/v3/internal/utils"
+	"github.com/puzpuzpuz/xsync"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
@@ -17,12 +17,12 @@ import (
 // The next handler in the chain is only called when a cache mismatch occurs.
 type cacheHandler struct {
 	Next   http.Handler
-	Hashes *syncwrap.Map[string, string]
+	Hashes *xsync.MapOf[string, string]
 }
 
 //nolint:contextcheck // context is obtained from request
 func (handler *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	eTag, ok := handler.Hashes.Get(r.URL.Path)
+	eTag, ok := handler.Hashes.Load(r.URL.Path)
 	if ok {
 		if r.Header.Get("If-None-Match") == eTag {
 			log.Debug().Msgf("Returned not modified for %s: %s", r.URL.Path, eTag)
@@ -79,7 +79,7 @@ func (handler *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hash := sha256.Sum256(data)
 	eTag = base64.StdEncoding.EncodeToString(hash[:])
 	log.Debug().Msgf("Computed missing eTag for %s: %s", r.URL.Path, eTag)
-	handler.Hashes.Set(r.URL.Path, eTag)
+	handler.Hashes.Store(r.URL.Path, eTag)
 	w.Header().Set("ETag", eTag)
 
 	_, err = io.Copy(w, bytes.NewReader(data))
@@ -93,6 +93,6 @@ func NewCacheHandler(next http.Handler) *cacheHandler {
 	// compute hashes
 	return &cacheHandler{
 		Next:   next,
-		Hashes: syncwrap.NewMap[string, string](),
+		Hashes: xsync.NewMapOf[string](),
 	}
 }

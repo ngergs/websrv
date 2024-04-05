@@ -25,7 +25,7 @@ func TestEtagSetting(t *testing.T) {
 		require.NoError(t, err)
 	}()
 	require.Equal(t, http.StatusOK, result.StatusCode)
-	hash, ok := cacheHandler.Hashes.Get(path)
+	hash, ok := cacheHandler.Hashes.Load(path)
 	require.True(t, ok)
 	require.Equal(t, hash, w.Header().Get("ETag"))
 }
@@ -49,7 +49,7 @@ func TestNotModifiedResponse(t *testing.T) {
 	cacheHandler := server.NewCacheHandler(next)
 	r.URL = &url.URL{Path: path}
 	cacheHandler.ServeHTTP(w, r) // initial request to warm up the cache
-	hash, ok := cacheHandler.Hashes.Get(path)
+	hash, ok := cacheHandler.Hashes.Load(path)
 	require.True(t, ok)
 	r.Header.Set("If-None-Match", hash)
 	w, _, _ = getDefaultHandlerMocks()

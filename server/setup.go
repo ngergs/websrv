@@ -56,11 +56,7 @@ func CspHeaderReplace(variableName string) HandlerMiddleware {
 // has the hard requirement that a session cookie is present in the context, see server.SessionCookie to add one.
 func CspFileReplace(variableName string, mediaTypeMap map[string]string) HandlerMiddleware {
 	return func(handler http.Handler) http.Handler {
-		return &CspFileHandler{
-			Next:         handler,
-			VariableName: variableName,
-			MediaTypeMap: mediaTypeMap,
-		}
+		return NewCspFileHandler(handler, variableName, mediaTypeMap)
 	}
 }
 
