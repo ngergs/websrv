@@ -1,16 +1,15 @@
 package random
 
 import (
-	"math/rand"
-	"time"
+	"math/rand/v2"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-// bufferedRandomIdGenerator is used to fetch random generator ids while avoiding a mutex.
+// BufferedRandomIdGenerator is used to fetch random generator ids while avoiding a mutex.
 // The random ids are prefetched ina single goroutine in the background.
 // You have to call close to stop this goroutine.
-type bufferedRandomIdGenerator struct {
+type BufferedRandomIdGenerator struct {
 	idLength int
 	rand     *rand.Rand
 	ch       chan string
@@ -18,17 +17,17 @@ type bufferedRandomIdGenerator struct {
 }
 
 // GetRandomId returns a prefetched random id. Blocks till one is received.
-func (gen *bufferedRandomIdGenerator) GetRandomId() string {
+func (gen *BufferedRandomIdGenerator) GetRandomId() string {
 	return <-gen.ch
 }
 
 // NewBufferedRandomIdGenerator instantiates a new generator with the given buffer size.
-// The bufferedRandomIdGenerator has to be closed to avoid leaking the prefetch go routine.
-func NewBufferedRandomIdGenerator(idLength int, bufferSize int) *bufferedRandomIdGenerator {
-	gen := &bufferedRandomIdGenerator{
+// The BufferedRandomIdGenerator has to be closed to avoid leaking the prefetch go routine.
+func NewBufferedRandomIdGenerator(idLength int, bufferSize int) *BufferedRandomIdGenerator {
+	gen := &BufferedRandomIdGenerator{
 		idLength: idLength,
 		// use a non default source to avoid automatic mutex via the rand default source
-		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
+		rand:   rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64())),
 		ch:     make(chan string, bufferSize),
 		closed: make(chan struct{}),
 	}
@@ -37,8 +36,8 @@ func NewBufferedRandomIdGenerator(idLength int, bufferSize int) *bufferedRandomI
 }
 
 // prefetchRandomIds is called internally to prefetch random ids.
-// as we want to avoid mutexes only one version will be called per bufferedRandomIdGenerator.
-func (gen *bufferedRandomIdGenerator) prefetchRandomIds() {
+// as we want to avoid mutexes only one version will be called per BufferedRandomIdGenerator.
+func (gen *BufferedRandomIdGenerator) prefetchRandomIds() {
 	for {
 		select {
 		case <-gen.closed:
@@ -47,7 +46,7 @@ func (gen *bufferedRandomIdGenerator) prefetchRandomIds() {
 		default:
 			id := make([]rune, gen.idLength)
 			for i := range id {
-				id[i] = letters[gen.rand.Intn(len(letters))]
+				id[i] = letters[gen.rand.IntN(len(letters))]
 			}
 			gen.ch <- string(id)
 		}
@@ -55,7 +54,7 @@ func (gen *bufferedRandomIdGenerator) prefetchRandomIds() {
 }
 
 // Close stops the background prefetch process. Does not error.
-func (gen *bufferedRandomIdGenerator) Close() error {
+func (gen *BufferedRandomIdGenerator) Close() error {
 	close(gen.closed)
 	return nil
 }
@@ -65,7 +64,7 @@ func (gen *bufferedRandomIdGenerator) Close() error {
 func getRandomIdWithMutex(n int) string {
 	b := make([]rune, n)
 	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
+		b[i] = letters[rand.IntN(len(letters))]
 	}
 	return string(b)
 }
