@@ -1,0 +1,15 @@
+name: release
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - name: Run tests
+        uses: ngergs/composite-actions/go-test@main
