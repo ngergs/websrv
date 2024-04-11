@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.3.0](https://github.com/ngergs/websrv/compare/v3.2.0...v3.3.0) (2024-04-11)
+
+
+### Features
+
+* use xsync for efficient concurrent maps ([22d3a26](https://github.com/ngergs/websrv/commit/22d3a262c4e59c0742ed0a5fe8a17f3998b06501))
+
+
+### Bug Fixes
+
+* dependency updates ([e1b54cf](https://github.com/ngergs/websrv/commit/e1b54cfb9e1cabf0eda5ee996a187f4964b1205d))
+* dependency updates ([9579d6a](https://github.com/ngergs/websrv/commit/9579d6a918d103679f6f09ef66b2cd911c9c632a))
+* simplify config handling ([b7c4165](https://github.com/ngergs/websrv/commit/b7c4165f79df5303f4b005ee3222546b82a04cd5))
+* use math/rand/v2 ([77823c3](https://github.com/ngergs/websrv/commit/77823c345d9e166262ec448174337d075ea42053))
+
 ## [3.2.0](https://github.com/ngergs/websrv/compare/v3.1.7...v3.2.0) (2024-04-04)
 
 
