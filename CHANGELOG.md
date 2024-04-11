@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.1](https://github.com/ngergs/websrv/compare/v3.3.0...v3.3.1) (2024-04-11)
+
+
+### Bug Fixes
+
+* landlock os.args error (tries to lock on wrong path) ([432eda9](https://github.com/ngergs/websrv/commit/432eda995866b6db078fd31718cfb893720b1668))
+
 ## [3.3.0](https://github.com/ngergs/websrv/compare/v3.2.0...v3.3.0) (2024-04-11)
 
 
