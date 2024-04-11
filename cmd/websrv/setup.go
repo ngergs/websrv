@@ -104,5 +104,5 @@ func setup(conf *config) (string, error) {
 		return "", fmt.Errorf("%w: %d\n", ErrInvalidNumberArguments, len(args))
 	}
 
-	return os.Args[0], nil
+	return args[0], nil
 }
