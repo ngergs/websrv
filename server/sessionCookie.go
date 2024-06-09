@@ -36,7 +36,7 @@ func readSessionIdCookie(r *http.Request, cookieName string) (sessionId string, 
 // SessionCookieHandler reads the cookieName cookie from the request and adds if to the context unter the SessionIdKey if present.
 // If absent it generates a new sessionId and adds it to the context and the HTTP Set-Cookie Response header.
 //
-//nolint:gomnd // diving by 2 here is not a magic number
+//nolint:mnd // diving by 2 here is not a magic number
 func SessionCookieHandler(next http.Handler, cookieName string, cookieTimeToLife time.Duration) http.Handler {
 	randGen := random.NewBufferedRandomIdGenerator(sessionCookieLength, sessionCookieLength/2)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

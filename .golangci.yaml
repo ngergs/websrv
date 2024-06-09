@@ -8,21 +8,21 @@ linters:
     - contextcheck
     - dupl
     - durationcheck
+    - err113
     - errchkjson
     - errname
     - errorlint
     - exhaustive
     - forcetypeassert
     - gocritic
-    - goerr113
     - gofmt
-    - gomnd
     - inamedparam
     - interfacebloat
     - ireturn
     - makezero
     - mirror
     - misspell
+    - mnd
     - nilerr
     - noctx
     - nosprintfhostport

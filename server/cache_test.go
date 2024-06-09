@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +15,7 @@ func TestEtagSetting(t *testing.T) {
 	w, r, next := getDefaultHandlerMocks()
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte{}) // dummy write to trigger ETAg setting
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	}
 	cacheHandler := server.NewCacheHandler(next)
 	r.URL = &url.URL{Path: path}
@@ -35,7 +36,7 @@ func TestNoEtagOnError(t *testing.T) {
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusAccepted)
 		_, err := w.Write([]byte{}) // dummy write to trigger ETAg setting
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	}
 	cacheHandler := server.NewCacheHandler(next)
 	r.URL = &url.URL{Path: path}

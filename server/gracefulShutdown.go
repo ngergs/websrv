@@ -69,7 +69,7 @@ func logShutdown(ctx context.Context, timeout time.Duration) {
 // cancelDelay adds an additional delay before actually cancelling the context.
 // If a second SIGTERM is received, the shutdown is immediate via os.Exit(1).
 
-//nolint:gomnd // 2 is the signals we need to cache to allow double sending the signal for immediate exit
+//nolint:mnd // 2 is the signals we need to cache to allow double sending the signal for immediate exit
 func SigTermCtx(ctx context.Context, cancelDelay time.Duration) context.Context {
 	termChan := make(chan os.Signal, 2)
 	signal.Notify(termChan, os.Interrupt, syscall.SIGTERM)

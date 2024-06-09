@@ -21,11 +21,11 @@ func TestNoFallback(t *testing.T) {
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == fallbackPath {
 			_, err := w.Write([]byte(fallbackResponse))
-			require.NoError(t, err)
+			assert.NoError(t, err)
 			return
 		}
 		_, err := w.Write([]byte(dummyResponse))
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	}
 	handler := server.FallbackHandler(next, fallbackPath, fallbackStatus)
 	r.URL = &url.URL{Path: "/"}
@@ -47,12 +47,12 @@ func TestFallback(t *testing.T) {
 	next.serveHttpFunc = func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == fallbackPath {
 			_, err := w.Write([]byte(fallbackResponse))
-			require.NoError(t, err)
+			assert.NoError(t, err)
 			return
 		}
 		w.WriteHeader(fallbackStatus)
 		_, err := w.Write([]byte(dummyResponse))
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	}
 	handler := server.FallbackHandler(next, fallbackPath, fallbackStatus)
 	r.URL = &url.URL{Path: "/"}

@@ -112,7 +112,7 @@ type cookieConfig struct {
 	MaxAge int `koanf:"maxage"`
 }
 
-//nolint:gomnd
+//nolint:mnd
 var defaultConfig = config{
 	Log: logConfig{Level: "info"},
 	Port: portConfig{
