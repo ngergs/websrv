@@ -1,4 +1,4 @@
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static-debian12:nonroot
 COPY websrv /app/websrv
 COPY legal /app/legal
 USER nobody
