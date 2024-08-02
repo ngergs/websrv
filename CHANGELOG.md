@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.4](https://github.com/ngergs/websrv/compare/v3.3.3...v3.3.4) (2024-08-02)
+
+
+### Bug Fixes
+
+* dependency updates ([74b3b7c](https://github.com/ngergs/websrv/commit/74b3b7ccc556304e676c7da33530203fcab624c9))
+* update distroless image ([6fc2f07](https://github.com/ngergs/websrv/commit/6fc2f073a6bf5524c9aa1ec0feb43b40d5d59e5d))
+
 ## [3.3.3](https://github.com/ngergs/websrv/compare/v3.3.2...v3.3.3) (2024-06-09)
 
 
