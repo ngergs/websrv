@@ -25,6 +25,7 @@ import (
 	"github.com/ngergs/websrv/v3/server"
 	"github.com/rs/zerolog/log"
 
+	_ "github.com/KimMachineGun/automemlimit"
 	_ "go.uber.org/automaxprocs"
 )
 
