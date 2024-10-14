@@ -55,9 +55,9 @@ port:
   webserver: 8080
   # TCP port for the health endpoint
   health: 8081
-  # TCP port for the prometheus metrocs
+  # TCP port for the prometheus metrics
   metrics: 9090
-  # TCP port for h2c (unecncrypted http2)
+  # TCP port for h2c (unencrypted http2)
   h2c: 443
 
 # the configuration for gzip compression handling

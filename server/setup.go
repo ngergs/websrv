@@ -16,15 +16,15 @@ type Server struct {
 	*http.Server
 }
 
-// ListenGoServe is a half-asynchronous version of ListenAnServe.
-// This blocks till net.Listen has returned, the actual Serve of the http.Server is done in an goroutine.
-// All errors are returned via the error channel.
+// ListenGoServe is a half-asynchronous version of ListenAnDServe from http.Server.
+// This blocks till net.Listen has returned, the actual Serve of the http.Server is done in a separate (automatically spawned) goroutine.
+// All errors (including http.ErrServerClosed) are returned via the error channel.
 func (s *Server) ListenGoServe(errChan chan<- error) {
 	addr := s.Addr
 	if addr == "" {
 		addr = ":http"
 	}
-	l, err := net.Listen("tcp", s.Addr)
+	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		errChan <- err
 		return
