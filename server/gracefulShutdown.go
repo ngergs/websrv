@@ -40,19 +40,15 @@ func AddGracefulShutdown(ctx context.Context, wg *sync.WaitGroup, shutdowner Shu
 	}()
 }
 
-// RunTillWaitGroupFinishes runs the server argument until the WaitGroup wg finishes.
-// Subsequently, a graceful shutdown with the given timeout argument is executed.
-// Blocks till then.
-func RunTillWaitGroupFinishes(ctx context.Context, wg *sync.WaitGroup, server *http.Server, errChan chan<- error, timeout time.Duration) {
-	go func() { errChan <- server.ListenAndServe() }()
+// ShutdownAfterWaitGroup shutdown the server argument after the WaitGroup wg finished
+// via a graceful shutdown with the given timeout argument is executed. Blocks till then.
+func ShutdownAfterWaitGroup(ctx context.Context, wg *sync.WaitGroup, server *http.Server, timeout time.Duration) error {
 	wg.Wait()
 	logShutdown(ctx, timeout)
 	shutdownCtx, cancel := context.WithDeadline(ctx, time.Now().Add(timeout))
 	defer cancel()
-	err := server.Shutdown(shutdownCtx)
-	if err != nil {
-		errChan <- err
-	}
+	return server.Shutdown(shutdownCtx)
+
 }
 
 // logShutdown logs the relevant info for the shutdown and extracts the optional server name from the context

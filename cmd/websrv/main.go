@@ -30,15 +30,17 @@ import (
 )
 
 func main() {
+	ll := landlock.V5.BestEffort()
 	conf, err := readConfig()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error reading configuration: See https://github.com/ngergs/websrv/config.yaml for the expected structure.")
 	}
+
 	targetDir, err := setup(conf)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error during initialization")
 	}
-	if err := setupLandlock(targetDir, conf); err != nil {
+	if err := landlockFsReadonlyDir(ll, targetDir); err != nil {
 		log.Fatal().Err(err).Msg("")
 	}
 	var wg sync.WaitGroup
@@ -110,7 +112,7 @@ func main() {
 	log.Info().Msgf("Starting webserver server on port %d", conf.Port.Webserver)
 	srvCtx := context.WithValue(sigtermCtx, server.ServerName, "file server")
 	server.AddGracefulShutdown(srvCtx, &wg, webserver, time.Duration(conf.Timeout.Shutdown)*time.Second)
-	go func() { errChan <- webserver.ListenAndServe() }()
+	webserver.ListenGoServe(errChan)
 
 	if conf.Metrics.Enabled {
 		metricsServer := server.Build(conf.Port.Metrics, time.Duration(conf.Timeout.Read)*time.Second,
@@ -118,10 +120,8 @@ func main() {
 			promhttp.Handler(), server.Optional(server.AccessLog(), conf.Log.AccessLog.Metrics))
 		metricsCtx := context.WithValue(sigtermCtx, server.ServerName, "prometheus metrics server")
 		server.AddGracefulShutdown(metricsCtx, &wg, metricsServer, time.Duration(conf.Timeout.Shutdown)*time.Second)
-		go func() {
-			log.Info().Msgf("Listening for prometheus metric scrapes under container port tcp/%s", metricsServer.Addr[1:])
-			errChan <- metricsServer.ListenAndServe()
-		}()
+		metricsServer.ListenGoServe(errChan)
+		log.Info().Msgf("Listening for prometheus metric scrapes under container port tcp/%s", metricsServer.Addr[1:])
 	}
 
 	go logErrors(errChan)
@@ -135,9 +135,16 @@ func main() {
 		)
 		log.Info().Msgf("Starting healthcheck server on port %d", conf.Port.Health)
 		healthCtx := context.WithValue(context.Background(), server.ServerName, "health server")
+		healthServer.ListenGoServe(errChan)
+		if err := landlockNetwork(ll); err != nil {
+			log.Fatal().Err(err).Msg("")
+		}
 		// 1 second is sufficient for health checks to shut down
-		server.RunTillWaitGroupFinishes(healthCtx, &wg, healthServer, errChan, time.Duration(1)*time.Second)
+		errChan <- server.ShutdownAfterWaitGroup(healthCtx, &wg, healthServer.Server, time.Duration(1)*time.Second)
 	} else {
+		if err := landlockNetwork(ll); err != nil {
+			log.Fatal().Err(err).Msg("")
+		}
 		wg.Wait()
 	}
 }
@@ -178,28 +185,18 @@ func logErrors(errChan <-chan error) {
 	}
 }
 
-// setupLandlock activates the linux landlock sandbox features on an best effort basis
-func setupLandlock(targetDir string, conf *config) error {
-	llConf := landlock.V4.BestEffort()
-	if err := llConf.RestrictPaths(landlock.RODirs(targetDir)); err != nil {
-		return fmt.Errorf("error during landlock filesystem setup: %w", err)
+// landlockReadonlyDir restricts file system access to only readonly permissions for the specified directory
+func landlockFsReadonlyDir(ll landlock.Config, target string) error {
+	if err := ll.RestrictPaths(landlock.RODirs(target)); err != nil {
+		return fmt.Errorf("error during landlock filesystem restriction: %w", err)
 	}
-	ports := []uint16{conf.Port.Webserver}
-	if conf.Health {
-		ports = append(ports, conf.Port.Health)
-	}
-	if conf.H2C {
-		ports = append(ports, conf.Port.H2c)
-	}
-	if conf.Metrics.Enabled {
-		ports = append(ports, conf.Port.Metrics)
-	}
-	portRules := make([]landlock.Rule, len(ports))
-	for i, port := range ports {
-		portRules[i] = landlock.BindTCP(port)
-	}
-	if err := llConf.RestrictNet(portRules...); err != nil {
-		return fmt.Errorf("error during landlock network setup: %w", err)
+	return nil
+}
+
+// landlockNetwork allows no additional tcp connections (connect and bind TCP)
+func landlockNetwork(ll landlock.Config) error {
+	if err := ll.RestrictNet(); err != nil {
+		return fmt.Errorf("error during landlock network restriction: %w", err)
 	}
 	return nil
 }

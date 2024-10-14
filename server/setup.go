@@ -3,6 +3,7 @@ package server
 import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,20 +12,43 @@ import (
 // HandlerMiddleware wraps a received handler with another wrapper handler to add functionality
 type HandlerMiddleware func(handler http.Handler) http.Handler
 
+type Server struct {
+	*http.Server
+}
+
+// ListenGoServe is a half-asynchronous version of ListenAnDServe from http.Server.
+// This blocks till net.Listen has returned, the actual Serve of the http.Server is done in a separate (automatically spawned) goroutine.
+// All errors (including http.ErrServerClosed) are returned via the error channel.
+func (s *Server) ListenGoServe(errChan chan<- error) {
+	addr := s.Addr
+	if addr == "" {
+		addr = ":http"
+	}
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		errChan <- err
+		return
+	}
+	go func() {
+		errChan <- s.Serve(l)
+	}()
+}
+
 // Build a http server from the provided options.
 func Build(port uint16, readTimeout time.Duration, writeTimeout time.Duration, idleTimeout time.Duration,
-	handler http.Handler, handlerSetups ...HandlerMiddleware) *http.Server {
+	handler http.Handler, handlerSetups ...HandlerMiddleware) *Server {
 	for _, handlerSetup := range handlerSetups {
 		handler = handlerSetup(handler)
 	}
-	server := &http.Server{
-		Addr:         ":" + strconv.FormatUint(uint64(port), 10),
-		Handler:      handler,
-		ReadTimeout:  readTimeout,
-		WriteTimeout: writeTimeout,
-		IdleTimeout:  idleTimeout,
+	return &Server{
+		&http.Server{
+			Addr:         ":" + strconv.FormatUint(uint64(port), 10),
+			Handler:      handler,
+			ReadTimeout:  readTimeout,
+			WriteTimeout: writeTimeout,
+			IdleTimeout:  idleTimeout,
+		},
 	}
-	return server
 }
 
 // Optional sets the middleware if the isActive condition is fulfilled
