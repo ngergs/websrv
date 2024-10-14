@@ -16,7 +16,7 @@ jobs:
         uses: ngergs/composite-actions/go-test@main
       - name: Check for release
         id: semrel
-        uses: google-github-actions/release-please-action@v4
+        uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
     outputs:
