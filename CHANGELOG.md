@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.4.0](https://github.com/ngergs/websrv/compare/v3.3.3...v3.4.0) (2024-10-14)
+
+
+### Features
+
+* listenGoServe method for server, simplify landlock network rules ([7314b74](https://github.com/ngergs/websrv/commit/7314b741a17e9161809858be785dded75d8de02b))
+
+
+### Bug Fixes
+
+* add automemlimit ([1e0b259](https://github.com/ngergs/websrv/commit/1e0b259b44966fa3025b8f9e9e88c52d32e2f4ee))
+* dependency updates ([a83e06d](https://github.com/ngergs/websrv/commit/a83e06de8ca627ec19fa14b60ea0243526fe7488))
+* dependency updates ([5bd8825](https://github.com/ngergs/websrv/commit/5bd8825951caa6218d61afb334b7a86ca4ffdfb6))
+* dependency updates ([f172ace](https://github.com/ngergs/websrv/commit/f172ace83cbef949fc2c2d97eba0527d12f2ae3d))
+* dependency updates ([ef739eb](https://github.com/ngergs/websrv/commit/ef739eb473b18e05d1483373ed63373ba4191bda))
+* dependency updates ([74b3b7c](https://github.com/ngergs/websrv/commit/74b3b7ccc556304e676c7da33530203fcab624c9))
+* update distroless image ([6fc2f07](https://github.com/ngergs/websrv/commit/6fc2f073a6bf5524c9aa1ec0feb43b40d5d59e5d))
+
 ## [3.3.3](https://github.com/ngergs/websrv/compare/v3.3.2...v3.3.3) (2024-06-09)
 
 
