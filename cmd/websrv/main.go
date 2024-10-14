@@ -110,7 +110,7 @@ func main() {
 	log.Info().Msgf("Starting webserver server on port %d", conf.Port.Webserver)
 	srvCtx := context.WithValue(sigtermCtx, server.ServerName, "file server")
 	server.AddGracefulShutdown(srvCtx, &wg, webserver, time.Duration(conf.Timeout.Shutdown)*time.Second)
-	go func() { errChan <- webserver.ListenAndServe() }()
+	webserver.ListenGoServe(errChan)
 
 	if conf.Metrics.Enabled {
 		metricsServer := server.Build(conf.Port.Metrics, time.Duration(conf.Timeout.Read)*time.Second,
@@ -118,10 +118,8 @@ func main() {
 			promhttp.Handler(), server.Optional(server.AccessLog(), conf.Log.AccessLog.Metrics))
 		metricsCtx := context.WithValue(sigtermCtx, server.ServerName, "prometheus metrics server")
 		server.AddGracefulShutdown(metricsCtx, &wg, metricsServer, time.Duration(conf.Timeout.Shutdown)*time.Second)
-		go func() {
-			log.Info().Msgf("Listening for prometheus metric scrapes under container port tcp/%s", metricsServer.Addr[1:])
-			errChan <- metricsServer.ListenAndServe()
-		}()
+		metricsServer.ListenGoServe(errChan)
+		log.Info().Msgf("Listening for prometheus metric scrapes under container port tcp/%s", metricsServer.Addr[1:])
 	}
 
 	go logErrors(errChan)
