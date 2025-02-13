@@ -1,6 +1,6 @@
 module github.com/ngergs/websrv/v3
 
-go 1.23.6
+go 1.24.0
 
 require (
 	github.com/KimMachineGun/automemlimit v0.7.0
@@ -18,7 +18,7 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/automaxprocs v1.6.0
-	golang.org/x/net v0.34.0
+	golang.org/x/net v0.35.0
 )
 
 require (
