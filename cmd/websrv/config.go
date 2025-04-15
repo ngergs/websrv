@@ -1,9 +1,13 @@
 package main
 
+import "time"
+
 // config is the general configuration struct
 type config struct {
 	// Log configures log properties
 	Log logConfig `koanf:"log"`
+	// RateLimit is the configuration of the global or per IP request rate limit
+	RateLimit rateLimitConfig `koanf:"ratelimit"`
 	// Headers is a map of static HTTP response headers
 	Headers map[string]string `koanf:"headers"`
 	// MediaTypeMap is a map of file extensions like ".jk" to corresponding media types.
@@ -112,9 +116,27 @@ type cookieConfig struct {
 	MaxAge int `koanf:"maxage"`
 }
 
+// rateLimitConfig holds the configuration for rate limiting
+type rateLimitConfig struct {
+	// Enabled activates the gzip response compression
+	Enabled bool `koanf:"enabled"`
+	// ByIp enforces the rate limit not global but per ip
+	ByIp bool `koanf:"byip"`
+	// Requests is the number of requests allowed per time window
+	MaxRequests int `koanf:"max_requests"`
+	// TimeWindow is the time window for which the maximal number of requests applies
+	TimeWindow time.Duration `koanf:"timewindow"`
+}
+
 //nolint:mnd
 var defaultConfig = config{
 	Log: logConfig{Level: "info"},
+	RateLimit: rateLimitConfig{
+		Enabled:     false,
+		ByIp:        false,
+		MaxRequests: 400,
+		TimeWindow:  10 * time.Minute,
+	},
 	Port: portConfig{
 		Webserver: 8080,
 		Health:    8081,

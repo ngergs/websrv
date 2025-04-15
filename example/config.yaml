@@ -3,9 +3,13 @@ log:
     general: true
 fallback: /
 memoryfs: true
+health: true
 h2c: true
 gzip:
    enabled: true
+
+ratelimit:
+  enabled: trueco
 
 headers:
   X-XSS-Protection: 1; mode=block
@@ -21,6 +25,7 @@ headers:
   Expect-CT: enforce, max-age=2592000
   Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; form-action 'none';  font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self' 'nonce-random_csp_nonce' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='; worker-src 'self'
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
 
 mediatypes:
   .js:   text/javascript; charset=utf-8

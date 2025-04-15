@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httprate"
 	"github.com/landlock-lsm/go-landlock/landlock"
 	"github.com/ngergs/websrv/v3/internal/utils"
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,7 +15,9 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -40,7 +43,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error during initialization")
 	}
-	if err := landlockFsReadonlyDir(ll, targetDir); err != nil {
+	if err := landlockFsReadonlyDirs(ll, targetDir, filepath.Join("/", "proc", strconv.Itoa(os.Getpid()), "task")); err != nil {
 		log.Fatal().Err(err).Msg("")
 	}
 	var wg sync.WaitGroup
@@ -57,7 +60,18 @@ func main() {
 	}
 
 	r := chi.NewRouter()
+	var rateLimitHandler func(http.Handler) http.Handler
+	if conf.RateLimit.Enabled {
+		if conf.RateLimit.ByIp {
+			log.Info().Msgf("Rate limiting per Ip with %d requests per %v", conf.RateLimit.MaxRequests, conf.RateLimit.TimeWindow)
+			rateLimitHandler = httprate.LimitByRealIP(conf.RateLimit.MaxRequests, conf.RateLimit.TimeWindow)
+		} else {
+			log.Info().Msgf("Rate limiting globally with %d requests per %v", conf.RateLimit.MaxRequests, conf.RateLimit.TimeWindow)
+			rateLimitHandler = httprate.Limit(conf.RateLimit.MaxRequests, conf.RateLimit.TimeWindow)
+		}
+	}
 	r.Use(
+		server.Optional(rateLimitHandler, conf.RateLimit.Enabled),
 		server.Optional(server.H2C(conf.Port.H2c), conf.H2C),
 		middleware.RequestID,
 		middleware.RealIP,
@@ -185,9 +199,9 @@ func logErrors(errChan <-chan error) {
 	}
 }
 
-// landlockReadonlyDir restricts file system access to only readonly permissions for the specified directory
-func landlockFsReadonlyDir(ll landlock.Config, target string) error {
-	if err := ll.RestrictPaths(landlock.RODirs(target)); err != nil {
+// landlockReadonlyDirs restricts file system access to only readonly permissions for the specified directories
+func landlockFsReadonlyDirs(ll landlock.Config, target ...string) error {
+	if err := ll.RestrictPaths(landlock.RODirs(target...)); err != nil {
 		return fmt.Errorf("error during landlock filesystem restriction: %w", err)
 	}
 	return nil
