@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.5.0](https://github.com/ngergs/websrv/compare/v3.4.1...v3.5.0) (2025-04-15)
+
+
+### Features
+
+* request rate limiting ([211fc29](https://github.com/ngergs/websrv/commit/211fc2947051bedae2f7f2ab3b044e0add6779be))
+
+
+### Bug Fixes
+
+* dependency updates ([4b90307](https://github.com/ngergs/websrv/commit/4b90307991281356add48da974dcdc8b7d0363e6))
+* dependency updates ([465a231](https://github.com/ngergs/websrv/commit/465a231dbbae9cf9fbcdce0893269f91cfac8177))
+* dependency updates ([d503497](https://github.com/ngergs/websrv/commit/d503497e42e53cc3c08c110f72dc90df600e4382))
+
 ## [3.4.1](https://github.com/ngergs/websrv/compare/v3.4.0...v3.4.1) (2025-02-13)
 
 
