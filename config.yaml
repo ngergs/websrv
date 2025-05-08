@@ -15,6 +15,12 @@ log:
     # enables the metrics endpoint access log
     metrics: false
 
+ratelimit:
+  enabled: false
+  byip: false
+  max_requests: 400
+  time_window: 10m
+
 # a map of static HTTP response headers, example value
 headers: {}
 
