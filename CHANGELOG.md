@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.5](https://github.com/ngergs/websrv/compare/v3.5.4...v3.5.5) (2025-08-16)
+
+
+### Bug Fixes
+
+* dependency updates ([7fa75cf](https://github.com/ngergs/websrv/commit/7fa75cf13da5a66f59e3994d6d38a58d8edb3fdb))
+
 ## [3.5.4](https://github.com/ngergs/websrv/compare/v3.5.3...v3.5.4) (2025-08-05)
 
 
