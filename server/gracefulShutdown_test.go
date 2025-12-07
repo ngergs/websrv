@@ -2,7 +2,7 @@ package server_test
 
 import (
 	"context"
-	"github.com/ngergs/websrv/v3/server"
+	"github.com/ngergs/websrv/v4/server"
 	"github.com/rs/zerolog/log"
 	"sync"
 	"syscall"

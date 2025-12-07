@@ -2,7 +2,7 @@ package server
 
 import (
 	"github.com/felixge/httpsnoop"
-	"github.com/ngergs/websrv/v3/internal/utils"
+	"github.com/ngergs/websrv/v4/internal/utils"
 	"io"
 	"net/http"
 )

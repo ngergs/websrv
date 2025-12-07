@@ -1,7 +1,7 @@
 package server_test
 
 import (
-	"github.com/ngergs/websrv/v3/server"
+	"github.com/ngergs/websrv/v4/server"
 	"testing"
 
 	"github.com/stretchr/testify/require"

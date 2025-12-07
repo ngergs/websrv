@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"github.com/ngergs/websrv/v3/internal/random"
+	"github.com/ngergs/websrv/v4/internal/random"
 	"net/http"
 	"time"
 

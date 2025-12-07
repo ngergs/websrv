@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
 	"github.com/landlock-lsm/go-landlock/landlock"
-	"github.com/ngergs/websrv/v3/internal/utils"
+	"github.com/ngergs/websrv/v4/internal/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"io/fs"
 	"net/http"
@@ -24,8 +24,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/ngergs/websrv/v3/filesystem"
-	"github.com/ngergs/websrv/v3/server"
+	"github.com/ngergs/websrv/v4/filesystem"
+	"github.com/ngergs/websrv/v4/server"
 	"github.com/rs/zerolog/log"
 
 	_ "github.com/KimMachineGun/automemlimit"

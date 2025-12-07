@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/ngergs/websrv/v3/server"
+	"github.com/ngergs/websrv/v4/server"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

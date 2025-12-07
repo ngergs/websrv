@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"github.com/felixge/httpsnoop"
-	"github.com/ngergs/websrv/v3/internal/utils"
+	"github.com/ngergs/websrv/v4/internal/utils"
 	"github.com/puzpuzpuz/xsync"
 	"github.com/rs/zerolog/log"
 	"io"
