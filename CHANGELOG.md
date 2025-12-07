@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.5.6](https://github.com/ngergs/websrv/compare/v3.5.5...v3.5.6) (2025-12-07)
+
+
+### Bug Fixes
+
+* context handling, lints ([8e64ac1](https://github.com/ngergs/websrv/commit/8e64ac1cc6e73abadfef4ee450c2ec15f76f7773))
+* dependency updates ([6710b44](https://github.com/ngergs/websrv/commit/6710b44d00ee440124b8f4593b955a93098dc550))
+* dependency updates ([fbdc0f8](https://github.com/ngergs/websrv/commit/fbdc0f8bb103937029b7493c14d628494e2a094b))
+
 ## [3.5.5](https://github.com/ngergs/websrv/compare/v3.5.4...v3.5.5) (2025-08-16)
 
 
