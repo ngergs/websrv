@@ -2,12 +2,13 @@ package server_test
 
 import (
 	"context"
-	"github.com/ngergs/websrv/v3/server"
 	"net/http"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ngergs/websrv/v3/server"
 
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +32,7 @@ func TestSessionCookieShouldBeAdded(t *testing.T) {
 	require.True(t, cookie.Secure)
 	require.Equal(t, "Strict", sameSite)
 	require.Equal(t, "/", cookie.Path)
-	require.Equal(t, "", cookie.Domain)
+	require.Empty(t, cookie.Domain)
 	// dynamic settings
 	require.Equal(t, cookieName, cookie.Name)
 	require.Equal(t, int(cookieLifeTime.Seconds()), cookie.MaxAge)
@@ -41,7 +42,7 @@ func TestSessionCookieShouldBeAdded(t *testing.T) {
 	require.True(t, cookie.Expires.Before(expectedExpiresTime.Add(time.Duration(1)*time.Second)))
 
 	cookieValue := getCookieFromCtx(t, next.r.Context())
-	require.NotEqual(t, "", cookieValue)
+	require.NotEmpty(t, cookieValue)
 }
 
 func TestSessionCookieShouldNotAddedIfPresent(t *testing.T) {

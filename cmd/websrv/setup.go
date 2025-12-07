@@ -4,6 +4,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/env"
@@ -11,8 +14,6 @@ import (
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
 	"github.com/rs/zerolog"
-	"os"
-	"strings"
 
 	stdlog "log"
 
@@ -101,7 +102,7 @@ func setup(conf *config) (string, error) {
 	args := flag.Args()
 	if len(args) != 1 {
 		flag.Usage()
-		return "", fmt.Errorf("%w: %d\n", ErrInvalidNumberArguments, len(args))
+		return "", fmt.Errorf("%w: %d", ErrInvalidNumberArguments, len(args))
 	}
 
 	return args[0], nil

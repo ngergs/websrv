@@ -1,10 +1,11 @@
 package server_test
 
 import (
-	"github.com/ngergs/websrv/v3/server"
 	"net/http"
 	"net/url"
 	"testing"
+
+	"github.com/ngergs/websrv/v3/server"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +42,7 @@ func TestNoEtagOnError(t *testing.T) {
 	cacheHandler := server.NewCacheHandler(next)
 	r.URL = &url.URL{Path: path}
 	cacheHandler.ServeHTTP(w, r)
-	require.Equal(t, "", w.Header().Get("ETag"))
+	require.Empty(t, w.Header().Get("ETag"))
 }
 
 func TestNotModifiedResponse(t *testing.T) {

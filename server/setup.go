@@ -1,12 +1,14 @@
 package server
 
 import (
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
+	"context"
 	"net"
 	"net/http"
 	"strconv"
 	"time"
+
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 // HandlerMiddleware wraps a received handler with another wrapper handler to add functionality
@@ -19,12 +21,13 @@ type Server struct {
 // ListenGoServe is a half-asynchronous version of ListenAnDServe from http.Server.
 // This blocks till net.Listen has returned, the actual Serve of the http.Server is done in a separate (automatically spawned) goroutine.
 // All errors (including http.ErrServerClosed) are returned via the error channel.
-func (s *Server) ListenGoServe(errChan chan<- error) {
+func (s *Server) ListenGoServe(ctx context.Context, errChan chan<- error) {
 	addr := s.Addr
 	if addr == "" {
 		addr = ":http"
 	}
-	l, err := net.Listen("tcp", addr)
+	lc := net.ListenConfig{}
+	l, err := lc.Listen(ctx, "tcp", addr)
 	if err != nil {
 		errChan <- err
 		return
