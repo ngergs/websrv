@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.3](https://github.com/ngergs/websrv/compare/v4.0.2...v4.0.3) (2026-01-29)
+
+
+### Bug Fixes
+
+* go version update ([d18dd6e](https://github.com/ngergs/websrv/commit/d18dd6e7768d955c07e3931ce025b258aae0b32f))
+
 ## [4.0.2](https://github.com/ngergs/websrv/compare/v4.0.1...v4.0.2) (2026-01-29)
 
 
