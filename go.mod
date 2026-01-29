@@ -5,21 +5,21 @@ go 1.25.5
 require (
 	github.com/KimMachineGun/automemlimit v0.7.5
 	github.com/felixge/httpsnoop v1.0.4
-	github.com/go-chi/chi/v5 v5.2.3
+	github.com/go-chi/chi/v5 v5.2.4
 	github.com/go-chi/httprate v0.15.0
-	github.com/go-viper/mapstructure/v2 v2.4.0
+	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/knadh/koanf/parsers/yaml v1.1.0
 	github.com/knadh/koanf/providers/env v1.1.0
-	github.com/knadh/koanf/providers/file v1.2.0
+	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/providers/structs v1.0.0
-	github.com/knadh/koanf/v2 v2.3.0
-	github.com/landlock-lsm/go-landlock v0.0.0-20251103212306-430f8e5cd97c
+	github.com/knadh/koanf/v2 v2.3.2
+	github.com/landlock-lsm/go-landlock v0.0.0-20260129082549-e9cc8f7e63c8
 	github.com/prometheus/client_golang v1.23.2
 	github.com/puzpuzpuz/xsync v1.5.2
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/automaxprocs v1.6.0
-	golang.org/x/net v0.47.0
+	golang.org/x/net v0.49.0
 )
 
 require (
@@ -38,15 +38,15 @@ require (
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.67.4 // indirect
+	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
-	github.com/zeebo/xxh3 v1.0.2 // indirect
+	github.com/zeebo/xxh3 v1.1.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
-	google.golang.org/protobuf v1.36.10 // indirect
+	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.77 // indirect
 )
