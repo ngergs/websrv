@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.1](https://github.com/ngergs/websrv/compare/v5.0.0...v5.0.1) (2026-07-04)
+
+
+### Bug Fixes
+
+* v5 release ([210af4d](https://github.com/ngergs/websrv/commit/210af4db078d62221065f4bae65cfa8fb5a34c11))
+
 ## [5.0.0](https://github.com/ngergs/websrv/compare/v4.0.4...v5.0.0) (2026-07-04)
 
 
