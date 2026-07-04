@@ -120,8 +120,6 @@ type cookieConfig struct {
 type rateLimitConfig struct {
 	// Enabled activates the gzip response compression
 	Enabled bool `koanf:"enabled"`
-	// ByIp enforces the rate limit not global but per ip
-	ByIp bool `koanf:"byip"`
 	// Requests is the number of requests allowed per time window
 	MaxRequests int `koanf:"max_requests"`
 	// TimeWindow is the time window for which the maximal number of requests applies
@@ -133,7 +131,6 @@ var defaultConfig = config{
 	Log: logConfig{Level: "info"},
 	RateLimit: rateLimitConfig{
 		Enabled:     false,
-		ByIp:        false,
 		MaxRequests: 400,
 		TimeWindow:  10 * time.Minute,
 	},

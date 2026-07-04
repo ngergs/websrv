@@ -62,19 +62,13 @@ func main() {
 	r := chi.NewRouter()
 	var rateLimitHandler func(http.Handler) http.Handler
 	if conf.RateLimit.Enabled {
-		if conf.RateLimit.ByIp {
-			log.Info().Msgf("Rate limiting per Ip with %d requests per %v", conf.RateLimit.MaxRequests, conf.RateLimit.TimeWindow)
-			rateLimitHandler = httprate.LimitByRealIP(conf.RateLimit.MaxRequests, conf.RateLimit.TimeWindow)
-		} else {
-			log.Info().Msgf("Rate limiting globally with %d requests per %v", conf.RateLimit.MaxRequests, conf.RateLimit.TimeWindow)
-			rateLimitHandler = httprate.Limit(conf.RateLimit.MaxRequests, conf.RateLimit.TimeWindow)
-		}
+		log.Info().Msgf("Rate limiting globally with %d requests per %v", conf.RateLimit.MaxRequests, conf.RateLimit.TimeWindow)
+		rateLimitHandler = httprate.LimitBy(conf.RateLimit.MaxRequests, conf.RateLimit.TimeWindow, httprate.Key("*"))
 	}
 	r.Use(
 		server.Optional(rateLimitHandler, conf.RateLimit.Enabled),
 		server.Optional(server.H2C(conf.Port.H2c), conf.H2C),
 		middleware.RequestID,
-		middleware.RealIP,
 		middleware.Timeout(time.Duration(conf.Timeout.Write)*time.Second),
 		server.Optional(server.AccessLog(), conf.Log.AccessLog.General),
 		server.Optional(server.AccessMetrics(promRegistration), conf.Metrics.Enabled),
@@ -122,7 +116,7 @@ func main() {
 	}))
 
 	webserver := server.Build(conf.Port.Webserver, time.Duration(conf.Timeout.Read)*time.Second,
-		time.Duration(conf.Timeout.Write)*time.Second, time.Duration(conf.Timeout.Idle)*time.Second, r)
+		time.Duration(conf.Timeout.Write)*time.Second, time.Duration(conf.Timeout.Idle)*time.Second, conf.H2C, r)
 	log.Info().Msgf("Starting webserver server on port %d", conf.Port.Webserver)
 	srvCtx := context.WithValue(sigtermCtx, server.ServerName, "file server")
 	server.AddGracefulShutdown(srvCtx, &wg, webserver, time.Duration(conf.Timeout.Shutdown)*time.Second)
@@ -131,7 +125,7 @@ func main() {
 	if conf.Metrics.Enabled {
 		metricsServer := server.Build(conf.Port.Metrics, time.Duration(conf.Timeout.Read)*time.Second,
 			time.Duration(conf.Timeout.Write)*time.Second, time.Duration(conf.Timeout.Idle)*time.Second,
-			promhttp.Handler(), server.Optional(server.AccessLog(), conf.Log.AccessLog.Metrics))
+			false, promhttp.Handler(), server.Optional(server.AccessLog(), conf.Log.AccessLog.Metrics))
 		metricsCtx := context.WithValue(sigtermCtx, server.ServerName, "prometheus metrics server")
 		server.AddGracefulShutdown(metricsCtx, &wg, metricsServer, time.Duration(conf.Timeout.Shutdown)*time.Second)
 		metricsServer.ListenGoServe(sigtermCtx, errChan)
@@ -144,7 +138,7 @@ func main() {
 	if conf.Health {
 		healthServer := server.Build(conf.Port.Health, time.Duration(conf.Timeout.Read)*time.Second,
 			time.Duration(conf.Timeout.Write)*time.Second, time.Duration(conf.Timeout.Idle)*time.Second,
-			server.HealthCheckHandler(),
+			false, server.HealthCheckHandler(),
 			server.Optional(server.AccessLog(), conf.Log.AccessLog.Health),
 		)
 		log.Info().Msgf("Starting healthcheck server on port %d", conf.Port.Health)

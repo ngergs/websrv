@@ -39,7 +39,6 @@ func BenchmarkServer(b *testing.B) {
 	r := chi.NewRouter()
 	r.Use(
 		middleware.RequestID,
-		middleware.RealIP,
 		middleware.Timeout(time.Duration(config.Timeout.Write)*time.Second),
 		server.Optional(server.AccessLog(), config.Log.AccessLog.General),
 		server.Validate(),
@@ -65,7 +64,7 @@ func BenchmarkServer(b *testing.B) {
 			}
 		}
 	}))
-	webserver := server.Build(config.Port.Webserver, time.Duration(1)*time.Second, time.Duration(1)*time.Second, time.Duration(1)*time.Second, r)
+	webserver := server.Build(config.Port.Webserver, time.Duration(1)*time.Second, time.Duration(1)*time.Second, time.Duration(1)*time.Second, false, r)
 	defer func() {
 		err := webserver.Shutdown(ctx)
 		if err != nil {

@@ -6,9 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 // HandlerMiddleware wraps a received handler with another wrapper handler to add functionality
@@ -38,14 +35,23 @@ func (s *Server) ListenGoServe(ctx context.Context, errChan chan<- error) {
 }
 
 // Build a http server from the provided options.
-func Build(port uint16, readTimeout time.Duration, writeTimeout time.Duration, idleTimeout time.Duration,
+func Build(port uint16, readTimeout time.Duration, writeTimeout time.Duration, idleTimeout time.Duration, h2c bool,
 	handler http.Handler, handlerSetups ...HandlerMiddleware) *Server {
 	for _, handlerSetup := range handlerSetups {
 		handler = handlerSetup(handler)
 	}
+
+	var protocols *http.Protocols
+	if h2c {
+		protocols = new(http.Protocols)
+		protocols.SetHTTP1(true)
+		protocols.SetUnencryptedHTTP2(true)
+	}
+
 	return &Server{
 		&http.Server{
 			Addr:         ":" + strconv.FormatUint(uint64(port), 10),
+			Protocols:    protocols,
 			Handler:      handler,
 			ReadTimeout:  readTimeout,
 			WriteTimeout: writeTimeout,
@@ -130,14 +136,12 @@ func AccessMetrics(registration *PrometheusRegistration) HandlerMiddleware {
 	}
 }
 
-// H2C adds a middleware that supports h2c (unencrypted http2)
+// H2C adds a middleware that adds a `Alt-Svc` HTTP-header to advertise http2
 func H2C(h2cPort uint16) HandlerMiddleware {
-	h2s := &http2.Server{}
 	return func(handler http.Handler) http.Handler {
-		h2cHandler := h2c.NewHandler(handler, h2s)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Alt-Svc", "h2=\":"+strconv.FormatUint(uint64(h2cPort), 10)+"\"")
-			h2cHandler.ServeHTTP(w, r)
+			handler.ServeHTTP(w, r)
 		})
 	}
 }
