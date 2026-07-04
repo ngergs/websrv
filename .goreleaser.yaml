@@ -1,3 +1,4 @@
+version: 2
 gomod:
   proxy: true
 
@@ -15,8 +16,8 @@ builds:
     ldflags:
       - -extldflags "-static" -s -w -X main.version={{.Version}}
 
-dockers:
-  - image_templates:
+dockers_v2:
+  - images:
       - "ngergs/websrv:latest"
       - "ngergs/websrv:v{{ .Major }}"
       - "ngergs/websrv:v{{ .Major }}.{{ .Minor }}"
