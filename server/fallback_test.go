@@ -1,13 +1,14 @@
 package server_test
 
 import (
-	"github.com/ngergs/websrv/v4/server"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/url"
 	"testing"
+
+	"github.com/ngergs/websrv/v5/server"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const dummyResponse = "hi"

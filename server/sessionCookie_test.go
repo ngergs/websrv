@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ngergs/websrv/v4/server"
+	"github.com/ngergs/websrv/v5/server"
 
 	"github.com/stretchr/testify/require"
 )

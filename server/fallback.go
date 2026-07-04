@@ -1,10 +1,11 @@
 package server
 
 import (
-	"github.com/felixge/httpsnoop"
-	"github.com/ngergs/websrv/v4/internal/utils"
 	"io"
 	"net/http"
+
+	"github.com/felixge/httpsnoop"
+	"github.com/ngergs/websrv/v5/internal/utils"
 )
 
 // FallbackHandler routes the request to a fallback route on of the given HTTP fallback status codes

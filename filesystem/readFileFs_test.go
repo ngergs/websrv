@@ -1,10 +1,11 @@
 package filesystem_test
 
 import (
-	"github.com/ngergs/websrv/v4/filesystem"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/ngergs/websrv/v5/filesystem"
 
 	"github.com/stretchr/testify/require"
 )

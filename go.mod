@@ -1,4 +1,4 @@
-module github.com/ngergs/websrv/v4
+module github.com/ngergs/websrv/v5
 
 go 1.26.4
 

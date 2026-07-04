@@ -2,9 +2,10 @@ package server
 
 import (
 	"context"
-	"github.com/ngergs/websrv/v4/internal/random"
 	"net/http"
 	"time"
+
+	"github.com/ngergs/websrv/v5/internal/random"
 
 	"github.com/rs/zerolog/log"
 )

@@ -1,10 +1,11 @@
 package server_test
 
 import (
-	"github.com/ngergs/websrv/v4/server"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
+
+	"github.com/ngergs/websrv/v5/server"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHealthCheck(t *testing.T) {

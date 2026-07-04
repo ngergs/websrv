@@ -2,13 +2,14 @@ package server_test
 
 import (
 	"context"
-	"github.com/ngergs/websrv/v4/server"
-	"github.com/rs/zerolog/log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/ngergs/websrv/v5/server"
+	"github.com/rs/zerolog/log"
 
 	"github.com/stretchr/testify/require"
 )

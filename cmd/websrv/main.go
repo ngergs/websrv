@@ -5,12 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/httprate"
-	"github.com/landlock-lsm/go-landlock/landlock"
-	"github.com/ngergs/websrv/v4/internal/utils"
-	"github.com/prometheus/client_golang/prometheus"
 	"io/fs"
 	"net/http"
 	"os"
@@ -22,10 +16,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httprate"
+	"github.com/landlock-lsm/go-landlock/landlock"
+	"github.com/ngergs/websrv/v5/internal/utils"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/ngergs/websrv/v4/filesystem"
-	"github.com/ngergs/websrv/v4/server"
+	"github.com/ngergs/websrv/v5/filesystem"
+	"github.com/ngergs/websrv/v5/server"
 	"github.com/rs/zerolog/log"
 
 	_ "github.com/KimMachineGun/automemlimit"

@@ -2,12 +2,13 @@ package server_test
 
 import (
 	"context"
-	"github.com/ngergs/websrv/v4/server"
-	"github.com/rs/zerolog/log"
 	"sync"
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/ngergs/websrv/v5/server"
+	"github.com/rs/zerolog/log"
 
 	"github.com/stretchr/testify/require"
 )

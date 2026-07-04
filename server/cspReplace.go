@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/felixge/httpsnoop"
-	"github.com/ngergs/websrv/v4/internal/utils"
-	"github.com/puzpuzpuz/xsync"
-	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/felixge/httpsnoop"
+	"github.com/ngergs/websrv/v5/internal/utils"
+	"github.com/puzpuzpuz/xsync"
+	"github.com/rs/zerolog/log"
 )
 
 var (

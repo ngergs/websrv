@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
 	"regexp"
 	"testing"
 	"time"
 
-	"github.com/ngergs/websrv/v4/filesystem"
-	"github.com/ngergs/websrv/v4/server"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
+	"github.com/ngergs/websrv/v5/filesystem"
+	"github.com/ngergs/websrv/v5/server"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )

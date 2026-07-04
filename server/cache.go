@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
-	"github.com/felixge/httpsnoop"
-	"github.com/ngergs/websrv/v4/internal/utils"
-	"github.com/puzpuzpuz/xsync"
-	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
+
+	"github.com/felixge/httpsnoop"
+	"github.com/ngergs/websrv/v5/internal/utils"
+	"github.com/puzpuzpuz/xsync"
+	"github.com/rs/zerolog/log"
 )
 
 // cacheHandler implements a http.Handler that supports Caching via the ETag and If-None-Match HTTP-Headers.
