@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.0.0](https://github.com/ngergs/websrv/compare/v4.0.4...v5.0.0) (2026-07-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* rm per ip ratelimiting, adjust h2c handling
+
+### Bug Fixes
+
+* dependency updates ([45789e8](https://github.com/ngergs/websrv/commit/45789e809fda6f0d51085cac2edbedc9184a014c))
+* rm per ip ratelimiting, adjust h2c handling ([1aa41ff](https://github.com/ngergs/websrv/commit/1aa41ff4c9679743f16d5119cd1eba166f2baf50))
+
 ## [4.0.4](https://github.com/ngergs/websrv/compare/v4.0.3...v4.0.4) (2026-04-26)
 
 
