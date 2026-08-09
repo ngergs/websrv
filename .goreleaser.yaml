@@ -18,10 +18,12 @@ builds:
 
 dockers_v2:
   - images:
-      - "ngergs/websrv:latest"
-      - "ngergs/websrv:v{{ .Major }}"
-      - "ngergs/websrv:v{{ .Major }}.{{ .Minor }}"
-      - "ngergs/websrv:{{ .Tag }}"
+      - "ngergs/websrv"
+    tags:
+      - "latest"
+      - "v{{ .Major }}"
+      - "v{{ .Major }}.{{ .Minor }}"
+      - "v{{ .Tag }}"
     dockerfile: build/Dockerfile
     extra_files:
       - legal
