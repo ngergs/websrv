@@ -23,7 +23,7 @@ dockers_v2:
       - "latest"
       - "v{{ .Major }}"
       - "v{{ .Major }}.{{ .Minor }}"
-      - "v{{ .Tag }}"
+      - "{{ .Tag }}"
     dockerfile: build/Dockerfile
     extra_files:
       - legal
