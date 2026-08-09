@@ -25,5 +25,7 @@ dockers_v2:
       - "v{{ .Major }}.{{ .Minor }}"
       - "{{ .Tag }}"
     dockerfile: build/Dockerfile
+    ids:
+      - websrv
     extra_files:
       - legal
