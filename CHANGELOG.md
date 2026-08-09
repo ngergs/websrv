@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.6](https://github.com/ngergs/websrv/compare/v5.0.5...v5.0.6) (2026-08-09)
+
+
+### Bug Fixes
+
+* goreleaser ([d8f7ef7](https://github.com/ngergs/websrv/commit/d8f7ef7974de7d57f065ca12cb101e2a76ce0429))
+
 ## [5.0.5](https://github.com/ngergs/websrv/compare/v5.0.4...v5.0.5) (2026-08-09)
 
 
