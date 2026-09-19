@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.7](https://github.com/ngergs/websrv/compare/v5.0.6...v5.0.7) (2026-09-19)
+
+
+### Bug Fixes
+
+* dependency updates ([ec8f842](https://github.com/ngergs/websrv/commit/ec8f842667b8854e96e128ac1f27caa72a349b18))
+
 ## [5.0.6](https://github.com/ngergs/websrv/compare/v5.0.5...v5.0.6) (2026-08-09)
 
 
