@@ -1,6 +1,6 @@
 module github.com/ngergs/websrv/v5
 
-go 1.26.5
+go 1.27.1
 
 require (
 	github.com/KimMachineGun/automemlimit v1.0.0
@@ -12,7 +12,7 @@ require (
 	github.com/knadh/koanf/providers/env v1.1.0
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/providers/structs v1.0.1
-	github.com/knadh/koanf/v2 v2.3.6
+	github.com/knadh/koanf/v2 v2.3.7
 	github.com/landlock-lsm/go-landlock v0.10.1
 	github.com/prometheus/client_golang v1.24.1
 	github.com/puzpuzpuz/xsync v1.5.2
@@ -35,7 +35,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
-	github.com/prometheus/common v0.71.0 // indirect
+	github.com/prometheus/common v0.72.0 // indirect
 	github.com/prometheus/procfs v0.22.0 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
