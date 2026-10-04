@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.9](https://github.com/ngergs/websrv/compare/v5.0.8...v5.0.9) (2026-10-04)
+
+
+### Bug Fixes
+
+* dockerfile ([e1026df](https://github.com/ngergs/websrv/commit/e1026dfe4a28ce0b063bffd60f40e5b36bf8565d))
+
 ## [5.0.8](https://github.com/ngergs/websrv/compare/v5.0.7...v5.0.8) (2026-10-04)
 
 
